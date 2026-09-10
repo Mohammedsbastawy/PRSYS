@@ -1,0 +1,376 @@
+// Prisma schema for PRSYS — Enterprise Purchase Request & Dynamic RBAC
+// Target: Microsoft SQL Server
+// Generated from prsys_new_schema.sql
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+// ============ RBAC ============
+model Roles {
+  RoleID          String   @id @default(uuid()) @db.UniqueIdentifier
+  Name            String
+  Code            String   @unique
+  Description     String?
+  IsSystemDefault Boolean  @default(false)
+  CreatedAt       DateTime @default(now())
+  UpdatedAt       DateTime @updatedAt
+
+  RolePermissions RolePermissions[]
+  Users           Users[]          @relation("UsersRole")
+  WFSteps         WFSteps[]        @relation("WFStepsTargetRole")
+}
+
+model Permissions {
+  PermissionID String   @id @default(uuid()) @db.UniqueIdentifier
+  Code         String   @unique
+  Module       String
+  Name         String
+  Description  String?
+  CreatedAt    DateTime @default(now())
+
+  RolePermissions RolePermissions[]
+}
+
+model RolePermissions {
+  RoleID       String @db.UniqueIdentifier
+  PermissionID String @db.UniqueIdentifier
+  GrantedAt    DateTime @default(now())
+
+  Role       Roles     @relation(fields: [RoleID], references: [RoleID], onDelete: Cascade)
+  Permission Permissions @relation(fields: [PermissionID], references: [PermissionID], onDelete: Cascade)
+
+  @@id([RoleID, PermissionID])
+}
+
+// ============ ORG ============
+model DEP {
+  DEPID      String   @id @default(uuid()) @db.UniqueIdentifier
+  Name       String
+  Code       String   @unique
+  ManagerID  String?  @db.UniqueIdentifier
+  CreatedAt  DateTime @default(now())
+  UpdatedAt  DateTime @updatedAt
+
+  ManagedByUser     Users?          @relation("DEPManager", fields: [ManagerID], references: [UserID], onDelete: SetNull)
+  UsersAssigned    Users[]          @relation("DEPUser")
+  FormPermissions  FormPermissions[]
+}
+
+model Users {
+  UserID           String   @id @default(uuid()) @db.UniqueIdentifier
+  Name             String
+  Email            String   @unique
+  PasswordHash     String?
+  AccountType      String   @default("AZURE_AD") // AZURE_AD | LOCAL
+  RoleID           String   @db.UniqueIdentifier
+  DEPID            String?  @db.UniqueIdentifier
+  DirectManagerID  String?  @db.UniqueIdentifier
+  IsActive         Boolean  @default(true)
+  CreatedAt        DateTime @default(now())
+  UpdatedAt        DateTime @updatedAt
+
+  Role                Roles          @relation("UsersRole", fields: [RoleID], references: [RoleID])
+  Manager             Users?         @relation("UsersManager", fields: [DirectManagerID], references: [UserID], onDelete: SetNull)
+  Manages             Users[]        @relation("UsersManager")
+  ManagedDepartments DEP[]           @relation("DEPManager")
+  GroupMembers        GroupMembers[]
+  FormPermissions     FormPermissions[]
+  RequestsRequester   Requests[]     @relation("RequestsRequester")
+  RequestsAssignee    Requests[]     @relation("RequestsAssignee")
+  RequestsPoCreator   Requests[]     @relation("RequestsPoCreator")
+  WFStepsTargetUser  WFSteps[]      @relation("WFStepsTargetUser")
+  RequestApprovals    RequestApprovals[]
+  RequestComments     RequestComments[]
+  RequestAttachments  RequestAttachments[]
+  RequestAuditLog     RequestAuditLog[]
+}
+
+model Groups {
+  GroupID    String   @id @default(uuid()) @db.UniqueIdentifier
+  Name       String
+  Description String?
+  CreatedAt  DateTime @default(now())
+  UpdatedAt  DateTime @updatedAt
+
+  GroupMembers    GroupMembers[]
+  FormPermissions FormPermissions[]
+}
+
+model GroupMembers {
+  GroupID  String @db.UniqueIdentifier
+  UserID   String @db.UniqueIdentifier
+  AddedAt  DateTime @default(now())
+
+  GroupRef          Groups          @relation(fields: [GroupID], references: [GroupID], onDelete: Cascade)
+  User  Users @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
+
+  @@id([GroupID, UserID])
+}
+
+// ============ FORM BUILDER & WF ============
+model FormCategories {
+  FormCategoryID String   @id @default(uuid()) @db.UniqueIdentifier
+  Name           String
+  SortOrder      Int      @default(0)
+  CreatedAt      DateTime @default(now())
+  UpdatedAt      DateTime @updatedAt
+
+  FormTemplates  FormTemplates[]
+}
+
+model WFDefinitions {
+  WFDefinitionID String   @id @default(uuid()) @db.UniqueIdentifier
+  Name           String
+  Description    String?
+  Status         String   @default("ACTIVE") // ACTIVE | INACTIVE
+  CreatedAt      DateTime @default(now())
+  UpdatedAt      DateTime @updatedAt
+
+  FormTemplates  FormTemplates[]
+  WFSteps        WFSteps[]
+}
+
+model FormTemplates {
+  FormTemplateID   String   @id @default(uuid()) @db.UniqueIdentifier
+  Name             String
+  Description      String?
+  FormCategoryID   String?  @db.UniqueIdentifier
+  WFDefinitionID   String?  @db.UniqueIdentifier
+  Status           String   @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  Version          Int      @default(1)
+  CreatedAt        DateTime @default(now())
+  UpdatedAt        DateTime @updatedAt
+
+  Category         FormCategories?   @relation(fields: [FormCategoryID], references: [FormCategoryID], onDelete: SetNull)
+  Workflow         WFDefinitions?     @relation(fields: [WFDefinitionID], references: [WFDefinitionID], onDelete: SetNull)
+  FormFields       FormFields[]
+  FormPermissions  FormPermissions[]
+  Requests         Requests[]
+}
+
+model FormPermissions {
+  FormPermissionID String   @id @default(uuid()) @db.UniqueIdentifier
+  FormTemplateID   String   @db.UniqueIdentifier
+  PermissionType   String   // DEP | GROUP | USER
+  DEPID            String?  @db.UniqueIdentifier
+  GroupID          String?  @db.UniqueIdentifier
+  UserID           String?  @db.UniqueIdentifier
+  CreatedAt        DateTime @default(now())
+
+  FormTemplate FormTemplates @relation(fields: [FormTemplateID], references: [FormTemplateID], onDelete: Cascade)
+  DEP           DEP?          @relation(fields: [DEPID], references: [DEPID], onDelete: NoAction)
+  Group         Groups?       @relation(fields: [GroupID], references: [GroupID], onDelete: NoAction)
+  User          Users?        @relation(fields: [UserID], references: [UserID], onDelete: NoAction)
+}
+
+model FormFields {
+  FormFieldID    String   @id @default(uuid()) @db.UniqueIdentifier
+  FormTemplateID String   @db.UniqueIdentifier
+  Label          String
+  FieldKey       String
+  FieldType      String   // TEXT | NUMBER | TEXTAREA | SELECT | MULTI_SELECT | DATE | FILE | ITEM_PICKER
+  IsRequired     Boolean  @default(false)
+  SortOrder      Int      @default(0)
+  Config         String?
+  CreatedAt      DateTime @default(now())
+  UpdatedAt      DateTime @updatedAt
+
+  FormTemplate    FormTemplates   @relation(fields: [FormTemplateID], references: [FormTemplateID], onDelete: Cascade)
+  RequestFieldValues RequestFieldValues[]
+  RequestItems    RequestItems[]
+}
+
+model WFSteps {
+  WFStepID         String   @id @default(uuid()) @db.UniqueIdentifier
+  WFDefinitionID   String   @db.UniqueIdentifier
+  StepName         String
+  StepOrder        Int
+  ApproverType     String   // DIRECT_MANAGER | DEP_HEAD | SPECIFIC_USER | GROUP | ROLE
+  TargetUserID     String?  @db.UniqueIdentifier
+  TargetGroupID    String?  @db.UniqueIdentifier
+  TargetRoleID     String?  @db.UniqueIdentifier
+  ApprovalMode     String   @default("ANY_ONE") // ANY_ONE | ALL_MUST_APPROVE
+  RejectAction     String   @default("REJECT_COMPLETELY") // REJECT_COMPLETELY | RETURN_TO_REQUESTER
+  Condition        String?
+  CreatedAt        DateTime @default(now())
+  UpdatedAt        DateTime @updatedAt
+
+  Workflow         WFDefinitions @relation(fields: [WFDefinitionID], references: [WFDefinitionID], onDelete: Cascade)
+  TargetUser       Users?       @relation("WFStepsTargetUser", fields: [TargetUserID], references: [UserID], onDelete: SetNull)
+  TargetGroup      Groups?      @relation(fields: [TargetGroupID], references: [GroupID], onDelete: SetNull)
+  TargetRole       Roles?       @relation("WFStepsTargetRole", fields: [TargetRoleID], references: [RoleID], onDelete: SetNull)
+  Requests         Requests[]
+  RequestApprovals RequestApprovals[]
+}
+
+// ============ ORACLE ITEM REGISTRY ============
+model ItemCatalogCache {
+  ItemCatalogCacheID String   @id @default(uuid()) @db.UniqueIdentifier
+  OracleItemID       String   @unique
+  ItemCode           String   @unique
+  ItemName           String
+  Description        String?
+  Uom                String
+  OrganizationCode   String
+  LastPurchasedPrice Decimal? @db.Decimal(18, 4)
+  FirstUsedAt        DateTime @default(now())
+  LastUsedAt         DateTime @default(now())
+
+  RequestItems RequestItems[]
+}
+
+// ============ REQUESTS ============
+model Requests {
+  RequestID          String   @id @default(uuid()) @db.UniqueIdentifier
+  TrackingNumber     String   @unique
+  FormTemplateID     String   @db.UniqueIdentifier
+  RequesterID        String   @db.UniqueIdentifier
+  Status             String   @default("DRAFT") // DRAFT | PENDING_VERIFICATION | PENDING_APPROVAL | PENDING_PO | APPLIED | REJECTED | CANCELLED | COMPLETED
+  CurrentWFStepID    String?  @db.UniqueIdentifier
+  FormSnapshot       String
+  Priority           String   @default("MEDIUM") // LOW | MEDIUM | HIGH | CRITICAL
+  AssigneeID         String?  @db.UniqueIdentifier
+  FulfillmentType    String?  // STOCK_ONLY | PURCHASE_ONLY | HYBRID
+  StockIssueNumber   String?
+  OraclePoNumber     String?  // registered manually by procurement agent (Oracle is external)
+  PoCreatedByUserID  String?  @db.UniqueIdentifier
+  PoCreatedAt        DateTime?
+  PoNotes            String?
+  SubmittedAt        DateTime?
+  CompletedAt        DateTime?
+  CreatedAt          DateTime @default(now())
+  UpdatedAt          DateTime @updatedAt
+
+  FormTemplate     FormTemplates    @relation(fields: [FormTemplateID], references: [FormTemplateID], onDelete: NoAction)
+  Requester        Users            @relation("RequestsRequester", fields: [RequesterID], references: [UserID], onDelete: NoAction)
+  Assignee         Users?           @relation("RequestsAssignee", fields: [AssigneeID], references: [UserID], onDelete: SetNull)
+  CurrentStep      WFSteps?         @relation(fields: [CurrentWFStepID], references: [WFStepID], onDelete: SetNull)
+  PoCreator        Users?           @relation("RequestsPoCreator", fields: [PoCreatedByUserID], references: [UserID], onDelete: SetNull)
+  Items            RequestItems[]
+  FieldValues      RequestFieldValues[]
+  Approvals        RequestApprovals[]
+  Comments         RequestComments[]
+  Attachments      RequestAttachments[]
+  AuditLogs        RequestAuditLog[]
+}
+
+model RequestFieldValues {
+  RequestFieldValueID String   @id @default(uuid()) @db.UniqueIdentifier
+  RequestID           String   @db.UniqueIdentifier
+  FormFieldID         String   @db.UniqueIdentifier
+  Value               String
+  CreatedAt           DateTime @default(now())
+  UpdatedAt           DateTime @updatedAt
+
+  Request   Requests   @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
+  FormField FormFields @relation(fields: [FormFieldID], references: [FormFieldID], onDelete: NoAction)
+
+  @@unique([RequestID, FormFieldID])
+}
+
+model RequestItems {
+  RequestItemID            String   @id @default(uuid()) @db.UniqueIdentifier
+  RequestID               String   @db.UniqueIdentifier
+  FormFieldID             String   @db.UniqueIdentifier
+  RequestedItemName       String
+  RequestedItemDetails    String?
+  RequestedUom            String?
+  RequestedQuantity       Decimal  @db.Decimal(18, 4)
+  ItemCatalogCacheID      String?  @db.UniqueIdentifier
+  OracleItemID            String?
+  ItemCode                String?
+  ItemName                String?
+  Uom                     String?
+  OrganizationCode        String?
+  OnHandQuantity          Decimal? @db.Decimal(18, 4)
+  ItemVerifiedByUserID    String?  @db.UniqueIdentifier
+  ItemVerifiedAt          DateTime?
+  IssuedFromStockQuantity Decimal  @db.Decimal(18, 4) @default(0)
+  ToPurchaseQuantity      Decimal? @db.Decimal(18, 4)
+  EstimatedPrice          Decimal? @db.Decimal(18, 4)
+  StockDecisionNotes      String?
+  CreatedAt               DateTime @default(now())
+  UpdatedAt               DateTime @updatedAt
+
+  Request         Requests         @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
+  FormField       FormFields       @relation(fields: [FormFieldID], references: [FormFieldID], onDelete: NoAction)
+  ItemCatalog     ItemCatalogCache? @relation(fields: [ItemCatalogCacheID], references: [ItemCatalogCacheID], onDelete: SetNull)
+  ItemVerifier    Users?           @relation(fields: [ItemVerifiedByUserID], references: [UserID], onDelete: SetNull)
+}
+
+model RequestApprovals {
+  RequestApprovalID String   @id @default(uuid()) @db.UniqueIdentifier
+  RequestID         String   @db.UniqueIdentifier
+  WFStepID          String   @db.UniqueIdentifier
+  ApproverUserID    String   @db.UniqueIdentifier
+  Decision          String   @default("PENDING") // PENDING | APPROVED | REJECTED | RETURNED | CLARIFICATION_REQUESTED
+  Comment           String?
+  DecidedAt         DateTime?
+  CreatedAt         DateTime @default(now())
+
+  Request   Requests  @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
+  WFStep    WFSteps  @relation(fields: [WFStepID], references: [WFStepID], onDelete: NoAction)
+  Approver  Users    @relation(fields: [ApproverUserID], references: [UserID], onDelete: NoAction)
+}
+
+model RequestComments {
+  RequestCommentID String   @id @default(uuid()) @db.UniqueIdentifier
+  RequestID        String   @db.UniqueIdentifier
+  AuthorUserID     String   @db.UniqueIdentifier
+  CommentText      String
+  CommentType      String   @default("GENERAL") // GENERAL | CLARIFICATION_REQUEST | CLARIFICATION_RESPONSE
+  IsInternal       Boolean  @default(false)
+  CreatedAt        DateTime @default(now())
+  UpdatedAt        DateTime @updatedAt
+
+  Request Requests @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
+  Author  Users   @relation(fields: [AuthorUserID], references: [UserID], onDelete: NoAction)
+}
+
+model RequestAttachments {
+  RequestAttachmentID String   @id @default(uuid()) @db.UniqueIdentifier
+  RequestID          String   @db.UniqueIdentifier
+  UploadedByUserID   String   @db.UniqueIdentifier
+  FileName           String
+  FilePath           String
+  MimeType           String
+  FileSize           BigInt
+  CreatedAt          DateTime @default(now())
+
+  Request  Requests @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
+  Uploader Users   @relation(fields: [UploadedByUserID], references: [UserID], onDelete: NoAction)
+}
+
+model Notifications {
+  NotificationID    String   @id @default(uuid()) @db.UniqueIdentifier
+  UserID            String   @db.UniqueIdentifier
+  Title             String
+  Message           String
+  Type              String   // APPROVAL_REQUIRED | STATUS_UPDATE | COMMENT_ADDED | PO_ASSIGNED | CLARIFICATION_REQUESTED | CLARIFICATION_RESPONDED
+  RelatedRequestID  String?  @db.UniqueIdentifier
+  IsRead            Boolean  @default(false)
+  CreatedAt         DateTime @default(now())
+
+  User     Users     @relation(fields: [UserID], references: [UserID], onDelete: Cascade)
+  Request  Requests? @relation(fields: [RelatedRequestID], references: [RequestID], onDelete: SetNull)
+}
+
+model RequestAuditLog {
+  AuditLogID        String   @id @default(uuid()) @db.UniqueIdentifier
+  RequestID         String   @db.UniqueIdentifier
+  ChangedByUserID   String?  @db.UniqueIdentifier
+  FromStatus        String?
+  ToStatus          String?
+  Action            String?  // SUBMIT | ASSIGN | APPROVE | REJECT | PO_REGISTERED | ...
+  Note              String?
+  CreatedAt         DateTime @default(now())
+
+  Request Requests @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
+  ChangedBy Users  @relation(fields: [ChangedByUserID], references: [UserID], onDelete: SetNull)
+}
