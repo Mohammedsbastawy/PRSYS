@@ -200,10 +200,10 @@ async function main() {
   // 9. Request form templates
   console.log('→ Form Templates')
   interface SeedField { label: string; key: string; type: string; req: boolean; options?: string[] }
-  interface SeedTemplate { name: string; desc: string; cat: string; fields: SeedField[] }
+  interface SeedTemplate { name: string; prefix: string; desc: string; cat: string; fields: SeedField[] }
   const templates: SeedTemplate[] = [
     {
-      name: 'Raw Material Request', desc: 'Specify raw material requirements and quantity for production.', cat: 'Procurement & Operations',
+      name: 'Raw Material Request', prefix: 'RM', desc: 'Specify raw material requirements and quantity for production.', cat: 'Procurement & Operations',
       fields: [
         { label: 'Department / Cost Center', key: 'department', type: 'text', req: true },
         { label: 'Required By Date', key: 'requiredByDate', type: 'date', req: false },
@@ -211,7 +211,7 @@ async function main() {
       ],
     },
     {
-      name: 'General Items Request', desc: 'Request items not found in the standard material catalog.', cat: 'Procurement & Operations',
+      name: 'General Items Request', prefix: 'GI', desc: 'Request items not found in the standard material catalog.', cat: 'Procurement & Operations',
       fields: [
         { label: 'Department', key: 'department', type: 'text', req: true },
         { label: 'Needed By Date', key: 'neededByDate', type: 'date', req: false },
@@ -219,7 +219,7 @@ async function main() {
       ],
     },
     {
-      name: 'General Supply Request', desc: 'Order basic office and facility supplies.', cat: 'Procurement & Operations',
+      name: 'General Supply Request', prefix: 'GS', desc: 'Order basic office and facility supplies.', cat: 'Procurement & Operations',
       fields: [
         { label: 'Department', key: 'department', type: 'text', req: false },
         { label: 'Delivery Location', key: 'deliveryLocation', type: 'text', req: false },
@@ -227,7 +227,7 @@ async function main() {
       ],
     },
     {
-      name: 'Lab Equipment Repair', desc: 'Request maintenance or fix for laboratory devices.', cat: 'Procurement & Operations',
+      name: 'Lab Equipment Repair', prefix: 'LER', desc: 'Request maintenance or fix for laboratory devices.', cat: 'Procurement & Operations',
       fields: [
         { label: 'Equipment ID', key: 'equipmentId', type: 'text', req: true },
         { label: 'Issue Description', key: 'issueDescription', type: 'textarea', req: true },
@@ -235,7 +235,7 @@ async function main() {
       ],
     },
     {
-      name: 'Chemical Reagent Order', desc: 'Procure approved chemical reagents for lab use.', cat: 'Procurement & Operations',
+      name: 'Chemical Reagent Order', prefix: 'CR', desc: 'Procure approved chemical reagents for lab use.', cat: 'Procurement & Operations',
       fields: [
         { label: 'Lab Location', key: 'labLocation', type: 'text', req: false },
         { label: 'Safety Approval Ref', key: 'safetyRef', type: 'text', req: false },
@@ -243,7 +243,7 @@ async function main() {
       ],
     },
     {
-      name: 'New Software License', desc: 'Request access or licenses for specific software tools.', cat: 'IT & Digital Services',
+      name: 'New Software License', prefix: 'SW', desc: 'Request access or licenses for specific software tools.', cat: 'IT & Digital Services',
       fields: [
         { label: 'Software Name', key: 'softwareName', type: 'text', req: true },
         { label: 'License Type', key: 'licenseType', type: 'select', req: false, options: ['Perpetual', 'Subscription', 'Trial'] },
@@ -251,7 +251,7 @@ async function main() {
       ],
     },
     {
-      name: 'Hardware Replacement', desc: 'Report broken IT hardware and request replacements.', cat: 'IT & Digital Services',
+      name: 'Hardware Replacement', prefix: 'HW', desc: 'Report broken IT hardware and request replacements.', cat: 'IT & Digital Services',
       fields: [
         { label: 'Asset Tag', key: 'assetTag', type: 'text', req: true },
         { label: 'Issue Description', key: 'issueDescription', type: 'textarea', req: true },
@@ -259,7 +259,7 @@ async function main() {
       ],
     },
     {
-      name: 'Travel Authorization', desc: 'Request approval for business-related travel.', cat: 'HR & Employee Support',
+      name: 'Travel Authorization', prefix: 'TR', desc: 'Request approval for business-related travel.', cat: 'HR & Employee Support',
       fields: [
         { label: 'Destination', key: 'destination', type: 'text', req: true },
         { label: 'Travel Dates', key: 'travelDates', type: 'text', req: true },
@@ -281,6 +281,9 @@ async function main() {
         FormCategoryID: catMap.get(t.cat)!,
         WFDefinitionID: wf.WFDefinitionID,
         Status: 'ACTIVE',
+        IdPrefix: t.prefix,
+        IdSeparator: '-',
+        IdPadding: 4,
         Fields: {
           create: t.fields.map((f, i) => ({
             Label: f.label,

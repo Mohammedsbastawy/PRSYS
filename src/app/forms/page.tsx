@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { PageHeader, StatusBadge } from "@/components/ui";
+import { formatRequestId } from "@/lib/request-ids";
 
 interface TemplateRow {
   FormTemplateID: string;
@@ -15,6 +16,10 @@ interface TemplateRow {
   Workflow?: { Name: string } | null;
   OwnerDEP?: { DEPID: string; Name: string } | null;
   OwnerGroup?: { GroupID: string; Name: string } | null;
+  IdPrefix?: string | null;
+  IdSeparator?: string | null;
+  IdPadding?: number | null;
+  IdIncludeYear?: boolean | null;
   Fields?: { FormFieldID: string }[];
   _count?: { Requests: number };
 }
@@ -131,6 +136,11 @@ export default function FormsPage() {
                     {(f.OwnerDEP?.Name || f.OwnerGroup?.Name) && (
                       <span className="block text-xs text-ink-soft">
                         Owner: {f.OwnerDEP?.Name || f.OwnerGroup?.Name}
+                      </span>
+                    )}
+                    {f.IdPrefix && (
+                      <span className="block font-mono text-xs text-ink-soft">
+                        ID: {formatRequestId({ prefix: f.IdPrefix, separator: f.IdSeparator ?? "", padding: f.IdPadding ?? 0, includeYear: f.IdIncludeYear ?? false }, new Date().getFullYear(), 1)} ...
                       </span>
                     )}
                     {f.Description && (

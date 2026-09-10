@@ -146,6 +146,11 @@ model FormTemplates {
   Version          Int      @default(1)
   OwnerDEPID       String?
   OwnerGroupID     String?
+  IdPrefix         String?  @unique
+  IdSeparator      String?
+  IdPadding        Int      @default(0)
+  IdIncludeYear    Boolean  @default(false)
+  IdNextSeq        Int      @default(1)
   CreatedAt        DateTime @default(now())
   UpdatedAt        DateTime @updatedAt
 

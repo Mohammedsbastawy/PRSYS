@@ -4,6 +4,7 @@ import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { FIELD_TYPE_VALUES } from '@/lib/field-config'
+import { buildIdHead, validateIdFormat } from '@/lib/request-ids'
 import { z } from 'zod'
 
 // GET /api/form-templates
@@ -49,6 +50,10 @@ const tmplSchema = z.object({
   ownerDepId: z.string().optional().nullable(),
   ownerGroupId: z.string().optional().nullable(),
   visibility: z.array(visibilitySchema).default([]),
+  idPrefix: z.string().max(10).optional().nullable(),
+  idSeparator: z.string().max(3).optional().nullable(),
+  idPadding: z.number().int().min(0).max(10).default(0),
+  idIncludeYear: z.boolean().default(false),
   fields: z.array(fieldSchema).default([]),
 })
 
@@ -151,6 +156,10 @@ async function normalizeVisibility(
   return { rows: out, error: null }
 }
 
+function isPrismaUniqueError(e: unknown): boolean {
+  return (e as { code?: unknown } | null)?.code === 'P2002'
+}
+
 // POST /api/form-templates
 export async function POST(req: NextRequest) {
   const payload = getUserFromRequest(req)
@@ -173,39 +182,83 @@ export async function POST(req: NextRequest) {
   const vis = await normalizeVisibility(data!.visibility ?? [])
   if (vis.error) return json({ error: vis.error }, 400)
 
-  const tmpl = await prisma.formTemplates.create({
-    data: {
-      Name: data!.name,
-      Description: data!.description ?? null,
-      FormCategoryID: data!.formCategoryId ?? null,
-      WFDefinitionID: data!.wfDefinitionId ?? null,
-      Status: data!.status,
-      OwnerDEPID: data!.ownerDepId ?? null,
-      OwnerGroupID: data!.ownerGroupId ?? null,
-      Fields: {
-        create: (data!.fields ?? []).map((f, i) => ({
-          Label: f.label,
-          FieldKey: f.fieldKey,
-          FieldType: f.fieldType,
-          IsRequired: f.isRequired,
-          SortOrder: i,
-          Config: f.config ?? null,
-        })),
+  // ---- request ID format: normalize, validate, collision-check ----
+  const prefixRaw = (data!.idPrefix ?? '').trim()
+  const prefix = prefixRaw === '' ? null : prefixRaw.toUpperCase()
+  const separator = data!.idSeparator ?? ''
+  const padding = data!.idPadding ?? 0
+  const includeYear = data!.idIncludeYear ?? false
+  const idErr = validateIdFormat(prefix, separator, padding, includeYear)
+  if (idErr) return json({ error: idErr }, 400)
+  if (prefix) {
+    const taken = await prisma.formTemplates.findMany({
+      where: { IdPrefix: { not: null } },
+      select: { Name: true, IdPrefix: true },
+    })
+    const clash = taken.find(
+      (o: { Name: string; IdPrefix: string | null }) =>
+        o.IdPrefix !== null && o.IdPrefix.toLowerCase() === prefix.toLowerCase()
+    )
+    if (clash) return json({ error: `ID prefix "${prefix}" is already used by "${clash.Name}"` }, 400)
+    const head = buildIdHead({ prefix, separator, padding, includeYear }, new Date().getFullYear())!
+    const conflict = await prisma.requests.findFirst({
+      where: { TrackingNumber: { startsWith: head } },
+      select: { TrackingNumber: true },
+    })
+    if (conflict) {
+      return json(
+        { error: `ID prefix "${prefix}" conflicts with existing request ID "${conflict.TrackingNumber}" — pick a different abbreviation` },
+        400
+      )
+    }
+  }
+
+  let tmpl
+  try {
+    tmpl = await prisma.formTemplates.create({
+      data: {
+        Name: data!.name,
+        Description: data!.description ?? null,
+        FormCategoryID: data!.formCategoryId ?? null,
+        WFDefinitionID: data!.wfDefinitionId ?? null,
+        Status: data!.status,
+        OwnerDEPID: data!.ownerDepId ?? null,
+        OwnerGroupID: data!.ownerGroupId ?? null,
+        IdPrefix: prefix,
+        IdSeparator: separator === '' ? null : separator,
+        IdPadding: padding,
+        IdIncludeYear: includeYear,
+        Fields: {
+          create: (data!.fields ?? []).map((f, i) => ({
+            Label: f.label,
+            FieldKey: f.fieldKey,
+            FieldType: f.fieldType,
+            IsRequired: f.isRequired,
+            SortOrder: i,
+            Config: f.config ?? null,
+          })),
+        },
+        ...(vis.rows.length > 0
+          ? {
+              FormPerms: {
+                create: vis.rows.map((v) => ({
+                  PermissionType: 'VIEW',
+                  DEPID: v.depId,
+                  GroupID: v.groupId,
+                  UserID: v.userId,
+                })),
+              },
+            }
+          : {}),
       },
-      ...(vis.rows.length > 0
-        ? {
-            FormPerms: {
-              create: vis.rows.map((v) => ({
-                PermissionType: 'VIEW',
-                DEPID: v.depId,
-                GroupID: v.groupId,
-                UserID: v.userId,
-              })),
-            },
-          }
-        : {}),
-    },
-    include: { Fields: true },
-  })
+      include: { Fields: true },
+    })
+  } catch (e) {
+    // unique-prefix race between concurrent saves
+    if (isPrismaUniqueError(e)) {
+      return json({ error: `ID prefix "${prefix}" is already in use — pick a different abbreviation` }, 400)
+    }
+    throw e
+  }
   return json(tmpl, 201)
 }

@@ -16,6 +16,7 @@ import {
   parseFieldConfig,
   parseMultiValue,
 } from "@/lib/field-config";
+import { formatRequestId, validateIdFormat } from "@/lib/request-ids";
 
 interface FieldDraft {
   key: string;
@@ -65,6 +66,10 @@ interface LoadedTemplate {
   OwnerDEPID?: string | null;
   OwnerGroupID?: string | null;
   FormPerms?: LoadedPerm[];
+  IdPrefix?: string | null;
+  IdSeparator?: string | null;
+  IdPadding?: number | null;
+  IdIncludeYear?: boolean | null;
 }
 
 interface CatRow {
@@ -484,6 +489,10 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
   const [visChips, setVisChips] = useState<VisChip[]>([]);
   const [visKind, setVisKind] = useState<"dep" | "group" | "user">("dep");
   const [visPick, setVisPick] = useState("");
+  const [idPrefix, setIdPrefix] = useState("");
+  const [idSeparator, setIdSeparator] = useState("");
+  const [idPadding, setIdPadding] = useState("0");
+  const [idIncludeYear, setIdIncludeYear] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<"field" | "form">("field");
   const [preview, setPreview] = useState(false);
@@ -537,6 +546,10 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
           setOwnerType(t.OwnerGroupID ? "group" : t.OwnerDEPID ? "dep" : "none");
           setOwnerDepId(t.OwnerDEPID ?? "");
           setOwnerGroupId(t.OwnerGroupID ?? "");
+          setIdPrefix(t.IdPrefix ?? "");
+          setIdSeparator(t.IdSeparator ?? "");
+          setIdPadding(String(t.IdPadding ?? 0));
+          setIdIncludeYear(t.IdIncludeYear ?? false);
           const perms = t.FormPerms ?? [];
           if (perms.length === 0) {
             setVisMode("public");
@@ -682,6 +695,13 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
       setError("Restricted visibility needs at least one department, group or user — or switch back to Public");
       return;
     }
+    const idPrefixNorm = idPrefix.trim() === "" ? null : idPrefix.trim().toUpperCase();
+    const idPadNum = idPadding.trim() === "" ? 0 : Number(idPadding);
+    const idErr = validateIdFormat(idPrefixNorm, idSeparator, idPadNum, idIncludeYear);
+    if (idErr) {
+      setError(idErr);
+      return;
+    }
     // resolve keys (sections get an auto key when left empty) and validate
     const resolvedKeys = fields.map((f, i) =>
       f.fieldType === "section" && !f.fieldKey.trim() ? `section_${i + 1}` : f.fieldKey.trim()
@@ -737,6 +757,10 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         status,
         ownerDepId: ownerType === "dep" ? ownerDepId || null : null,
         ownerGroupId: ownerType === "group" ? ownerGroupId || null : null,
+        idPrefix: idPrefixNorm,
+        idSeparator: idSeparator || null,
+        idPadding: idPadNum,
+        idIncludeYear,
         visibility:
           visMode === "restricted"
             ? visChips.map((c) => ({ depId: c.depId, groupId: c.groupId, userId: c.userId }))
@@ -778,6 +802,15 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
     }
   }
 
+  const idPreview = (() => {
+    const p = idPrefix.trim().toUpperCase();
+    if (p === "") return "";
+    const pad = idPadding.trim() === "" ? 0 : Number(idPadding);
+    if (validateIdFormat(p, idSeparator, pad, idIncludeYear)) return "";
+    const cfg = { prefix: p, separator: idSeparator, padding: pad, includeYear: idIncludeYear };
+    const y = new Date().getFullYear();
+    return `${formatRequestId(cfg, y, 1)} -> ${formatRequestId(cfg, y, 2)} ...`;
+  })();
   const ro = !canManage;
   const selected = fields.find((f) => f.key === selectedKey) ?? null;
   const visOptions = visKind === "dep" ? departments : visKind === "group" ? groups : users;
@@ -1317,6 +1350,70 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     </select>
                   </div>
 
+                  {/* ---- Request ID format ---- */}
+                  <div className="rounded border border-surface-border p-3">
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                      Request ID Format
+                    </div>
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="label">Prefix</label>
+                          <input
+                            className="input font-mono uppercase"
+                            value={idPrefix}
+                            disabled={ro}
+                            maxLength={10}
+                            onChange={(e) => setIdPrefix(e.target.value)}
+                            placeholder="e.g. PR"
+                          />
+                        </div>
+                        <div>
+                          <label className="label">Separator</label>
+                          <input
+                            className="input font-mono"
+                            value={idSeparator}
+                            disabled={ro}
+                            maxLength={3}
+                            onChange={(e) => setIdSeparator(e.target.value)}
+                            placeholder="(none)"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 items-end gap-2">
+                        <div>
+                          <label className="label">Padding</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="10"
+                            step="1"
+                            className="input"
+                            value={idPadding}
+                            disabled={ro}
+                            onChange={(e) => setIdPadding(e.target.value)}
+                          />
+                        </div>
+                        <label className="flex cursor-pointer items-center gap-2 pb-2 text-xs font-medium text-ink">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={idIncludeYear}
+                            disabled={ro}
+                            onChange={(e) => setIdIncludeYear(e.target.checked)}
+                          />
+                          Include year
+                        </label>
+                      </div>
+                      <div className="rounded bg-surface-muted px-2.5 py-2 font-mono text-xs text-ink">
+                        {idPreview || "Off - requests use REQ-YYYY-NNNNN"}
+                      </div>
+                      <p className="text-[11px] leading-snug text-ink-faint">
+                        The prefix must be unique and is checked against existing IDs. Issued IDs never change.
+                      </p>
+                    </div>
+                  </div>
+
                   {/* ---- Responsible owner ---- */}
                   <div className="rounded border border-surface-border p-3">
                     <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
@@ -1472,6 +1569,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     <div className="mb-1.5 text-xs font-semibold text-ink">How it works</div>
                     <ul className="list-disc space-y-1 pl-4 text-[11px] leading-snug text-ink-soft">
                       <li>Only Active templates appear in the New Request catalog.</li>
+                      <li>Set an ID prefix (e.g. PR) for custom numbering like PR1, PR2.</li>
                       <li>Field keys must be unique — they identify answers.</li>
                       <li>Required fields block submission until filled.</li>
                       <li>Sections are layout-only and never store answers.</li>

@@ -5,6 +5,7 @@ import { json, unauthorized, forbidden, notFound, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { canUserUseTemplate } from '@/lib/form-visibility'
 import { FIELD_TYPE_VALUES } from '@/lib/field-config'
+import { buildIdHead, validateIdFormat } from '@/lib/request-ids'
 import { z } from 'zod'
 
 interface Params { params: { id: string } }
@@ -118,6 +119,10 @@ const tmplSchema = z.object({
   ownerDepId: z.string().optional().nullable(),
   ownerGroupId: z.string().optional().nullable(),
   visibility: z.array(visibilitySchema).default([]),
+  idPrefix: z.string().max(10).optional().nullable(),
+  idSeparator: z.string().max(3).optional().nullable(),
+  idPadding: z.number().int().min(0).max(10).default(0),
+  idIncludeYear: z.boolean().default(false),
   fields: z.array(fieldSchema).default([]),
 })
 
@@ -160,7 +165,11 @@ async function normalizeVisibility(
   return { rows: out, error: null }
 }
 
-// PUT /api/form-templates/[id] — full update (settings + fields merge + owner + visibility)
+function isPrismaUniqueError(e: unknown): boolean {
+  return (e as { code?: unknown } | null)?.code === 'P2002'
+}
+
+// PUT /api/form-templates/[id] — full update (settings + fields merge + owner + visibility + ID format)
 export async function PUT(req: NextRequest, { params }: Params) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
@@ -225,6 +234,52 @@ export async function PUT(req: NextRequest, { params }: Params) {
   })
   if (!existing) return notFound('Template not found')
 
+  // ---- request ID format: normalize, validate, collision-check ----
+  const prefixRaw = (data!.idPrefix ?? '').trim()
+  const prefix = prefixRaw === '' ? null : prefixRaw.toUpperCase()
+  const separator = data!.idSeparator ?? ''
+  const padding = data!.idPadding ?? 0
+  const includeYear = data!.idIncludeYear ?? false
+  const idErr = validateIdFormat(prefix, separator, padding, includeYear)
+  if (idErr) return json({ error: idErr }, 400)
+  const yearNow = new Date().getFullYear()
+  const oldHead = buildIdHead(
+    {
+      prefix: existing.IdPrefix,
+      separator: existing.IdSeparator ?? '',
+      padding: existing.IdPadding,
+      includeYear: existing.IdIncludeYear,
+    },
+    yearNow
+  )
+  const newHead = buildIdHead({ prefix, separator, padding, includeYear }, yearNow)
+  const headChanged = oldHead !== newHead
+  if (prefix) {
+    const taken = await prisma.formTemplates.findMany({
+      where: { FormTemplateID: { not: params.id }, IdPrefix: { not: null } },
+      select: { Name: true, IdPrefix: true },
+    })
+    const clash = taken.find(
+      (o: { Name: string; IdPrefix: string | null }) =>
+        o.IdPrefix !== null && o.IdPrefix.toLowerCase() === prefix.toLowerCase()
+    )
+    if (clash) return json({ error: `ID prefix "${prefix}" is already used by "${clash.Name}"` }, 400)
+    // only re-check overlap when the generated head actually changed, so the
+    // template's own previously issued IDs don't block unrelated saves
+    if (headChanged) {
+      const conflict = await prisma.requests.findFirst({
+        where: { TrackingNumber: { startsWith: newHead! } },
+        select: { TrackingNumber: true },
+      })
+      if (conflict) {
+        return json(
+          { error: `ID prefix "${prefix}" conflicts with existing request ID "${conflict.TrackingNumber}" — pick a different abbreviation` },
+          400
+        )
+      }
+    }
+  }
+
   const existingIds = new Set<string>(
     existing.Fields.map((f: { FormFieldID: string }) => f.FormFieldID)
   )
@@ -237,55 +292,68 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
   const toDelete = Array.from(existingIds).filter((id) => !incomingIds.has(id))
 
-  await prisma.$transaction(async (tx) => {
-    if (toDelete.length > 0) {
-      await tx.formFields.deleteMany({ where: { FormFieldID: { in: toDelete } } })
-    }
-    for (let i = 0; i < fields.length; i++) {
-      const f = fields[i]
-      const row = {
-        Label: f.label,
-        FieldKey: f.fieldKey,
-        FieldType: f.fieldType,
-        IsRequired: f.isRequired,
-        SortOrder: i,
-        Config: f.config ?? null,
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (toDelete.length > 0) {
+        await tx.formFields.deleteMany({ where: { FormFieldID: { in: toDelete } } })
       }
-      if (f.id) {
-        await tx.formFields.update({ where: { FormFieldID: f.id }, data: row })
-      } else {
-        await tx.formFields.create({ data: { ...row, FormTemplateID: params.id } })
+      for (let i = 0; i < fields.length; i++) {
+        const f = fields[i]
+        const row = {
+          Label: f.label,
+          FieldKey: f.fieldKey,
+          FieldType: f.fieldType,
+          IsRequired: f.isRequired,
+          SortOrder: i,
+          Config: f.config ?? null,
+        }
+        if (f.id) {
+          await tx.formFields.update({ where: { FormFieldID: f.id }, data: row })
+        } else {
+          await tx.formFields.create({ data: { ...row, FormTemplateID: params.id } })
+        }
       }
-    }
-    // replace visibility grants wholesale
-    await tx.formPermissions.deleteMany({
-      where: { FormTemplateID: params.id, PermissionType: 'VIEW' },
-    })
-    if (vis.rows.length > 0) {
-      await tx.formPermissions.createMany({
-        data: vis.rows.map((v) => ({
-          FormTemplateID: params.id,
-          PermissionType: 'VIEW',
-          DEPID: v.depId,
-          GroupID: v.groupId,
-          UserID: v.userId,
-        })),
+      // replace visibility grants wholesale
+      await tx.formPermissions.deleteMany({
+        where: { FormTemplateID: params.id, PermissionType: 'VIEW' },
       })
-    }
-    await tx.formTemplates.update({
-      where: { FormTemplateID: params.id },
-      data: {
-        Name: data!.name,
-        Description: data!.description ?? null,
-        FormCategoryID: data!.formCategoryId ?? null,
-        WFDefinitionID: data!.wfDefinitionId ?? null,
-        Status: data!.status,
-        OwnerDEPID: data!.ownerDepId ?? null,
-        OwnerGroupID: data!.ownerGroupId ?? null,
-        Version: { increment: 1 },
-      },
+      if (vis.rows.length > 0) {
+        await tx.formPermissions.createMany({
+          data: vis.rows.map((v) => ({
+            FormTemplateID: params.id,
+            PermissionType: 'VIEW',
+            DEPID: v.depId,
+            GroupID: v.groupId,
+            UserID: v.userId,
+          })),
+        })
+      }
+      await tx.formTemplates.update({
+        where: { FormTemplateID: params.id },
+        data: {
+          Name: data!.name,
+          Description: data!.description ?? null,
+          FormCategoryID: data!.formCategoryId ?? null,
+          WFDefinitionID: data!.wfDefinitionId ?? null,
+          Status: data!.status,
+          OwnerDEPID: data!.ownerDepId ?? null,
+          OwnerGroupID: data!.ownerGroupId ?? null,
+          IdPrefix: prefix,
+          IdSeparator: separator === '' ? null : separator,
+          IdPadding: padding,
+          IdIncludeYear: includeYear,
+          ...(headChanged ? { IdNextSeq: 1 } : {}),
+          Version: { increment: 1 },
+        },
+      })
     })
-  })
+  } catch (e) {
+    // unique-prefix race between concurrent saves
+    if (isPrismaUniqueError(e)) {
+      return json({ error: `ID prefix "${prefix}" is already in use — pick a different abbreviation` }, 400)
+    }
+    throw e
+  }
 
   const tmpl = await prisma.formTemplates.findUnique({
     where: { FormTemplateID: params.id },

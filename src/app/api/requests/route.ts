@@ -4,6 +4,7 @@ import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { canUserUseTemplate } from '@/lib/form-visibility'
+import { formatRequestId } from '@/lib/request-ids'
 import { z } from 'zod'
 
 const fieldValueSchema = z.object({
@@ -66,6 +67,30 @@ export async function GET(req: NextRequest) {
   return json(requests)
 }
 
+/** Next free legacy tracking number (REQ-YEAR-SEQ). Bumps past any taken value. */
+async function nextLegacyTracking(year: number): Promise<string> {
+  const count = await prisma.requests.count({ where: { FormTemplate: { IdPrefix: null } } })
+  let seq = (count as number) + 1
+  for (let i = 0; i < 50; i++) {
+    const candidate = `REQ-${year}-${String(seq).padStart(5, '0')}`
+    const exists = await prisma.requests.findUnique({
+      where: { TrackingNumber: candidate },
+      select: { RequestID: true },
+    })
+    if (!exists) return candidate
+    seq++
+  }
+  // extreme fallback — timestamp suffix guarantees progress
+  return `REQ-${year}-${Date.now().toString(36).toUpperCase()}`
+}
+
+function isTrackingConflict(e: unknown): boolean {
+  const err = e as { code?: unknown; meta?: unknown } | null
+  if (!err || err.code !== 'P2002') return false
+  const target = (err.meta as { target?: unknown } | undefined)?.target
+  return !Array.isArray(target) || (target as unknown[]).includes('TrackingNumber')
+}
+
 // POST /api/requests — create draft
 export async function POST(req: NextRequest) {
   const payload = getUserFromRequest(req)
@@ -81,11 +106,6 @@ export async function POST(req: NextRequest) {
     neededBy = new Date(data!.neededByDate)
     if (isNaN(neededBy.getTime())) return json({ error: 'Invalid neededByDate' }, 400)
   }
-
-  // generate tracking number
-  const count = await prisma.requests.count()
-  const year = new Date().getFullYear()
-  const tracking = `REQ-${year}-${String(count + 1).padStart(5, '0')}`
 
   // snapshot form template
   const tmpl = await prisma.formTemplates.findUnique({
@@ -123,21 +143,57 @@ export async function POST(req: NextRequest) {
   const title =
     data!.title?.trim() || items[0]?.RequestedItemName || tmpl.Name
 
-  const request = await prisma.requests.create({
-    data: {
-      TrackingNumber: tracking,
-      Title: title,
-      FormTemplateID: data!.formTemplateId,
-      RequesterID: payload.userId,
-      Status: 'DRAFT',
-      Priority: data!.priority,
-      NeededByDate: neededBy,
-      FormSnapshot: JSON.stringify(tmpl),
-      ...(fieldValues.length ? { FieldValues: { create: fieldValues } } : {}),
-      Items: { create: items },
-    },
-    include: { FieldValues: true, Items: true },
+  const year = new Date().getFullYear()
+  const idCfg = {
+    prefix: (tmpl.IdPrefix as string | null) ?? null,
+    separator: (tmpl.IdSeparator as string | null) ?? '',
+    padding: (tmpl.IdPadding as number | null) ?? 0,
+    includeYear: (tmpl.IdIncludeYear as boolean | null) ?? false,
+  }
+
+  const buildData = (tracking: string) => ({
+    TrackingNumber: tracking,
+    Title: title,
+    FormTemplateID: data!.formTemplateId,
+    RequesterID: payload.userId,
+    Status: 'DRAFT',
+    Priority: data!.priority,
+    NeededByDate: neededBy,
+    FormSnapshot: JSON.stringify(tmpl),
+    ...(fieldValues.length ? { FieldValues: { create: fieldValues } } : {}),
+    Items: { create: items },
   })
+
+  // Reserve a unique tracking number — atomic per-template sequence for
+  // prefixed forms, hardened global numbering otherwise — with P2002 retry
+  // so concurrent creates never fail with a duplicate ID.
+  let request = null
+  for (let attempt = 0; attempt < 5 && !request; attempt++) {
+    try {
+      if (idCfg.prefix) {
+        request = await prisma.$transaction(async (tx) => {
+          const t = await tx.formTemplates.update({
+            where: { FormTemplateID: data!.formTemplateId },
+            data: { IdNextSeq: { increment: 1 } },
+            select: { IdNextSeq: true },
+          })
+          return tx.requests.create({
+            data: buildData(formatRequestId(idCfg, year, t.IdNextSeq - 1)),
+            include: { FieldValues: true, Items: true },
+          })
+        })
+      } else {
+        request = await prisma.requests.create({
+          data: buildData(await nextLegacyTracking(year)),
+          include: { FieldValues: true, Items: true },
+        })
+      }
+    } catch (e) {
+      if (isTrackingConflict(e)) continue
+      throw e
+    }
+  }
+  if (!request) return json({ error: 'Could not generate a unique request ID — please retry' }, 500)
 
   // audit
   await prisma.requestAuditLog.create({
