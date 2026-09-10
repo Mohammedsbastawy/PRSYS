@@ -6,6 +6,14 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { Icon, StatusBadge } from "@/components/ui";
+import {
+  CONDITION_FIELDS,
+  NUMERIC_OPS,
+  PRIORITY_OPS,
+  PRIORITY_VALUES,
+  parseStepCondition,
+  validateConditionInput,
+} from "@/lib/workflow-conditions";
 
 interface StepDraft {
   key: string;
@@ -15,6 +23,12 @@ interface StepDraft {
   targetUserId: string;
   targetGroupId: string;
   targetRoleId: string;
+  approvalMode: string;
+  rejectAction: string;
+  condField: string;
+  condOp: string;
+  condValue: string;
+  dueDays: string;
 }
 
 interface LoadedStep {
@@ -25,6 +39,10 @@ interface LoadedStep {
   TargetUserID: string | null;
   TargetGroupID: string | null;
   TargetRoleID: string | null;
+  ApprovalMode: string | null;
+  RejectAction: string | null;
+  Condition: string | null;
+  DueDays: number | null;
 }
 
 interface LoadedWorkflow {
@@ -69,6 +87,17 @@ const APPROVER_TYPES = [
   { value: "REQUESTER_MANAGER", label: "Requester's direct manager" },
 ];
 
+const APPROVAL_MODES = [
+  { value: "ANY_ONE", label: "Anyone assigned can approve (first decision wins)" },
+  { value: "ALL", label: "Everyone assigned must approve" },
+];
+
+const REJECT_ACTIONS = [
+  { value: "REJECT_COMPLETELY", label: "Reject the request completely" },
+  { value: "RETURN_TO_REQUESTER", label: "Return to requester for correction" },
+  { value: "RETURN_TO_PREVIOUS_STEP", label: "Send back to the previous step" },
+];
+
 let stepSeq = 0;
 function nextKey(): string {
   stepSeq += 1;
@@ -83,6 +112,12 @@ function blankStep(): StepDraft {
     targetUserId: "",
     targetGroupId: "",
     targetRoleId: "",
+    approvalMode: "ANY_ONE",
+    rejectAction: "REJECT_COMPLETELY",
+    condField: "none",
+    condOp: ">=",
+    condValue: "",
+    dueDays: "",
   };
 }
 
@@ -149,15 +184,24 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           setStatus(w.Status);
           setUsage(w.usage ?? null);
           setSteps(
-            (w.Steps || []).map((s) => ({
-              key: nextKey(),
-              id: s.WFStepID,
-              stepName: s.StepName,
-              approverType: s.ApproverType,
-              targetUserId: s.TargetUserID ?? "",
-              targetGroupId: s.TargetGroupID ?? "",
-              targetRoleId: s.TargetRoleID ?? "",
-            }))
+            (w.Steps || []).map((s) => {
+              const cond = parseStepCondition(s.Condition);
+              return {
+                key: nextKey(),
+                id: s.WFStepID,
+                stepName: s.StepName,
+                approverType: s.ApproverType,
+                targetUserId: s.TargetUserID ?? "",
+                targetGroupId: s.TargetGroupID ?? "",
+                targetRoleId: s.TargetRoleID ?? "",
+                approvalMode: s.ApprovalMode ?? "ANY_ONE",
+                rejectAction: s.RejectAction ?? "REJECT_COMPLETELY",
+                condField: cond?.field ?? "none",
+                condOp: cond?.op ?? ">=",
+                condValue: cond?.value ?? "",
+                dueDays: s.DueDays != null ? String(s.DueDays) : "",
+              };
+            })
           );
         })
         .catch(() => setError("Failed to load workflow"))
@@ -217,6 +261,22 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         setError(`Step "${s.stepName}": choose a user`);
         return;
       }
+      if (s.dueDays.trim() !== "") {
+        const n = Number(s.dueDays);
+        if (!Number.isInteger(n) || n < 1 || n > 365) {
+          setError(`Step "${s.stepName}": due days must be a whole number between 1 and 365`);
+          return;
+        }
+      }
+      const cErr = validateConditionInput(
+        s.condField === "none" ? null : s.condField,
+        s.condOp,
+        s.condValue
+      );
+      if (cErr) {
+        setError(`Step "${s.stepName}": ${cErr}`);
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -232,6 +292,13 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           targetUserId: s.approverType === "USER" ? s.targetUserId || null : null,
           targetGroupId: s.approverType === "GROUP" ? s.targetGroupId || null : null,
           targetRoleId: s.approverType === "ROLE" ? s.targetRoleId || null : null,
+          approvalMode: s.approvalMode,
+          rejectAction: s.rejectAction,
+          condition:
+            s.condField === "none"
+              ? null
+              : { field: s.condField, op: s.condOp, value: s.condValue.trim() },
+          dueDays: s.dueDays.trim() === "" ? null : Number(s.dueDays),
         })),
       };
       const url = isNew ? "/api/workflows" : `/api/workflows/${workflowId}`;
@@ -516,6 +583,125 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                         </select>
                       </div>
                       <div className="md:col-span-2">{targetControl(s)}</div>
+                      <div>
+                        <label className="label">If approved</label>
+                        <select
+                          className="input"
+                          value={s.approvalMode}
+                          disabled={ro}
+                          onChange={(e) => patchStep(s.key, { approvalMode: e.target.value })}
+                        >
+                          {APPROVAL_MODES.map((m) => (
+                            <option key={m.value} value={m.value}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
+                        {s.approvalMode === "ALL" &&
+                          (s.approverType === "USER" || s.approverType === "REQUESTER_MANAGER") && (
+                            <p className="mt-1 text-[11px] text-ink-faint">
+                              Only one person is assigned, so this behaves like a single approval.
+                            </p>
+                          )}
+                      </div>
+                      <div>
+                        <label className="label">If rejected</label>
+                        <select
+                          className="input"
+                          value={s.rejectAction}
+                          disabled={ro}
+                          onChange={(e) => patchStep(s.key, { rejectAction: e.target.value })}
+                        >
+                          {REJECT_ACTIONS.map((m) => (
+                            <option key={m.value} value={m.value}>
+                              {m.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">This step applies when</label>
+                        <select
+                          className="input"
+                          value={s.condField}
+                          disabled={ro}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            patchStep(s.key, {
+                              condField: v,
+                              condOp: v === "priority" ? "==" : ">=",
+                              condValue: "",
+                            });
+                          }}
+                        >
+                          {CONDITION_FIELDS.map((f) => (
+                            <option key={f.value} value={f.value}>
+                              {f.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">Due within (days)</label>
+                        <input
+                          className="input"
+                          inputMode="numeric"
+                          placeholder="No due date"
+                          value={s.dueDays}
+                          disabled={ro}
+                          onChange={(e) => patchStep(s.key, { dueDays: e.target.value })}
+                        />
+                      </div>
+                      {s.condField !== "none" && (
+                        <>
+                          <div>
+                            <label className="label">Condition</label>
+                            <select
+                              className="input"
+                              value={s.condOp}
+                              disabled={ro}
+                              onChange={(e) =>
+                                patchStep(s.key, { condOp: e.target.value, condValue: "" })
+                              }
+                            >
+                              {(s.condField === "priority" ? PRIORITY_OPS : NUMERIC_OPS).map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="label">Value</label>
+                            {s.condField === "priority" && s.condOp !== "in" ? (
+                              <select
+                                className="input"
+                                value={s.condValue}
+                                disabled={ro}
+                                onChange={(e) => patchStep(s.key, { condValue: e.target.value })}
+                              >
+                                <option value="">Select priority...</option>
+                                {PRIORITY_VALUES.map((p) => (
+                                  <option key={p} value={p}>
+                                    {p}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                className="input"
+                                value={s.condValue}
+                                disabled={ro}
+                                inputMode={s.condField === "priority" ? "text" : "decimal"}
+                                placeholder={
+                                  s.condField === "priority" ? "e.g. HIGH, URGENT" : "e.g. 50000"
+                                }
+                                onChange={(e) => patchStep(s.key, { condValue: e.target.value })}
+                              />
+                            )}
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -566,8 +752,16 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             <div className="card p-5">
               <h2 className="mb-2 text-sm font-semibold text-ink">How it works</h2>
               <ul className="list-disc space-y-1.5 pl-5 text-xs text-ink-soft">
-                <li>Steps run in order — each needs one decision to advance.</li>
-                <li>Only the step&apos;s assignee can approve, reject or ask for clarification.</li>
+                <li>Steps run in order — an approval advances to the next step that applies.</li>
+                <li>
+                  Each step defines what an approval needs (anyone / everyone), what a rejection
+                  does, when it applies, and its due days.
+                </li>
+                <li>
+                  Requests returned for correction go back to draft — resubmitting starts a fresh
+                  round while history is kept.
+                </li>
+                <li>Each assignee decides once per round; overdue steps are flagged.</li>
                 <li>Link forms here, or pick the workflow in a form&apos;s settings.</li>
                 <li>Steps with live requests or history cannot be removed.</li>
               </ul>

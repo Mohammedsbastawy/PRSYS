@@ -3,7 +3,14 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, notFound, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
+import { buildStepCondition, validateConditionInput } from '@/lib/workflow-conditions'
 import { z } from 'zod'
+
+const conditionSchema = z.object({
+  field: z.enum(['totalValue', 'itemCount', 'priority']),
+  op: z.enum(['==', '!=', '>', '<', '>=', '<=', 'in']),
+  value: z.string().min(1).max(100),
+}).nullable().optional()
 
 interface Params { params: { id: string } }
 
@@ -46,6 +53,10 @@ const stepSchema = z.object({
   targetUserId: z.string().optional().nullable(),
   targetGroupId: z.string().optional().nullable(),
   targetRoleId: z.string().optional().nullable(),
+  approvalMode: z.enum(['ANY_ONE', 'ALL']).default('ANY_ONE'),
+  rejectAction: z.enum(['REJECT_COMPLETELY', 'RETURN_TO_REQUESTER', 'RETURN_TO_PREVIOUS_STEP']).default('REJECT_COMPLETELY'),
+  condition: conditionSchema,
+  dueDays: z.number().int().min(1).max(365).optional().nullable(),
 })
 
 const wfSchema = z.object({
@@ -61,11 +72,19 @@ type StepInput = {
   targetUserId?: string | null
   targetGroupId?: string | null
   targetRoleId?: string | null
+  approvalMode?: 'ANY_ONE' | 'ALL'
+  rejectAction?: 'REJECT_COMPLETELY' | 'RETURN_TO_REQUESTER' | 'RETURN_TO_PREVIOUS_STEP'
+  condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
+  dueDays?: number | null
 }
 
 async function validateSteps(steps: StepInput[]): Promise<string | null> {
   for (const s of steps) {
     if (!s.stepName.trim()) return 'Every step needs a name'
+    if (s.condition) {
+      const cErr = validateConditionInput(s.condition.field, s.condition.op, s.condition.value)
+      if (cErr) return `Step "${s.stepName}": ${cErr}`
+    }
     if (s.approverType === 'ROLE') {
       if (!s.targetRoleId) return `Step "${s.stepName}": choose a role`
       const r = await prisma.roles.findUnique({ where: { RoleID: s.targetRoleId }, select: { RoleID: true } })
@@ -140,12 +159,16 @@ export async function PUT(req: NextRequest, { params }: Params) {
         TargetUserID: s.approverType === 'USER' ? s.targetUserId! : null,
         TargetGroupID: s.approverType === 'GROUP' ? s.targetGroupId! : null,
         TargetRoleID: s.approverType === 'ROLE' ? s.targetRoleId! : null,
+        ApprovalMode: s.approvalMode ?? 'ANY_ONE',
+        RejectAction: s.rejectAction ?? 'REJECT_COMPLETELY',
+        Condition: s.condition ? buildStepCondition(s.condition.field, s.condition.op, s.condition.value) : null,
+        DueDays: s.dueDays ?? null,
       }
       if (s.id) {
         await tx.wFSteps.update({ where: { WFStepID: s.id }, data: row })
       } else {
         await tx.wFSteps.create({
-          data: { ...row, WFDefinitionID: params.id, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY' },
+          data: { ...row, WFDefinitionID: params.id },
         })
       }
     }

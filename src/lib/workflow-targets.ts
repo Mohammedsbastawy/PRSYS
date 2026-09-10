@@ -63,7 +63,12 @@ export async function canUserDecideStep(opts: {
   isSuperAdmin: boolean;
   hasApprovePerm: boolean;
   lookups: StepLookups;
+  /** user IDs that already recorded a decision on this step in the current round */
+  decidedUserIds?: string[];
 }): Promise<{ canDecide: boolean; reason: string | null }> {
+  if (opts.decidedUserIds?.includes(opts.userId)) {
+    return { canDecide: false, reason: 'You have already decided on this step' };
+  }
   if (opts.isSuperAdmin) return { canDecide: true, reason: null };
   if (!opts.hasApprovePerm) {
     return { canDecide: false, reason: "You do not have approval permission" };

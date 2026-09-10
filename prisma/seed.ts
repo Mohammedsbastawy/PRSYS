@@ -189,8 +189,8 @@ async function main() {
         Status: 'ACTIVE',
         Steps: {
           create: [
-            { StepName: 'Department Manager Approval', StepOrder: 1, ApproverType: 'ROLE', TargetRoleID: mgrRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY' },
-            { StepName: 'Procurement Review', StepOrder: 2, ApproverType: 'ROLE', TargetRoleID: procRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY' },
+            { StepName: 'Department Manager Approval', StepOrder: 1, ApproverType: 'ROLE', TargetRoleID: mgrRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'RETURN_TO_REQUESTER', DueDays: 3 },
+            { StepName: 'Procurement Review', StepOrder: 2, ApproverType: 'ROLE', TargetRoleID: procRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY', DueDays: 5 },
           ],
         },
       },

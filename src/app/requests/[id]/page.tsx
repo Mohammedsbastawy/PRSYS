@@ -23,6 +23,9 @@ interface Step {
   StepName: string;
   StepOrder: number;
   ApproverType: string;
+  ApprovalMode?: string | null;
+  RejectAction?: string | null;
+  DueDays?: number | null;
 }
 interface Approval {
   RequestApprovalID: string;
@@ -31,8 +34,16 @@ interface Approval {
   Comment: string | null;
   DecidedAt: string | null;
   CreatedAt: string;
+  Round?: number | null;
   Approver: { UserID: string; Name: string };
   WFStep: { StepName: string };
+}
+interface StepProgress {
+  mode: string;
+  approved: number;
+  total: number;
+  approvedBy: string[];
+  myDecided: boolean;
 }
 interface CommentT {
   RequestCommentID: string;
@@ -151,9 +162,12 @@ interface ReqDetail {
   PoCreatedAt: string | null;
   PoNotes: string | null;
   CurrentWFStepID: string | null;
+  CurrentStepDueAt: string | null;
+  Round?: number | null;
   CanDecide: boolean;
   DecideReason: string | null;
   AwaitingTarget: string | null;
+  StepProgress: StepProgress | null;
   Requester: { UserID: string; Name: string; Email: string };
   Assignee: { UserID: string; Name: string } | null;
   PoCreator: { Name: string } | null;
@@ -216,6 +230,25 @@ function qty(v: number | string, uom: string | null): string {
   const n = fmtNum(v);
   return uom ? `${n} ${uom}` : n;
 }
+const AUDIT_LABELS: Record<string, string> = {
+  SUBMIT: "Submitted",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+  RETURNED_TO_REQUESTER: "Returned to requester",
+  RETURNED_TO_PREVIOUS: "Sent back to previous step",
+  STEP_SKIPPED: "Step skipped",
+  DRAFT_UPDATED: "Draft updated",
+  CLARIFICATION_REQUESTED: "Clarification requested",
+  ASSIGN: "Assigned",
+  PO_REGISTERED: "PO registered",
+  FULFILL: "Fulfilled",
+  COMPLETE: "Completed",
+  CANCEL: "Cancelled",
+};
+function auditLabel(a: string | null): string {
+  if (!a) return "Updated";
+  return AUDIT_LABELS[a] || a.replace(/_/g, " ");
+}
 
 /* ================= small components ================= */
 function SummaryRow({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
@@ -233,12 +266,14 @@ function SummaryRow({ icon, label, children }: { icon: string; label: string; ch
 function DecisionModal({
   mode,
   stepName,
+  hint,
   busy,
   onClose,
   onConfirm,
 }: {
   mode: "APPROVE" | "REJECT" | "REQUEST_CLARIFICATION";
   stepName: string;
+  hint: string | null;
   busy: boolean;
   onClose: () => void;
   onConfirm: (comment: string) => void;
@@ -252,6 +287,11 @@ function DecisionModal({
   const required = mode !== "APPROVE";
   return (
     <Modal open onClose={onClose} title={titles[mode]}>
+      {hint && (
+        <p className="mb-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-[13px] text-primary-dark">
+          {hint}
+        </p>
+      )}
       <label className="label" htmlFor="decision-text">
         {mode === "REQUEST_CLARIFICATION" ? "What do you need from the requester?" : "Decision comment"}
         {required && <span className="text-danger"> *</span>}
@@ -795,9 +835,29 @@ export default function RequestDetailPage() {
 
   /* timeline nodes */
   const wfSteps = req.FormTemplate.Workflow?.Steps || [];
+  // only the current round counts — resubmits and send-backs start a fresh round
+  const round = req.Round ?? 1;
+  const roundApprovals = req.Approvals.filter((a) => (a.Round ?? 1) === round);
   const approvedByStep = new Map<string, Approval>();
-  req.Approvals.filter((a) => a.Decision === "APPROVED").forEach((a) => approvedByStep.set(a.WFStepID, a));
-  const rejectedApproval = req.Approvals.find((a) => a.Decision === "REJECTED");
+  roundApprovals.filter((a) => a.Decision === "APPROVED").forEach((a) => approvedByStep.set(a.WFStepID, a));
+  // a rejection marks its node only when the flow did not continue past it
+  const rejectedApproval =
+    req.Status === "REJECTED" || req.Status === "DRAFT"
+      ? roundApprovals.find((a) => a.Decision === "REJECTED")
+      : undefined;
+  const skippedNames = new Set<string>();
+  for (const l of req.AuditLogs) {
+    if (l.Action !== "STEP_SKIPPED" || !l.Note) continue;
+    const m = /^"(.+)" skipped \(condition not met(?:, round (\d+))?\)/.exec(l.Note);
+    if (!m) continue;
+    if (m[2] && Number(m[2]) !== round) continue;
+    skippedNames.add(m[1]);
+  }
+  const dueAt = req.CurrentStepDueAt ? new Date(req.CurrentStepDueAt) : null;
+  const stepOverdue =
+    !!dueAt &&
+    dueAt.getTime() < Date.now() &&
+    ["PENDING_APPROVAL", "CLARIFICATION_REQUESTED"].includes(req.Status);
   const doneStatuses = ["APPROVED", "PO_REGISTERED", "FULFILLED", "COMPLETED"];
   const isDone = doneStatuses.includes(req.Status);
   const finalLabel =
@@ -822,7 +882,24 @@ export default function RequestDetailPage() {
     } else if (rejectedApproval?.WFStepID === s.WFStepID) {
       nodes.push({ name: s.StepName, state: "rejected", sub: `Rejected by ${rejectedApproval.Approver.Name}` });
     } else if (s.WFStepID === req.CurrentWFStepID) {
-      nodes.push({ name: s.StepName, state: "current", sub: awaitingTarget ? `Awaiting: ${awaitingTarget}` : undefined });
+      const bits: string[] = [];
+      if (awaitingTarget) bits.push(`Awaiting: ${awaitingTarget}`);
+      if (req.StepProgress?.mode === "ALL") {
+        bits.push(`${req.StepProgress.approved} of ${req.StepProgress.total} approvals`);
+      }
+      if (dueAt) {
+        bits.push(
+          stepOverdue ? `Overdue (due ${fmtDate(req.CurrentStepDueAt)})` : `Due ${fmtDate(req.CurrentStepDueAt)}`
+        );
+      }
+      nodes.push({
+        name: s.StepName,
+        state: "current",
+        sub: bits.length > 0 ? bits.join(" · ") : undefined,
+        alert: stepOverdue,
+      });
+    } else if (skippedNames.has(s.StepName)) {
+      nodes.push({ name: s.StepName, state: "skipped", sub: "Skipped (condition not met)" });
     } else {
       nodes.push({ name: s.StepName, state: "todo" });
     }
@@ -853,6 +930,11 @@ export default function RequestDetailPage() {
         </h1>
         <StatusBadge status={req.Status} />
         <div className="ml-auto flex flex-wrap items-center gap-2">
+          {(isOwner || user?.role.code === "SUPER_ADMIN") && req.Status === "DRAFT" && (
+            <Link href={`/requests/${req.RequestID}/edit`} className="btn-secondary">
+              <Icon name="edit" className="text-[18px]" /> Edit
+            </Link>
+          )}
           {isOwner && req.Status === "DRAFT" && (
             <button className="btn-primary" disabled={busy !== null} onClick={() => act("SUBMIT")}>
               <Icon name="send" className="text-[18px]" /> {busy === "SUBMIT" ? "Submitting..." : "Submit Request"}
@@ -1296,7 +1378,7 @@ export default function RequestDetailPage() {
           )}
           {req.AuditLogs.map((a) => (
             <div key={a.AuditLogID} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5 text-[13px]">
-              <span className="font-semibold text-ink">{a.Action || "UPDATE"}</span>
+              <span className="font-semibold text-ink">{auditLabel(a.Action)}</span>
               {a.FromStatus && a.ToStatus && (
                 <span className="text-ink-soft">
                   {a.FromStatus.replace(/_/g, " ")} → {a.ToStatus.replace(/_/g, " ")}
@@ -1315,6 +1397,17 @@ export default function RequestDetailPage() {
         <DecisionModal
           mode={decision}
           stepName={stepName}
+          hint={
+            decision === "REJECT"
+              ? req.CurrentStep?.RejectAction === "RETURN_TO_REQUESTER"
+                ? "This will return the request to the requester for correction — they can edit and resubmit it."
+                : req.CurrentStep?.RejectAction === "RETURN_TO_PREVIOUS_STEP"
+                  ? "This will send the request back to the previous approval step."
+                  : "This will reject the request completely."
+              : decision === "APPROVE" && req.StepProgress?.mode === "ALL"
+                ? `Your approval will be recorded (${req.StepProgress.approved + 1} of ${req.StepProgress.total}) — the step completes when everyone assigned has approved.`
+                : null
+          }
           busy={busy !== null}
           onClose={() => setDecision(null)}
           onConfirm={(text) => act(decision, { comment: text || undefined })}

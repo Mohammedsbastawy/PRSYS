@@ -4,7 +4,7 @@ import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { usersWithPermission } from '@/lib/notifications'
-import { canUserDecideStep, describeStepTarget, type StepLookups } from '@/lib/workflow-targets'
+import { canUserDecideStep, describeStepTarget, stepTargetUserIds, type StepLookups } from '@/lib/workflow-targets'
 
 const PENDING_STATUSES = ['PENDING_APPROVAL', 'CLARIFICATION_REQUESTED']
 
@@ -124,6 +124,8 @@ export async function GET(req: NextRequest) {
           TargetUserID: true,
           TargetGroupID: true,
           TargetRoleID: true,
+          ApprovalMode: true,
+          DueDays: true,
           TargetUser: { select: { Name: true } },
           TargetGroup: { select: { Name: true } },
           TargetRole: { select: { Name: true } },
@@ -146,11 +148,44 @@ export async function GET(req: NextRequest) {
   const lookups = stepLookups()
   const isSuperAdmin = ctx.roleCode === 'SUPER_ADMIN'
   const now = Date.now()
+
+  // my past decisions on these requests (one decision per step per round)
+  const rowIds = rows.map((r: { RequestID: string }) => r.RequestID)
+  const myDecisions: { RequestID: string; WFStepID: string; Round: number }[] =
+    rowIds.length > 0
+      ? await prisma.requestApprovals.findMany({
+          where: {
+            ApproverUserID: payload.userId,
+            RequestID: { in: rowIds },
+            Decision: { not: 'PENDING' },
+          },
+          select: { RequestID: true, WFStepID: true, Round: true },
+        })
+      : []
+  const myDecidedKeys = new Set(
+    myDecisions.map((d) => `${d.RequestID}|${d.WFStepID}|${d.Round ?? 1}`)
+  )
+  // approvals collected per (request, step, round) for ALL-mode progress
+  const progressRows: { RequestID: string; WFStepID: string; Round: number; ApproverUserID: string }[] =
+    rowIds.length > 0
+      ? await prisma.requestApprovals.findMany({
+          where: { RequestID: { in: rowIds }, Decision: 'APPROVED' },
+          select: { RequestID: true, WFStepID: true, Round: true, ApproverUserID: true },
+        })
+      : []
+  const approvalCount = new Map<string, Set<string>>()
+  for (const p of progressRows) {
+    const key = `${p.RequestID}|${p.WFStepID}|${p.Round ?? 1}`
+    if (!approvalCount.has(key)) approvalCount.set(key, new Set())
+    approvalCount.get(key)!.add(p.ApproverUserID)
+  }
+
   const items = []
   for (const r of rows) {
     const steps = r.FormTemplate?.Workflow?.Steps ?? []
     const idx = r.CurrentWFStepID ? steps.findIndex((s) => s.WFStepID === r.CurrentWFStepID) : -1
     const submitted = r.SubmittedAt ?? r.CreatedAt
+    const roundKey = `${r.RequestID}|${r.CurrentWFStepID}|${r.Round ?? 1}`
     const verdict = await canUserDecideStep({
       step: r.CurrentStep,
       userId: payload.userId,
@@ -158,7 +193,14 @@ export async function GET(req: NextRequest) {
       isSuperAdmin,
       hasApprovePerm: true,
       lookups,
+      decidedUserIds: myDecidedKeys.has(roundKey) ? [payload.userId] : [],
     })
+    let progress: { approved: number; total: number } | null = null
+    if (r.CurrentStep?.ApprovalMode === 'ALL' && r.CurrentWFStepID) {
+      const approved = approvalCount.get(roundKey)?.size ?? 0
+      const targets = await stepTargetUserIds(r.CurrentStep, r.RequesterID, lookups)
+      progress = { approved, total: Math.max(targets.length, approved) }
+    }
     items.push({
       id: r.RequestID,
       tracking: r.TrackingNumber,
@@ -183,6 +225,9 @@ export async function GET(req: NextRequest) {
       canDecide: verdict.canDecide,
       decideReason: verdict.reason,
       awaiting: r.CurrentStep ? describeStepTarget(r.CurrentStep) : null,
+      dueAt: r.CurrentStepDueAt ?? null,
+      approvalMode: r.CurrentStep?.ApprovalMode ?? 'ANY_ONE',
+      progress,
     })
   }
 

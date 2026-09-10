@@ -352,8 +352,9 @@ export function fmtSize(bytes: number): string {
 /* ---------- Full workflow timeline (labeled nodes, detail pages) ---------- */
 export interface TimelineNode {
   name: string;
-  state: "done" | "current" | "todo" | "rejected";
+  state: "done" | "current" | "todo" | "rejected" | "skipped";
   sub?: string;
+  alert?: boolean;
 }
 
 export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
@@ -381,12 +382,16 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600">
                 <Icon name="close" className="text-[16px] font-bold text-white" />
               </span>
+            ) : n.state === "skipped" ? (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-gray-50">
+                <Icon name="minimize" className="text-[16px] text-ink-faint" />
+              </span>
             ) : (
               <span className="h-7 w-7 rounded-full border-2 border-gray-200 bg-white" />
             )}
             <span
               className={`text-xs leading-tight ${
-                n.state === "todo"
+                n.state === "todo" || n.state === "skipped"
                   ? "text-ink-faint"
                   : n.state === "rejected"
                     ? "font-semibold text-red-600"
@@ -397,7 +402,13 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
             >
               {n.name}
             </span>
-            {n.sub && <span className="text-[11px] leading-tight text-ink-faint">{n.sub}</span>}
+            {n.sub && (
+              <span
+                className={`text-[11px] leading-tight ${n.alert ? "font-semibold text-red-600" : "text-ink-faint"}`}
+              >
+                {n.sub}
+              </span>
+            )}
           </div>
         </Fragment>
       ))}

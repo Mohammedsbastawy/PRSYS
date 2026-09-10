@@ -25,6 +25,9 @@ interface QueueItem {
   canDecide: boolean;
   decideReason: string | null;
   awaiting: string | null;
+  dueAt: string | null;
+  approvalMode: string;
+  progress: { approved: number; total: number } | null;
 }
 
 interface HistoryItem {
@@ -356,6 +359,7 @@ export default function ApprovalsPage() {
               <tbody className="divide-y divide-surface-border">
                 {pageQueue.map((item) => {
                   const awaiting = item.status === "CLARIFICATION_REQUESTED";
+                  const overdue = item.dueAt ? new Date(item.dueAt).getTime() < Date.now() : false;
                   return (
                     <tr key={item.id} className="hover:bg-surface-muted">
                       <td className="px-4 py-3">
@@ -412,6 +416,22 @@ export default function ApprovalsPage() {
                         />
                         {item.stepName && (
                           <span className="block text-[11px] text-ink-faint">{item.stepName}</span>
+                        )}
+                        {item.progress && (
+                          <span className="block text-[11px] font-medium text-ink-soft">
+                            {item.progress.approved} of {item.progress.total} approvals
+                          </span>
+                        )}
+                        {item.dueAt && (
+                          <span
+                            className={`block text-[11px] ${overdue ? "font-semibold text-red-600" : "text-ink-faint"}`}
+                          >
+                            {overdue ? "Overdue" : "Due"}{" "}
+                            {new Date(item.dueAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">

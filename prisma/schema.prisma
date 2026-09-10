@@ -208,6 +208,7 @@ model WFSteps {
   ApprovalMode     String   @default("ANY_ONE")
   RejectAction     String   @default("REJECT_COMPLETELY")
   Condition        String?
+  DueDays          Int?
   CreatedAt        DateTime @default(now())
   UpdatedAt        DateTime @updatedAt
 
@@ -242,6 +243,8 @@ model Requests {
   RequesterID        String  
   Status             String   @default("DRAFT")
   CurrentWFStepID    String? 
+  CurrentStepDueAt   DateTime?
+  Round              Int      @default(1)
   FormSnapshot       String @db.Text
   Priority           String   @default("MEDIUM")
   NeededByDate       DateTime?
@@ -323,6 +326,7 @@ model RequestApprovals {
   Decision          String   @default("PENDING")
   Comment           String?
   DecidedAt         DateTime?
+  Round             Int      @default(1)
   CreatedAt         DateTime @default(now())
 
   Request  Requests @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
