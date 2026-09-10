@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
   const ctx = await getUserContext(payload.userId)
-  if (!ctx || (!hasPermission(ctx, 'REQUEST_ASSIGN') && !hasPermission(ctx, 'WF_MANAGE'))) return forbidden()
+  if (!ctx || (!hasPermission(ctx, 'REQUEST_ASSIGN') && !hasPermission(ctx, 'WF_MANAGE') && !hasPermission(ctx, 'REQUEST_CREATE'))) return forbidden()
 
   const users = await prisma.users.findMany({
     where: { IsActive: true },

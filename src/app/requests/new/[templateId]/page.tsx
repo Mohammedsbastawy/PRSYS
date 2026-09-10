@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { EmptyState, Icon } from "@/components/ui";
-import { parseFieldConfig } from "@/lib/field-config";
+import { isValueEmpty, parseFieldConfig, parseMultiValue } from "@/lib/field-config";
 
 interface TField {
   FormFieldID: string;
@@ -45,6 +45,15 @@ interface Row {
   org: string;
   price: string;
 }
+interface LookupUser {
+  UserID: string;
+  Name: string;
+  Email: string;
+}
+interface LookupDep {
+  DEPID: string;
+  Name: string;
+}
 
 const UOMS = ["Piece", "KG", "L", "Box", "Meter", "Pack", "Service", "Each"];
 const PRIORITIES = [
@@ -61,6 +70,15 @@ function fmtSize(bytes: number): string {
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
 
+function inputType(t: string): string {
+  if (t === "number" || t === "currency") return "number";
+  if (t === "date") return "date";
+  if (t === "time") return "time";
+  if (t === "datetime") return "datetime-local";
+  if (t === "email" || t === "tel" || t === "url") return t;
+  return "text";
+}
+
 export default function DynamicRequestFormPage() {
   const { token, user } = useAuth();
   const router = useRouter();
@@ -68,6 +86,7 @@ export default function DynamicRequestFormPage() {
   const templateId = params.templateId as string;
 
   const [template, setTemplate] = useState<Template | null | undefined>(undefined);
+  const [forbidden, setForbidden] = useState(false);
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState("MEDIUM");
   const [neededBy, setNeededBy] = useState("");
@@ -79,6 +98,8 @@ export default function DynamicRequestFormPage() {
   const [invalidTitle, setInvalidTitle] = useState(false);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [invalidRows, setInvalidRows] = useState<number[]>([]);
+  const [userOpts, setUserOpts] = useState<{ id: string; name: string }[]>([]);
+  const [depOpts, setDepOpts] = useState<{ id: string; name: string }[]>([]);
 
   const [cq, setCq] = useState("");
   const [cHits, setCHits] = useState<CatItem[]>([]);
@@ -92,11 +113,49 @@ export default function DynamicRequestFormPage() {
 
   useEffect(() => {
     if (!token) return;
-    fetch("/api/form-templates", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((all: Template[]) => setTemplate(all.find((t) => t.FormTemplateID === templateId) || null))
+    fetch(`/api/form-templates/${templateId}?context=fill`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (r) => {
+        if (r.status === 403) {
+          setForbidden(true);
+          setTemplate(null);
+          return;
+        }
+        setTemplate(r.ok ? await r.json() : null);
+      })
       .catch(() => setTemplate(null));
   }, [token, templateId]);
+
+  const needsUser = useMemo(
+    () => (template?.Fields || []).some((f) => f.FieldType === "user"),
+    [template]
+  );
+  const needsDep = useMemo(
+    () => (template?.Fields || []).some((f) => f.FieldType === "department"),
+    [template]
+  );
+
+  // Load picker options only when the form actually uses them
+  useEffect(() => {
+    if (!token || !template) return;
+    if (needsUser) {
+      fetch("/api/users/lookup", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((d: LookupUser[]) =>
+          setUserOpts((d || []).map((u) => ({ id: u.UserID, name: `${u.Name} (${u.Email})` })))
+        )
+        .catch(() => setUserOpts([]));
+    }
+    if (needsDep) {
+      fetch("/api/departments", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((d: LookupDep[]) =>
+          setDepOpts((d || []).map((x) => ({ id: x.DEPID, name: x.Name })))
+        )
+        .catch(() => setDepOpts([]));
+    }
+  }, [token, template, needsUser, needsDep]);
 
   // Catalog search (debounced)
   useEffect(() => {
@@ -123,6 +182,16 @@ export default function DynamicRequestFormPage() {
       if (cTimer.current) clearTimeout(cTimer.current);
     };
   }, [cq, token, canCatalog]);
+
+  function typeOf(fieldId: string): string {
+    return template?.Fields.find((f) => f.FormFieldID === fieldId)?.FieldType ?? "text";
+  }
+
+  function toggleMulti(fieldId: string, opt: string) {
+    const cur = parseMultiValue(values[fieldId] || "");
+    const next = cur.includes(opt) ? cur.filter((o) => o !== opt) : [...cur, opt];
+    setValues({ ...values, [fieldId]: JSON.stringify(next) });
+  }
 
   function addCustomRow() {
     const key = keyRef.current++;
@@ -162,9 +231,12 @@ export default function DynamicRequestFormPage() {
   function validate(submit: boolean): boolean {
     if (!submit) return true;
     const badFields =
-      template?.Fields.filter((f) => f.IsRequired && !(values[f.FormFieldID] || "").trim()).map(
-        (f) => f.FormFieldID
-      ) || [];
+      template?.Fields.filter(
+        (f) =>
+          f.FieldType !== "section" &&
+          f.IsRequired &&
+          isValueEmpty(f.FieldType, values[f.FormFieldID] || "")
+      ).map((f) => f.FormFieldID) || [];
     const badRows = rows
       .filter((r) => !r.name.trim() || !(r.qty > 0) || (r.price.trim() !== "" && isNaN(Number(r.price))))
       .map((r) => r.key);
@@ -205,7 +277,7 @@ export default function DynamicRequestFormPage() {
           priority,
           neededByDate: neededBy || undefined,
           fieldValues: Object.entries(values)
-            .filter(([, v]) => v.trim() !== "")
+            .filter(([fieldId, v]) => !isValueEmpty(typeOf(fieldId), v))
             .map(([fieldId, value]) => ({ fieldId, value: value.trim() })),
           items: rows
             .filter((r) => r.name.trim() && r.qty > 0)
@@ -284,6 +356,19 @@ export default function DynamicRequestFormPage() {
       <div className="mx-auto w-full max-w-[1024px]">
         {template === undefined ? (
           <div className="py-10 text-center text-sm text-ink-soft">Loading form...</div>
+        ) : forbidden ? (
+          <div className="card">
+            <EmptyState
+              icon="block"
+              title="No access to this form"
+              hint="This form is restricted to specific departments, groups or users. Contact your administrator if you need access."
+              action={
+                <Link href="/requests/new" className="btn-secondary">
+                  Back to catalog
+                </Link>
+              }
+            />
+          </div>
         ) : template === null || template.Status !== "ACTIVE" ? (
           <div className="card">
             <EmptyState
@@ -369,14 +454,44 @@ export default function DynamicRequestFormPage() {
                       onChange={(e) => setNeededBy(e.target.value)}
                     />
                   </div>
-                  {template.Fields.sort((a, b) => a.SortOrder - b.SortOrder).map((f) => {
+                  {[...template.Fields].sort((a, b) => a.SortOrder - b.SortOrder).map((f) => {
                     const invalid = invalidFields.includes(f.FormFieldID);
                     const cls = `input ${invalid ? "!border-danger" : ""}`;
-                    const wide = f.FieldType === "textarea";
                     const cfg = parseFieldConfig(f.Config);
+                    const val = values[f.FormFieldID] || "";
+                    const set = (v: string) => setValues({ ...values, [f.FormFieldID]: v });
+
+                    if (f.FieldType === "section") {
+                      return (
+                        <div key={f.FormFieldID} className="md:col-span-2">
+                          <div className="border-l-2 border-primary pl-3">
+                            <div className="text-base font-bold text-ink">{f.Label}</div>
+                            {cfg.help && <p className="mt-0.5 text-xs text-ink-soft">{cfg.help}</p>}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    const wide = f.FieldType === "textarea" || f.FieldType === "multiselect";
+                    const showLabel = f.FieldType !== "checkbox";
+                    const numAttrs =
+                      f.FieldType === "number" || f.FieldType === "currency"
+                        ? {
+                            min: cfg.min.trim() || undefined,
+                            max: cfg.max.trim() || undefined,
+                            step: f.FieldType === "currency" ? "0.01" : "any",
+                          }
+                        : {};
+                    const lenAttrs =
+                      f.FieldType === "text" || f.FieldType === "textarea"
+                        ? {
+                            minLength: cfg.minLength.trim() ? Number(cfg.minLength) : undefined,
+                            maxLength: cfg.maxLength.trim() ? Number(cfg.maxLength) : undefined,
+                          }
+                        : {};
                     return (
                       <div key={f.FormFieldID} className={wide ? "md:col-span-2" : ""}>
-                        {f.FieldType !== "checkbox" && (
+                        {showLabel && (
                           <label className="label" htmlFor={f.FormFieldID}>
                             {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
                           </label>
@@ -386,10 +501,8 @@ export default function DynamicRequestFormPage() {
                             <input
                               type="checkbox"
                               className="h-4 w-4"
-                              checked={(values[f.FormFieldID] || "") === "true"}
-                              onChange={(e) =>
-                                setValues({ ...values, [f.FormFieldID]: e.target.checked ? "true" : "" })
-                              }
+                              checked={val === "true"}
+                              onChange={(e) => set(e.target.checked ? "true" : "")}
                             />
                             <span className="font-medium">
                               {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
@@ -401,31 +514,97 @@ export default function DynamicRequestFormPage() {
                             rows={3}
                             placeholder={cfg.placeholder || undefined}
                             className={cls}
-                            value={values[f.FormFieldID] || ""}
-                            onChange={(e) => setValues({ ...values, [f.FormFieldID]: e.target.value })}
+                            value={val}
+                            onChange={(e) => set(e.target.value)}
+                            {...lenAttrs}
                           />
                         ) : f.FieldType === "select" ? (
                           <select
                             id={f.FormFieldID}
                             className={cls}
-                            value={values[f.FormFieldID] || ""}
-                            onChange={(e) => setValues({ ...values, [f.FormFieldID]: e.target.value })}
+                            value={val}
+                            onChange={(e) => set(e.target.value)}
                           >
                             <option value="">Select...</option>
-                            {parseFieldConfig(f.Config).options.map((o) => (
+                            {cfg.options.map((o) => (
                               <option key={o} value={o}>
                                 {o}
+                              </option>
+                            ))}
+                          </select>
+                        ) : f.FieldType === "radio" ? (
+                          <div className="space-y-1.5 pt-1">
+                            {cfg.options.map((o) => (
+                              <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                                <input
+                                  type="radio"
+                                  name={f.FormFieldID}
+                                  className="h-4 w-4"
+                                  checked={val === o}
+                                  onChange={() => set(o)}
+                                />
+                                {o}
+                              </label>
+                            ))}
+                            {cfg.options.length === 0 && (
+                              <p className="text-xs italic text-ink-faint">No options defined</p>
+                            )}
+                          </div>
+                        ) : f.FieldType === "multiselect" ? (
+                          <div className="space-y-1.5 rounded border border-surface-border p-3 pt-2">
+                            {cfg.options.map((o) => (
+                              <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4"
+                                  checked={parseMultiValue(val).includes(o)}
+                                  onChange={() => toggleMulti(f.FormFieldID, o)}
+                                />
+                                {o}
+                              </label>
+                            ))}
+                            {cfg.options.length === 0 && (
+                              <p className="text-xs italic text-ink-faint">No options defined</p>
+                            )}
+                          </div>
+                        ) : f.FieldType === "user" ? (
+                          <select
+                            id={f.FormFieldID}
+                            className={cls}
+                            value={val}
+                            onChange={(e) => set(e.target.value)}
+                          >
+                            <option value="">Select user...</option>
+                            {userOpts.map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : f.FieldType === "department" ? (
+                          <select
+                            id={f.FormFieldID}
+                            className={cls}
+                            value={val}
+                            onChange={(e) => set(e.target.value)}
+                          >
+                            <option value="">Select department...</option>
+                            {depOpts.map((o) => (
+                              <option key={o.id} value={o.id}>
+                                {o.name}
                               </option>
                             ))}
                           </select>
                         ) : (
                           <input
                             id={f.FormFieldID}
-                            type={f.FieldType === "number" ? "number" : f.FieldType === "date" ? "date" : "text"}
+                            type={inputType(f.FieldType)}
                             placeholder={cfg.placeholder || undefined}
                             className={cls}
-                            value={values[f.FormFieldID] || ""}
-                            onChange={(e) => setValues({ ...values, [f.FormFieldID]: e.target.value })}
+                            value={val}
+                            onChange={(e) => set(e.target.value)}
+                            {...numAttrs}
+                            {...lenAttrs}
                           />
                         )}
                         {cfg.help && (

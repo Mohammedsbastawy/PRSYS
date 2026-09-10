@@ -3,11 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, notFound, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
+import { canUserUseTemplate } from '@/lib/form-visibility'
+import { FIELD_TYPE_VALUES } from '@/lib/field-config'
 import { z } from 'zod'
 
 interface Params { params: { id: string } }
 
-// GET /api/form-templates/[id]
+// GET /api/form-templates/[id] — with ?context=fill for the request fill page
 export async function GET(req: NextRequest, { params }: Params) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
@@ -17,10 +19,35 @@ export async function GET(req: NextRequest, { params }: Params) {
     include: {
       Category: true,
       Workflow: { include: { Steps: { orderBy: { StepOrder: 'asc' } } } },
+      OwnerDEP: { select: { DEPID: true, Name: true } },
+      OwnerGroup: { select: { GroupID: true, Name: true } },
+      FormPerms: {
+        include: {
+          DEP: { select: { Name: true } },
+          Group: { select: { Name: true } },
+          User: { select: { Name: true } },
+        },
+        orderBy: { CreatedAt: 'asc' },
+      },
       Fields: { orderBy: { SortOrder: 'asc' } },
     },
   })
   if (!tmpl) return notFound('Template not found')
+
+  // Fill context: only usable (ACTIVE + visible) forms for requesters.
+  // Admins / form managers bypass the check (they need DRAFT previews too).
+  const url = new URL(req.url)
+  if (url.searchParams.get('context') === 'fill') {
+    const ctx = await getUserContext(payload.userId)
+    const bypass =
+      ctx && (ctx.roleCode === 'SUPER_ADMIN' || hasPermission(ctx, 'FORM_TEMPLATE_MANAGE'))
+    if (!bypass) {
+      if (tmpl.Status !== 'ACTIVE') return notFound('Form not available')
+      const canUse = await canUserUseTemplate(payload.userId, params.id)
+      if (!canUse) return json({ error: 'You do not have access to this form' }, 403)
+    }
+  }
+
   return json(tmpl)
 }
 
@@ -70,10 +97,16 @@ const fieldSchema = z.object({
   id: z.string().optional(), // FormFieldID for existing fields; absent = new field
   label: z.string().min(1).max(100),
   fieldKey: z.string().min(1).max(60).regex(/^[A-Za-z0-9_]+$/, 'Use letters, numbers and underscore only'),
-  fieldType: z.enum(['text', 'textarea', 'number', 'date', 'select', 'checkbox']),
+  fieldType: z.enum(FIELD_TYPE_VALUES),
   isRequired: z.boolean().default(false),
   sortOrder: z.number().int().default(0),
   config: z.string().optional().nullable(),
+})
+
+const visibilitySchema = z.object({
+  depId: z.string().optional().nullable(),
+  groupId: z.string().optional().nullable(),
+  userId: z.string().optional().nullable(),
 })
 
 const tmplSchema = z.object({
@@ -82,10 +115,52 @@ const tmplSchema = z.object({
   formCategoryId: z.string().optional().nullable(),
   wfDefinitionId: z.string().optional().nullable(),
   status: z.enum(['DRAFT', 'ACTIVE']).default('DRAFT'),
+  ownerDepId: z.string().optional().nullable(),
+  ownerGroupId: z.string().optional().nullable(),
+  visibility: z.array(visibilitySchema).default([]),
   fields: z.array(fieldSchema).default([]),
 })
 
-// PUT /api/form-templates/[id] — full update (settings + fields merge)
+interface VisibilityRow {
+  depId?: string | null
+  groupId?: string | null
+  userId?: string | null
+}
+
+/** Validate visibility rows (refs exist) and remove duplicates. */
+async function normalizeVisibility(
+  rows: VisibilityRow[]
+): Promise<{ rows: VisibilityRow[]; error: string | null }> {
+  const seen = new Set<string>()
+  const out: VisibilityRow[] = []
+  for (const r of rows) {
+    const depId = r.depId || null
+    const groupId = r.groupId || null
+    const userId = r.userId || null
+    if (!depId && !groupId && !userId) {
+      return { rows: [], error: 'Each visibility row needs a department, group or user' }
+    }
+    const key = `${depId ?? ''}|${groupId ?? ''}|${userId ?? ''}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    if (depId) {
+      const d = await prisma.dEP.findUnique({ where: { DEPID: depId }, select: { DEPID: true } })
+      if (!d) return { rows: [], error: 'Visibility department not found' }
+    }
+    if (groupId) {
+      const g = await prisma.groups.findUnique({ where: { GroupID: groupId }, select: { GroupID: true } })
+      if (!g) return { rows: [], error: 'Visibility group not found' }
+    }
+    if (userId) {
+      const u = await prisma.users.findUnique({ where: { UserID: userId }, select: { UserID: true } })
+      if (!u) return { rows: [], error: 'Visibility user not found' }
+    }
+    out.push({ depId, groupId, userId })
+  }
+  return { rows: out, error: null }
+}
+
+// PUT /api/form-templates/[id] — full update (settings + fields merge + owner + visibility)
 export async function PUT(req: NextRequest, { params }: Params) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
@@ -110,6 +185,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
     }
   }
 
+  if (data!.ownerDepId && data!.ownerGroupId) {
+    return json({ error: 'Choose either a department owner or a group owner, not both' }, 400)
+  }
   if (data!.formCategoryId) {
     const c = await prisma.formCategories.findUnique({
       where: { FormCategoryID: data!.formCategoryId },
@@ -124,6 +202,22 @@ export async function PUT(req: NextRequest, { params }: Params) {
     })
     if (!w) return json({ error: 'Workflow not found' }, 400)
   }
+  if (data!.ownerDepId) {
+    const d = await prisma.dEP.findUnique({
+      where: { DEPID: data!.ownerDepId },
+      select: { DEPID: true },
+    })
+    if (!d) return json({ error: 'Owner department not found' }, 400)
+  }
+  if (data!.ownerGroupId) {
+    const g = await prisma.groups.findUnique({
+      where: { GroupID: data!.ownerGroupId },
+      select: { GroupID: true },
+    })
+    if (!g) return json({ error: 'Owner group not found' }, 400)
+  }
+  const vis = await normalizeVisibility(data!.visibility ?? [])
+  if (vis.error) return json({ error: vis.error }, 400)
 
   const existing = await prisma.formTemplates.findUnique({
     where: { FormTemplateID: params.id },
@@ -163,6 +257,21 @@ export async function PUT(req: NextRequest, { params }: Params) {
         await tx.formFields.create({ data: { ...row, FormTemplateID: params.id } })
       }
     }
+    // replace visibility grants wholesale
+    await tx.formPermissions.deleteMany({
+      where: { FormTemplateID: params.id, PermissionType: 'VIEW' },
+    })
+    if (vis.rows.length > 0) {
+      await tx.formPermissions.createMany({
+        data: vis.rows.map((v) => ({
+          FormTemplateID: params.id,
+          PermissionType: 'VIEW',
+          DEPID: v.depId,
+          GroupID: v.groupId,
+          UserID: v.userId,
+        })),
+      })
+    }
     await tx.formTemplates.update({
       where: { FormTemplateID: params.id },
       data: {
@@ -171,6 +280,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
         FormCategoryID: data!.formCategoryId ?? null,
         WFDefinitionID: data!.wfDefinitionId ?? null,
         Status: data!.status,
+        OwnerDEPID: data!.ownerDepId ?? null,
+        OwnerGroupID: data!.ownerGroupId ?? null,
         Version: { increment: 1 },
       },
     })
@@ -181,6 +292,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
     include: {
       Category: { select: { FormCategoryID: true, Name: true } },
       Workflow: { select: { WFDefinitionID: true, Name: true } },
+      OwnerDEP: { select: { DEPID: true, Name: true } },
+      OwnerGroup: { select: { GroupID: true, Name: true } },
       Fields: { orderBy: { SortOrder: 'asc' } },
     },
   })

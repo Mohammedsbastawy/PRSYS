@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
+import { canUserUseTemplate } from '@/lib/form-visibility'
 import { z } from 'zod'
 
 const fieldValueSchema = z.object({
@@ -92,6 +93,13 @@ export async function POST(req: NextRequest) {
     include: { Fields: true },
   })
   if (!tmpl) return json({ error: 'Form template not found' }, 404)
+
+  // visibility: form managers bypass, everyone else must be granted the form
+  const canManageForms =
+    ctx.roleCode === 'SUPER_ADMIN' || hasPermission(ctx, 'FORM_TEMPLATE_MANAGE')
+  if (!canManageForms && !(await canUserUseTemplate(payload.userId, data!.formTemplateId))) {
+    return json({ error: 'You do not have access to this form' }, 403)
+  }
 
   const fieldValues = (data!.fieldValues ?? []).filter((fv) => fv.fieldId).map((fv) => ({
     FormFieldID: fv.fieldId!,

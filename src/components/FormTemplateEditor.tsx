@@ -6,7 +6,16 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { Icon, StatusBadge } from "@/components/ui";
-import { buildFieldConfig, parseFieldConfig } from "@/lib/field-config";
+import {
+  FIELD_TYPES,
+  FIELD_TYPE_GROUPS,
+  buildFieldConfig,
+  fieldTypeIcon,
+  fieldTypeLabel,
+  isKnownFieldType,
+  parseFieldConfig,
+  parseMultiValue,
+} from "@/lib/field-config";
 
 interface FieldDraft {
   key: string;
@@ -19,6 +28,10 @@ interface FieldDraft {
   optionsText: string;
   help: string;
   placeholder: string;
+  min: string;
+  max: string;
+  minLength: string;
+  maxLength: string;
 }
 
 interface LoadedField {
@@ -31,6 +44,16 @@ interface LoadedField {
   Config: string | null;
 }
 
+interface LoadedPerm {
+  FormPermissionID: string;
+  DEPID: string | null;
+  GroupID: string | null;
+  UserID: string | null;
+  DEP: { Name: string } | null;
+  Group: { Name: string } | null;
+  User: { Name: string } | null;
+}
+
 interface LoadedTemplate {
   FormTemplateID: string;
   Name: string;
@@ -39,6 +62,9 @@ interface LoadedTemplate {
   WFDefinitionID: string | null;
   Status: string;
   Fields: LoadedField[];
+  OwnerDEPID?: string | null;
+  OwnerGroupID?: string | null;
+  FormPerms?: LoadedPerm[];
 }
 
 interface CatRow {
@@ -52,26 +78,40 @@ interface WfRow {
   Status: string;
 }
 
+interface DepRow {
+  DEPID: string;
+  Name: string;
+}
+
+interface GroupRow {
+  id: string;
+  name: string;
+}
+
+interface UserRow {
+  UserID: string;
+  Name: string;
+  Email: string;
+}
+
 interface Option {
   id: string;
   name: string;
 }
 
-const FIELD_TYPES = [
-  { value: "text", label: "Text Input", icon: "text_fields", section: "Basic Input" },
-  { value: "textarea", label: "Textarea", icon: "notes", section: "Basic Input" },
-  { value: "number", label: "Number", icon: "numbers", section: "Basic Input" },
-  { value: "date", label: "Date Picker", icon: "calendar_month", section: "Basic Input" },
-  { value: "select", label: "Dropdown", icon: "arrow_drop_down_circle", section: "Selection" },
-  { value: "checkbox", label: "Checkbox", icon: "check_box", section: "Selection" },
-];
-
-const SECTIONS = ["Basic Input", "Selection"];
-const KNOWN_TYPES = FIELD_TYPES.map((t) => t.value);
-
-function typeLabel(v: string): string {
-  return FIELD_TYPES.find((t) => t.value === v)?.label ?? v;
+interface VisChip {
+  key: string;
+  depId: string | null;
+  groupId: string | null;
+  userId: string | null;
+  kind: "dep" | "group" | "user";
+  label: string;
 }
+
+const OPTION_TYPES = ["select", "radio", "multiselect"];
+const PLACEHOLDER_TYPES = ["text", "textarea", "email", "tel", "url", "number", "currency"];
+const MINMAX_TYPES = ["number", "currency"];
+const LENGTH_TYPES = ["text", "textarea"];
 
 let draftSeq = 0;
 function nextKey(): string {
@@ -100,17 +140,41 @@ function blankField(type: string): FieldDraft {
     optionsText: "",
     help: "",
     placeholder: "",
+    min: "",
+    max: "",
+    minLength: "",
+    maxLength: "",
   };
 }
 
-function facsimileType(t: string): string {
-  if (t === "number") return "number";
+function inputType(t: string): string {
+  if (t === "number" || t === "currency") return "number";
   if (t === "date") return "date";
+  if (t === "time") return "time";
+  if (t === "datetime") return "datetime-local";
+  if (t === "email" || t === "tel" || t === "url") return t;
   return "text";
+}
+
+function optionsOf(f: FieldDraft): string[] {
+  return f.optionsText
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 /* ---------- Non-interactive field preview shown on the canvas ---------- */
 function FieldFacsimile({ f }: { f: FieldDraft }) {
+  if (f.fieldType === "section") {
+    return (
+      <div className="pointer-events-none border-l-2 border-primary pl-3">
+        <div className="text-base font-bold text-ink">
+          {f.label || <span className="text-ink-faint">Untitled section</span>}
+        </div>
+        {f.help && <p className="mt-0.5 text-xs text-ink-soft">{f.help}</p>}
+      </div>
+    );
+  }
   if (f.fieldType === "checkbox") {
     return (
       <div className="pointer-events-none flex items-center gap-2 pt-1 text-sm text-ink">
@@ -118,6 +182,55 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
         <span className="font-medium">
           {f.label || "Checkbox"} {f.isRequired && <span className="text-danger">*</span>}
         </span>
+      </div>
+    );
+  }
+  if (f.fieldType === "radio") {
+    const opts = optionsOf(f);
+    return (
+      <div className="pointer-events-none">
+        <div className="mb-1 block text-sm font-medium text-ink">
+          {f.label || <span className="text-ink-faint">Untitled field</span>}{" "}
+          {f.isRequired && <span className="text-danger">*</span>}
+        </div>
+        <div className="space-y-1">
+          {(opts.length > 0 ? opts.slice(0, 3) : ["Option"]).map((o) => (
+            <label key={o} className="flex items-center gap-2 text-sm text-ink-soft">
+              <input type="radio" disabled className="h-4 w-4" /> {o}
+            </label>
+          ))}
+          {opts.length > 3 && (
+            <div className="text-xs text-ink-faint">+{opts.length - 3} more</div>
+          )}
+        </div>
+        {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+      </div>
+    );
+  }
+  if (
+    f.fieldType === "select" ||
+    f.fieldType === "multiselect" ||
+    f.fieldType === "user" ||
+    f.fieldType === "department"
+  ) {
+    const ph =
+      f.fieldType === "multiselect"
+        ? "Select one or more..."
+        : f.fieldType === "user"
+          ? "Select user..."
+          : f.fieldType === "department"
+            ? "Select department..."
+            : "Select...";
+    return (
+      <div className="pointer-events-none">
+        <div className="mb-1 block text-sm font-medium text-ink">
+          {f.label || <span className="text-ink-faint">Untitled field</span>}{" "}
+          {f.isRequired && <span className="text-danger">*</span>}
+        </div>
+        <select disabled className="input bg-surface-muted">
+          <option>{ph}</option>
+        </select>
+        {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
       </div>
     );
   }
@@ -134,14 +247,10 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
           className="input bg-surface-muted"
           placeholder={f.placeholder || undefined}
         />
-      ) : f.fieldType === "select" ? (
-        <select disabled className="input bg-surface-muted">
-          <option>Select...</option>
-        </select>
       ) : (
         <input
           disabled
-          type={facsimileType(f.fieldType)}
+          type={inputType(f.fieldType)}
           className="input bg-surface-muted"
           placeholder={f.placeholder || undefined}
         />
@@ -156,12 +265,23 @@ function LivePreview({
   name,
   description,
   fields,
+  users,
+  departments,
 }: {
   name: string;
   description: string;
   fields: FieldDraft[];
+  users: Option[];
+  departments: Option[];
 }) {
   const [vals, setVals] = useState<Record<string, string>>({});
+
+  function toggleMulti(key: string, opt: string) {
+    const cur = parseMultiValue(vals[key] || "");
+    const next = cur.includes(opt) ? cur.filter((o) => o !== opt) : [...cur, opt];
+    setVals({ ...vals, [key]: JSON.stringify(next) });
+  }
+
   return (
     <div>
       <h2 className="text-xl font-bold text-ink">{name || "Untitled Form"}</h2>
@@ -174,29 +294,116 @@ function LivePreview({
       )}
       <div className="grid gap-4 md:grid-cols-2">
         {fields.map((f) => {
-          const wide = f.fieldType === "textarea";
-          const opts =
-            f.fieldType === "select"
-              ? f.optionsText
-                  .split("\n")
-                  .map((s) => s.trim())
-                  .filter(Boolean)
-              : [];
+          const wide = f.fieldType === "textarea" || f.fieldType === "section" || f.fieldType === "multiselect";
+          const opts = OPTION_TYPES.includes(f.fieldType) ? optionsOf(f) : [];
+          const numAttrs =
+            MINMAX_TYPES.includes(f.fieldType)
+              ? {
+                  min: f.min.trim() || undefined,
+                  max: f.max.trim() || undefined,
+                  step: f.fieldType === "currency" ? "0.01" : "any",
+                }
+              : {};
+          const lenAttrs = LENGTH_TYPES.includes(f.fieldType)
+            ? {
+                minLength: f.minLength.trim() ? Number(f.minLength) : undefined,
+                maxLength: f.maxLength.trim() ? Number(f.maxLength) : undefined,
+              }
+            : {};
           return (
             <div key={f.key} className={wide ? "md:col-span-2" : ""}>
-              {f.fieldType === "checkbox" ? (
-                <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-ink">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4"
-                    checked={(vals[f.key] || "") === "true"}
-                    onChange={(e) => setVals({ ...vals, [f.key]: e.target.checked ? "true" : "" })}
-                  />
-                  <span className="font-medium">
-                    {f.label || "Checkbox"}{" "}
+              {f.fieldType === "section" ? (
+                <div className="border-l-2 border-primary pl-3">
+                  <div className="text-base font-bold text-ink">{f.label || "Untitled section"}</div>
+                  {f.help && <p className="mt-0.5 text-xs text-ink-soft">{f.help}</p>}
+                </div>
+              ) : f.fieldType === "checkbox" ? (
+                <>
+                  <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-ink">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={(vals[f.key] || "") === "true"}
+                      onChange={(e) => setVals({ ...vals, [f.key]: e.target.checked ? "true" : "" })}
+                    />
+                    <span className="font-medium">
+                      {f.label || "Checkbox"}{" "}
+                      {f.isRequired && <span className="text-danger">*</span>}
+                    </span>
+                  </label>
+                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                </>
+              ) : f.fieldType === "radio" ? (
+                <>
+                  <span className="label">
+                    {f.label || "Untitled field"}{" "}
                     {f.isRequired && <span className="text-danger">*</span>}
                   </span>
-                </label>
+                  <div className="space-y-1.5 pt-1">
+                    {opts.length === 0 && (
+                      <p className="text-xs italic text-ink-faint">No options defined yet</p>
+                    )}
+                    {opts.map((o) => (
+                      <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                        <input
+                          type="radio"
+                          name={f.key}
+                          className="h-4 w-4"
+                          checked={(vals[f.key] || "") === o}
+                          onChange={() => setVals({ ...vals, [f.key]: o })}
+                        />
+                        {o}
+                      </label>
+                    ))}
+                  </div>
+                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                </>
+              ) : f.fieldType === "multiselect" ? (
+                <>
+                  <span className="label">
+                    {f.label || "Untitled field"}{" "}
+                    {f.isRequired && <span className="text-danger">*</span>}
+                  </span>
+                  <div className="space-y-1.5 rounded border border-surface-border p-3 pt-2">
+                    {opts.length === 0 && (
+                      <p className="text-xs italic text-ink-faint">No options defined yet</p>
+                    )}
+                    {opts.map((o) => (
+                      <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={parseMultiValue(vals[f.key] || "").includes(o)}
+                          onChange={() => toggleMulti(f.key, o)}
+                        />
+                        {o}
+                      </label>
+                    ))}
+                  </div>
+                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                </>
+              ) : f.fieldType === "user" || f.fieldType === "department" ? (
+                <>
+                  <label className="label">
+                    {f.label || "Untitled field"}{" "}
+                    {f.isRequired && <span className="text-danger">*</span>}
+                  </label>
+                  <select
+                    className="input"
+                    value={vals[f.key] || ""}
+                    onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
+                  >
+                    <option value="">
+                      {f.fieldType === "user" ? "Select user..." : "Select department..."}
+                    </option>
+                    {(f.fieldType === "user" ? users : departments).map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name}
+                      </option>
+                    ))}
+                  </select>
+                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                </>
               ) : (
                 <>
                   <label className="label">
@@ -210,6 +417,7 @@ function LivePreview({
                       placeholder={f.placeholder || undefined}
                       value={vals[f.key] || ""}
                       onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
+                      {...lenAttrs}
                     />
                   ) : f.fieldType === "select" ? (
                     <select
@@ -226,16 +434,18 @@ function LivePreview({
                     </select>
                   ) : (
                     <input
-                      type={facsimileType(f.fieldType)}
+                      type={inputType(f.fieldType)}
                       className="input"
                       placeholder={f.placeholder || undefined}
                       value={vals[f.key] || ""}
                       onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
+                      {...numAttrs}
+                      {...lenAttrs}
                     />
                   )}
+                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
                 </>
               )}
-              {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
             </div>
           );
         })}
@@ -264,6 +474,16 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
   const [fields, setFields] = useState<FieldDraft[]>([]);
   const [cats, setCats] = useState<Option[]>([]);
   const [wfs, setWfs] = useState<(Option & { status: string })[]>([]);
+  const [departments, setDepartments] = useState<Option[]>([]);
+  const [groups, setGroups] = useState<Option[]>([]);
+  const [users, setUsers] = useState<Option[]>([]);
+  const [ownerType, setOwnerType] = useState<"none" | "dep" | "group">("none");
+  const [ownerDepId, setOwnerDepId] = useState("");
+  const [ownerGroupId, setOwnerGroupId] = useState("");
+  const [visMode, setVisMode] = useState<"public" | "restricted">("public");
+  const [visChips, setVisChips] = useState<VisChip[]>([]);
+  const [visKind, setVisKind] = useState<"dep" | "group" | "user">("dep");
+  const [visPick, setVisPick] = useState("");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [settingsTab, setSettingsTab] = useState<"field" | "form">("field");
   const [preview, setPreview] = useState(false);
@@ -284,6 +504,22 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         setWfs((d || []).map((w) => ({ id: w.WFDefinitionID, name: w.Name, status: w.Status })))
       )
       .catch(() => setWfs([]));
+    fetch("/api/departments", { headers: h })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: DepRow[]) =>
+        setDepartments((d || []).map((x) => ({ id: x.DEPID, name: x.Name })))
+      )
+      .catch(() => setDepartments([]));
+    fetch("/api/groups", { headers: h })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: GroupRow[]) => setGroups((d || []).map((x) => ({ id: x.id, name: x.name }))))
+      .catch(() => setGroups([]));
+    fetch("/api/users/lookup", { headers: h })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: UserRow[]) =>
+        setUsers((d || []).map((x) => ({ id: x.UserID, name: `${x.Name} (${x.Email})` })))
+      )
+      .catch(() => setUsers([]));
     if (!isNew && templateId) {
       setLoading(true);
       fetch(`/api/form-templates/${templateId}`, { headers: h })
@@ -298,10 +534,30 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
           setCategoryId(t.FormCategoryID ?? "");
           setWorkflowId(t.WFDefinitionID ?? "");
           setStatus(t.Status);
+          setOwnerType(t.OwnerGroupID ? "group" : t.OwnerDEPID ? "dep" : "none");
+          setOwnerDepId(t.OwnerDEPID ?? "");
+          setOwnerGroupId(t.OwnerGroupID ?? "");
+          const perms = t.FormPerms ?? [];
+          if (perms.length === 0) {
+            setVisMode("public");
+            setVisChips([]);
+          } else {
+            setVisMode("restricted");
+            setVisChips(
+              perms.map((p) => ({
+                key: `${p.DEPID ?? ""}|${p.GroupID ?? ""}|${p.UserID ?? ""}`,
+                depId: p.DEPID,
+                groupId: p.GroupID,
+                userId: p.UserID,
+                kind: p.DEPID ? "dep" : p.GroupID ? "group" : "user",
+                label: p.DEP?.Name ?? p.Group?.Name ?? p.User?.Name ?? "Unknown",
+              }))
+            );
+          }
           setFields(
             (t.Fields || []).map((f) => {
               const cfg = parseFieldConfig(f.Config);
-              const known = KNOWN_TYPES.includes(f.FieldType) ? f.FieldType : "text";
+              const known = isKnownFieldType(f.FieldType) ? f.FieldType : "text";
               return {
                 key: nextKey(),
                 id: f.FormFieldID,
@@ -309,10 +565,14 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 fieldKey: f.FieldKey,
                 keyTouched: true,
                 fieldType: known,
-                isRequired: f.IsRequired,
-                optionsText: known === "select" ? cfg.options.join("\n") : "",
+                isRequired: known === "section" ? false : f.IsRequired,
+                optionsText: OPTION_TYPES.includes(known) ? cfg.options.join("\n") : "",
                 help: cfg.help,
                 placeholder: cfg.placeholder,
+                min: cfg.min,
+                max: cfg.max,
+                minLength: cfg.minLength,
+                maxLength: cfg.maxLength,
               };
             })
           );
@@ -379,9 +639,29 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
       });
       return;
     }
-    if (add !== "" && KNOWN_TYPES.includes(add)) {
+    if (add !== "" && isKnownFieldType(add)) {
       insertField(add, idx);
     }
+  }
+
+  function addVisChip() {
+    if (!visPick) return;
+    const depId = visKind === "dep" ? visPick : null;
+    const groupId = visKind === "group" ? visPick : null;
+    const userId = visKind === "user" ? visPick : null;
+    const key = `${depId ?? ""}|${groupId ?? ""}|${userId ?? ""}`;
+    if (visChips.some((c) => c.key === key)) {
+      setError("That entry is already in the list");
+      return;
+    }
+    const src = visKind === "dep" ? departments : visKind === "group" ? groups : users;
+    const found = src.find((o) => o.id === visPick);
+    setVisChips([
+      ...visChips,
+      { key, depId, groupId, userId, kind: visKind, label: found?.name ?? "Unknown" },
+    ]);
+    setVisPick("");
+    setError("");
   }
 
   async function save() {
@@ -390,13 +670,30 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
       setError("Template name is required");
       return;
     }
+    if (ownerType === "dep" && !ownerDepId) {
+      setError("Pick an owner department — or set owner to None");
+      return;
+    }
+    if (ownerType === "group" && !ownerGroupId) {
+      setError("Pick an owner group — or set owner to None");
+      return;
+    }
+    if (visMode === "restricted" && visChips.length === 0) {
+      setError("Restricted visibility needs at least one department, group or user — or switch back to Public");
+      return;
+    }
+    // resolve keys (sections get an auto key when left empty) and validate
+    const resolvedKeys = fields.map((f, i) =>
+      f.fieldType === "section" && !f.fieldKey.trim() ? `section_${i + 1}` : f.fieldKey.trim()
+    );
     const seen = new Set<string>();
-    for (const f of fields) {
+    for (let i = 0; i < fields.length; i++) {
+      const f = fields[i];
       if (!f.label.trim()) {
-        setError("Every field needs a label");
+        setError(f.fieldType === "section" ? "Every section needs a title" : "Every field needs a label");
         return;
       }
-      const k = f.fieldKey.trim();
+      const k = resolvedKeys[i];
       if (!/^[A-Za-z0-9_]+$/.test(k)) {
         setError(
           `Invalid key "${f.fieldKey || "(empty)"}": use letters, numbers and underscore only`
@@ -408,6 +705,27 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         return;
       }
       seen.add(k.toLowerCase());
+      if (MINMAX_TYPES.includes(f.fieldType)) {
+        if (f.min.trim() !== "" && !Number.isFinite(Number(f.min))) {
+          setError(`Field "${f.label}": Min must be a number`);
+          return;
+        }
+        if (f.max.trim() !== "" && !Number.isFinite(Number(f.max))) {
+          setError(`Field "${f.label}": Max must be a number`);
+          return;
+        }
+      }
+      if (LENGTH_TYPES.includes(f.fieldType)) {
+        for (const [nm, v] of [
+          ["Min length", f.minLength],
+          ["Max length", f.maxLength],
+        ] as const) {
+          if (v.trim() !== "" && !/^\d+$/.test(v.trim())) {
+            setError(`Field "${f.label}": ${nm} must be a whole number`);
+            return;
+          }
+        }
+      }
     }
     setSaving(true);
     try {
@@ -417,23 +735,27 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         formCategoryId: categoryId || null,
         wfDefinitionId: workflowId || null,
         status,
+        ownerDepId: ownerType === "dep" ? ownerDepId || null : null,
+        ownerGroupId: ownerType === "group" ? ownerGroupId || null : null,
+        visibility:
+          visMode === "restricted"
+            ? visChips.map((c) => ({ depId: c.depId, groupId: c.groupId, userId: c.userId }))
+            : [],
         fields: fields.map((f, i) => ({
           ...(f.id ? { id: f.id } : {}),
           label: f.label.trim(),
-          fieldKey: f.fieldKey.trim(),
+          fieldKey: resolvedKeys[i],
           fieldType: f.fieldType,
-          isRequired: f.isRequired,
+          isRequired: f.fieldType === "section" ? false : f.isRequired,
           sortOrder: i,
           config: buildFieldConfig({
-            options:
-              f.fieldType === "select"
-                ? f.optionsText
-                    .split("\n")
-                    .map((s) => s.trim())
-                    .filter(Boolean)
-                : [],
+            options: OPTION_TYPES.includes(f.fieldType) ? optionsOf(f) : [],
             help: f.help,
-            placeholder: f.placeholder,
+            placeholder: PLACEHOLDER_TYPES.includes(f.fieldType) ? f.placeholder : "",
+            min: MINMAX_TYPES.includes(f.fieldType) ? f.min : "",
+            max: MINMAX_TYPES.includes(f.fieldType) ? f.max : "",
+            minLength: LENGTH_TYPES.includes(f.fieldType) ? f.minLength : "",
+            maxLength: LENGTH_TYPES.includes(f.fieldType) ? f.maxLength : "",
           }),
         })),
       };
@@ -458,6 +780,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
 
   const ro = !canManage;
   const selected = fields.find((f) => f.key === selectedKey) ?? null;
+  const visOptions = visKind === "dep" ? departments : visKind === "group" ? groups : users;
 
   return (
     <AppShell>
@@ -519,13 +842,13 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
               Field Types
             </h2>
             <div className="grid grid-cols-2 gap-2 xl:grid-cols-1">
-              {SECTIONS.map((sec) => (
+              {FIELD_TYPE_GROUPS.map((sec) => (
                 <div key={sec} className="col-span-2 xl:col-span-1">
                   <div className="mb-1.5 mt-2 text-xs font-semibold text-ink-soft first:mt-0">
                     {sec}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    {FIELD_TYPES.filter((t) => t.section === sec).map((t) => (
+                    {FIELD_TYPES.filter((t) => t.group === sec).map((t) => (
                       <div
                         key={t.value}
                         draggable={canManage}
@@ -534,7 +857,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           e.dataTransfer.effectAllowed = "copy";
                         }}
                         onClick={() => canManage && insertField(t.value, fields.length)}
-                        title={canManage ? "Drag onto the canvas, or click to add" : typeLabel(t.value)}
+                        title={canManage ? "Drag onto the canvas, or click to add" : fieldTypeLabel(t.value)}
                         className={`flex flex-col items-center gap-1 rounded border border-surface-border bg-white px-2 py-3 text-center ${
                           canManage ? "cursor-grab hover:border-primary hover:text-primary" : ""
                         }`}
@@ -568,7 +891,13 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 <div className="mb-4 rounded bg-blue-50 px-3 py-2 text-xs font-medium text-primary">
                   Preview mode — try the form as a requester. Nothing here is saved.
                 </div>
-                <LivePreview name={name} description={description} fields={fields} />
+                <LivePreview
+                  name={name}
+                  description={description}
+                  fields={fields}
+                  users={users}
+                  departments={departments}
+                />
               </>
             ) : (
               <>
@@ -612,7 +941,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           {active && (
                             <>
                               <span className="absolute -top-2.5 left-3 rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
-                                {typeLabel(f.fieldType)}
+                                {fieldTypeLabel(f.fieldType)}
                               </span>
                               {canManage && (
                                 <span
@@ -702,14 +1031,11 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                   <>
                     <div className="flex items-center gap-2">
                       <span className="flex h-9 w-9 items-center justify-center rounded bg-blue-100 text-primary">
-                        <Icon
-                          name={FIELD_TYPES.find((t) => t.value === selected.fieldType)?.icon || "edit"}
-                          className="text-[20px]"
-                        />
+                        <Icon name={fieldTypeIcon(selected.fieldType)} className="text-[20px]" />
                       </span>
                       <div>
                         <div className="text-sm font-semibold text-ink">
-                          {typeLabel(selected.fieldType)}
+                          {fieldTypeLabel(selected.fieldType)}
                         </div>
                         <div className="font-mono text-[11px] text-ink-faint">
                           {selected.fieldKey || "no key yet"}
@@ -717,7 +1043,9 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                       </div>
                     </div>
                     <div>
-                      <label className="label">Field Label</label>
+                      <label className="label">
+                        {selected.fieldType === "section" ? "Section Title" : "Field Label"}
+                      </label>
                       <input
                         className="input"
                         value={selected.label}
@@ -729,34 +1057,36 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                             ...(selected.keyTouched ? {} : { fieldKey: slugify(label) }),
                           });
                         }}
-                        placeholder="e.g. Justification"
+                        placeholder={selected.fieldType === "section" ? "e.g. Delivery Details" : "e.g. Justification"}
                       />
                     </div>
-                    <div>
-                      <label className="label">Key (unique)</label>
-                      <div className="flex gap-1.5">
-                        <input
-                          className="input font-mono text-xs"
-                          value={selected.fieldKey}
-                          disabled={ro}
-                          onChange={(e) =>
-                            patchField(selected.key, { fieldKey: e.target.value, keyTouched: true })
-                          }
-                          placeholder="auto-generated"
-                        />
-                        {canManage && (
-                          <button
-                            className="icon-btn shrink-0"
-                            title="Regenerate from label"
-                            onClick={() =>
-                              patchField(selected.key, { fieldKey: slugify(selected.label) })
+                    {selected.fieldType !== "section" && (
+                      <div>
+                        <label className="label">Key (unique)</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            className="input font-mono text-xs"
+                            value={selected.fieldKey}
+                            disabled={ro}
+                            onChange={(e) =>
+                              patchField(selected.key, { fieldKey: e.target.value, keyTouched: true })
                             }
-                          >
-                            <Icon name="refresh" className="text-[18px]" />
-                          </button>
-                        )}
+                            placeholder="auto-generated"
+                          />
+                          {canManage && (
+                            <button
+                              className="icon-btn shrink-0"
+                              title="Regenerate from label"
+                              onClick={() =>
+                                patchField(selected.key, { fieldKey: slugify(selected.label) })
+                              }
+                            >
+                              <Icon name="refresh" className="text-[18px]" />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div>
                       <label className="label">Type</label>
                       <select
@@ -765,35 +1095,41 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         disabled={ro}
                         onChange={(e) => patchField(selected.key, { fieldType: e.target.value })}
                       >
-                        {FIELD_TYPES.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
-                          </option>
+                        {FIELD_TYPE_GROUPS.map((g) => (
+                          <optgroup key={g} label={g}>
+                            {FIELD_TYPES.filter((t) => t.group === g).map((t) => (
+                              <option key={t.value} value={t.value}>
+                                {t.label}
+                              </option>
+                            ))}
+                          </optgroup>
                         ))}
                       </select>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-ink">Required field</span>
-                      <button
-                        type="button"
-                        role="switch"
-                        aria-checked={selected.isRequired}
-                        disabled={ro}
-                        onClick={() => patchField(selected.key, { isRequired: !selected.isRequired })}
-                        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                          selected.isRequired ? "bg-primary" : "bg-gray-300"
-                        } disabled:opacity-50`}
-                      >
-                        <span
-                          className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
-                            selected.isRequired ? "left-[18px]" : "left-0.5"
-                          }`}
-                        />
-                      </button>
-                    </div>
+                    {selected.fieldType !== "section" && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-ink">Required field</span>
+                        <button
+                          type="button"
+                          role="switch"
+                          aria-checked={selected.isRequired}
+                          disabled={ro}
+                          onClick={() => patchField(selected.key, { isRequired: !selected.isRequired })}
+                          className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                            selected.isRequired ? "bg-primary" : "bg-gray-300"
+                          } disabled:opacity-50`}
+                        >
+                          <span
+                            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
+                              selected.isRequired ? "left-[18px]" : "left-0.5"
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    )}
                     <div>
                       <label className="label">
-                        Help Text{" "}
+                        {selected.fieldType === "section" ? "Description" : "Help Text"}{" "}
                         <span className="float-right font-normal text-ink-faint">Optional</span>
                       </label>
                       <textarea
@@ -802,10 +1138,14 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         value={selected.help}
                         disabled={ro}
                         onChange={(e) => patchField(selected.key, { help: e.target.value })}
-                        placeholder="Shown under the input to guide the requester"
+                        placeholder={
+                          selected.fieldType === "section"
+                            ? "Shown under the section title"
+                            : "Shown under the input to guide the requester"
+                        }
                       />
                     </div>
-                    {["text", "textarea", "number"].includes(selected.fieldType) && (
+                    {PLACEHOLDER_TYPES.includes(selected.fieldType) && (
                       <div>
                         <label className="label">
                           Placeholder{" "}
@@ -820,9 +1160,67 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         />
                       </div>
                     )}
-                    {selected.fieldType === "select" && (
+                    {MINMAX_TYPES.includes(selected.fieldType) && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="label">Min</label>
+                          <input
+                            type="number"
+                            step="any"
+                            className="input"
+                            value={selected.min}
+                            disabled={ro}
+                            onChange={(e) => patchField(selected.key, { min: e.target.value })}
+                            placeholder="No min"
+                          />
+                        </div>
+                        <div>
+                          <label className="label">Max</label>
+                          <input
+                            type="number"
+                            step="any"
+                            className="input"
+                            value={selected.max}
+                            disabled={ro}
+                            onChange={(e) => patchField(selected.key, { max: e.target.value })}
+                            placeholder="No max"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {LENGTH_TYPES.includes(selected.fieldType) && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="label">Min length</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="input"
+                            value={selected.minLength}
+                            disabled={ro}
+                            onChange={(e) => patchField(selected.key, { minLength: e.target.value })}
+                            placeholder="—"
+                          />
+                        </div>
+                        <div>
+                          <label className="label">Max length</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="input"
+                            value={selected.maxLength}
+                            disabled={ro}
+                            onChange={(e) => patchField(selected.key, { maxLength: e.target.value })}
+                            placeholder="—"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {OPTION_TYPES.includes(selected.fieldType) && (
                       <div>
-                        <label className="label">Dropdown options (one per line)</label>
+                        <label className="label">Options (one per line)</label>
                         <textarea
                           rows={4}
                           className="input"
@@ -918,12 +1316,165 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                       <option value="ACTIVE">Active</option>
                     </select>
                   </div>
+
+                  {/* ---- Responsible owner ---- */}
+                  <div className="rounded border border-surface-border p-3">
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                      Responsible Owner
+                    </div>
+                    <div className="space-y-2">
+                      <select
+                        className="input"
+                        value={ownerType}
+                        disabled={ro}
+                        onChange={(e) => setOwnerType(e.target.value as "none" | "dep" | "group")}
+                      >
+                        <option value="none">No owner</option>
+                        <option value="dep">Department</option>
+                        <option value="group">Group</option>
+                      </select>
+                      {ownerType === "dep" && (
+                        <select
+                          className="input"
+                          value={ownerDepId}
+                          disabled={ro}
+                          onChange={(e) => setOwnerDepId(e.target.value)}
+                        >
+                          <option value="">Select department...</option>
+                          {departments.map((d) => (
+                            <option key={d.id} value={d.id}>
+                              {d.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      {ownerType === "group" && (
+                        <select
+                          className="input"
+                          value={ownerGroupId}
+                          disabled={ro}
+                          onChange={(e) => setOwnerGroupId(e.target.value)}
+                        >
+                          <option value="">Select group...</option>
+                          {groups.map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <p className="text-[11px] leading-snug text-ink-faint">
+                        The owner is shown on the catalog card and notified on new submissions.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ---- Visibility ---- */}
+                  <div className="rounded border border-surface-border p-3">
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                      Visibility
+                    </div>
+                    <div className="mb-2 flex gap-2">
+                      {(["public", "restricted"] as const).map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          disabled={ro}
+                          onClick={() => setVisMode(m)}
+                          className={`flex-1 rounded border px-2 py-1.5 text-xs font-semibold capitalize ${
+                            visMode === m
+                              ? "border-primary bg-blue-50 text-primary"
+                              : "border-surface-border text-ink-soft hover:border-primary"
+                          } disabled:opacity-50`}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                    {visMode === "public" ? (
+                      <p className="text-[11px] leading-snug text-ink-faint">
+                        Everyone who can create requests can see and use this form.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {canManage && (
+                          <div className="flex gap-1.5">
+                            <select
+                              className="input !w-auto shrink-0"
+                              value={visKind}
+                              onChange={(e) => {
+                                setVisKind(e.target.value as "dep" | "group" | "user");
+                                setVisPick("");
+                              }}
+                            >
+                              <option value="dep">Department</option>
+                              <option value="group">Group</option>
+                              <option value="user">User</option>
+                            </select>
+                            <select
+                              className="input min-w-0 flex-1"
+                              value={visPick}
+                              onChange={(e) => setVisPick(e.target.value)}
+                            >
+                              <option value="">Select...</option>
+                              {visOptions.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                  {o.name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={addVisChip}
+                              disabled={!visPick}
+                              className="btn-secondary shrink-0 !px-3 disabled:opacity-50"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        )}
+                        {visChips.length === 0 && (
+                          <p className="text-[11px] italic text-ink-faint">
+                            No entries yet — add at least one, or switch back to Public.
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-1.5">
+                          {visChips.map((c) => (
+                            <span
+                              key={c.key}
+                              className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface-muted py-1 pl-2.5 pr-1 text-xs font-medium text-ink"
+                            >
+                              <Icon
+                                name={c.kind === "dep" ? "apartment" : c.kind === "group" ? "group" : "person"}
+                                className="text-[14px] text-ink-faint"
+                              />
+                              <span className="truncate">{c.label}</span>
+                              {canManage && (
+                                <button
+                                  type="button"
+                                  aria-label="Remove"
+                                  onClick={() =>
+                                    setVisChips((prev) => prev.filter((x) => x.key !== c.key))
+                                  }
+                                  className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-surface-border"
+                                >
+                                  <Icon name="close" className="text-[14px]" />
+                                </button>
+                              )}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="rounded bg-surface-muted p-3">
                     <div className="mb-1.5 text-xs font-semibold text-ink">How it works</div>
                     <ul className="list-disc space-y-1 pl-4 text-[11px] leading-snug text-ink-soft">
                       <li>Only Active templates appear in the New Request catalog.</li>
                       <li>Field keys must be unique — they identify answers.</li>
                       <li>Required fields block submission until filled.</li>
+                      <li>Sections are layout-only and never store answers.</li>
                       <li>Removing a field detaches it from old answers (text is kept).</li>
                     </ul>
                   </div>

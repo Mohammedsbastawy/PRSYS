@@ -56,6 +56,7 @@ model DEP {
 
   Manager   Users? @relation("DEPLeader", fields: [ManagerID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
   FormPerms FormPermissions[]
+  OwnedTemplates FormTemplates[] @relation("TemplateOwnerDEP")
 }
 
 model Users {
@@ -99,6 +100,7 @@ model Groups {
   Members    GroupMembers[] @relation("GroupMemberGroup")
   FormPerms  FormPermissions[] @relation("GroupFormPerms")
   WFSteps    WFSteps[]         @relation("WFGroup")
+  OwnedTemplates FormTemplates[] @relation("TemplateOwnerGroup")
 }
 
 model GroupMembers {
@@ -142,11 +144,15 @@ model FormTemplates {
   WFDefinitionID   String? 
   Status           String   @default("DRAFT")
   Version          Int      @default(1)
+  OwnerDEPID       String?
+  OwnerGroupID     String?
   CreatedAt        DateTime @default(now())
   UpdatedAt        DateTime @updatedAt
 
   Category    FormCategories? @relation(fields: [FormCategoryID], references: [FormCategoryID], onDelete: SetNull)
   Workflow    WFDefinitions?  @relation(fields: [WFDefinitionID], references: [WFDefinitionID], onDelete: NoAction, onUpdate: NoAction)
+  OwnerDEP    DEP?    @relation("TemplateOwnerDEP", fields: [OwnerDEPID], references: [DEPID], onDelete: SetNull)
+  OwnerGroup  Groups? @relation("TemplateOwnerGroup", fields: [OwnerGroupID], references: [GroupID], onDelete: SetNull)
   Fields      FormFields[]
   FormPerms   FormPermissions[] @relation("TemplateFormPerms")
   Requests    Requests[]

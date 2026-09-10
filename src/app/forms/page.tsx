@@ -13,6 +13,8 @@ interface TemplateRow {
   Status: string;
   Category?: { Name: string } | null;
   Workflow?: { Name: string } | null;
+  OwnerDEP?: { DEPID: string; Name: string } | null;
+  OwnerGroup?: { GroupID: string; Name: string } | null;
   Fields?: { FormFieldID: string }[];
   _count?: { Requests: number };
 }
@@ -89,9 +91,14 @@ export default function FormsPage() {
         subtitle="Request form definitions"
         action={
           canManage ? (
-            <Link href="/forms/new" className="btn-primary">
-              + New Template
-            </Link>
+            <span className="inline-flex items-center gap-2">
+              <Link href="/forms/categories" className="btn-secondary">
+                Manage Categories
+              </Link>
+              <Link href="/forms/new" className="btn-primary">
+                + New Template
+              </Link>
+            </span>
           ) : undefined
         }
       />
@@ -121,6 +128,11 @@ export default function FormsPage() {
                 <tr key={f.FormTemplateID} className="hover:bg-surface-muted">
                   <td className="px-4 py-3">
                     <span className="block font-medium text-ink">{f.Name}</span>
+                    {(f.OwnerDEP?.Name || f.OwnerGroup?.Name) && (
+                      <span className="block text-xs text-ink-soft">
+                        Owner: {f.OwnerDEP?.Name || f.OwnerGroup?.Name}
+                      </span>
+                    )}
                     {f.Description && (
                       <span className="block max-w-[280px] truncate text-xs text-ink-soft">
                         {f.Description}

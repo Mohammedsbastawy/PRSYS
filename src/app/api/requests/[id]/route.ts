@@ -6,6 +6,7 @@ import { getUserContext, hasPermission } from '@/lib/rbac'
 import { notifyUsers, usersWithPermission } from '@/lib/notifications'
 import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
 import type { StepLookups } from '@/lib/workflow-targets'
+import { parseFieldConfig, isValueEmpty, validateFieldValue, parseMultiValue } from '@/lib/field-config'
 import { z } from 'zod'
 
 interface Params { params: { id: string } }
@@ -110,6 +111,43 @@ export async function GET(req: NextRequest, { params }: Params) {
   // BigInt is not JSON-serializable — stringify file sizes
   const attachments = request.Attachments.map((a) => ({ ...a, FileSize: a.FileSize.toString() }))
 
+  // Friendly display values for answers (names instead of raw IDs, Yes/No, ...)
+  const userIds = new Set<string>()
+  const depIds = new Set<string>()
+  for (const fv of request.FieldValues) {
+    const t = fv.FormField?.FieldType
+    if ((t === 'user' || t === 'department') && fv.Value.trim() !== '') {
+      if (t === 'user') userIds.add(fv.Value.trim())
+      else depIds.add(fv.Value.trim())
+    }
+  }
+  const uRows: { UserID: string; Name: string }[] =
+    userIds.size > 0
+      ? await prisma.users.findMany({
+          where: { UserID: { in: Array.from(userIds) } },
+          select: { UserID: true, Name: true },
+        })
+      : []
+  const dRows: { DEPID: string; Name: string }[] =
+    depIds.size > 0
+      ? await prisma.dEP.findMany({
+          where: { DEPID: { in: Array.from(depIds) } },
+          select: { DEPID: true, Name: true },
+        })
+      : []
+  const userName = new Map(uRows.map((u) => [u.UserID, u.Name]))
+  const depName = new Map(dRows.map((d) => [d.DEPID, d.Name]))
+  const fieldValues = request.FieldValues.map((fv) => {
+    const t = fv.FormField?.FieldType
+    let display: string | null = null
+    if (t === 'checkbox') display = fv.Value === 'true' ? 'Yes' : 'No'
+    else if (t === 'user') display = userName.get(fv.Value.trim()) ?? fv.Value
+    else if (t === 'department') display = depName.get(fv.Value.trim()) ?? fv.Value
+    else if (t === 'multiselect') display = parseMultiValue(fv.Value).join(', ')
+    else if (t === 'datetime') display = fv.Value.replace('T', ' ')
+    return { ...fv, DisplayValue: display ?? fv.Value }
+  })
+
   // can the viewer decide the current step?
   let canDecide = false
   let decideReason: string | null = null
@@ -128,7 +166,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     decideReason = verdict.reason
   }
 
-  return json({ ...request, RequesterDepartment: department, Comments: comments, Attachments: attachments, CanDecide: canDecide, DecideReason: decideReason, AwaitingTarget: awaitingTarget })
+  return json({ ...request, RequesterDepartment: department, Comments: comments, Attachments: attachments, FieldValues: fieldValues, CanDecide: canDecide, DecideReason: decideReason, AwaitingTarget: awaitingTarget })
 }
 
 // PATCH /api/requests/[id] — status transitions
@@ -184,20 +222,35 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (request.RequesterID !== payload.userId && ctx.roleCode !== 'SUPER_ADMIN') return forbidden()
     if (request.Status !== 'DRAFT') return json({ error: 'Only draft requests can be submitted' }, 400)
 
-    // validate required template fields
-    const requiredFields = await prisma.formFields.findMany({
-      where: { FormTemplateID: request.FormTemplateID, IsRequired: true },
+    // validate template fields: required presence + value formats
+    const tmplFields = await prisma.formFields.findMany({
+      where: { FormTemplateID: request.FormTemplateID },
+      orderBy: { SortOrder: 'asc' },
     })
-    if (requiredFields.length > 0) {
+    if (tmplFields.length > 0) {
       const vals = await prisma.requestFieldValues.findMany({
         where: { RequestID: params.id },
         select: { FormFieldID: true, Value: true },
       })
-      const missing = requiredFields.filter(
-        (f) => !vals.some((v) => v.FormFieldID === f.FormFieldID && v.Value.trim() !== '')
-      )
+      const byField = new Map<string, string>()
+      for (const v of vals) {
+        if (v.FormFieldID) byField.set(v.FormFieldID, v.Value)
+      }
+      const missing: string[] = []
+      for (const f of tmplFields) {
+        if (f.FieldType === 'section') continue
+        const raw = byField.get(f.FormFieldID) ?? ''
+        if (f.IsRequired && isValueEmpty(f.FieldType, raw)) {
+          missing.push(f.Label)
+          continue
+        }
+        if (!isValueEmpty(f.FieldType, raw)) {
+          const reason = validateFieldValue(f.FieldType, raw, parseFieldConfig(f.Config))
+          if (reason) return json({ error: `Field "${f.Label}": ${reason}` }, 400)
+        }
+      }
       if (missing.length > 0) {
-        return json({ error: `Missing required fields: ${missing.map((m) => m.Label).join(', ')}` }, 400)
+        return json({ error: `Missing required fields: ${missing.join(', ')}` }, 400)
       }
     }
     const itemCount = await prisma.requestItems.count({ where: { RequestID: params.id } })
@@ -226,6 +279,33 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       type: 'REQUEST_SUBMITTED',
       requestId: params.id,
     })
+    // notify the form owner (owner group members + owner department manager),
+    // skipping the actor and approvers already notified above
+    const ownerTargets: string[] = []
+    if (request.FormTemplate.OwnerGroupID) {
+      const members = await prisma.groupMembers.findMany({
+        where: { GroupID: request.FormTemplate.OwnerGroupID },
+        select: { UserID: true },
+      })
+      ownerTargets.push(...members.map((m) => m.UserID))
+    }
+    if (request.FormTemplate.OwnerDEPID) {
+      const dep = await prisma.dEP.findUnique({
+        where: { DEPID: request.FormTemplate.OwnerDEPID },
+        select: { ManagerID: true },
+      })
+      if (dep?.ManagerID) ownerTargets.push(dep.ManagerID)
+    }
+    const alreadyNotified = new Set([...approvers, payload.userId])
+    const ownerNotify = Array.from(new Set(ownerTargets)).filter((id) => !alreadyNotified.has(id))
+    if (ownerNotify.length > 0) {
+      await notifyUsers(ownerNotify, {
+        title: 'New request on your form',
+        message: `${request.Requester.Name} submitted ${request.TrackingNumber} on your form (${request.FormTemplate.Name})`,
+        type: 'REQUEST_SUBMITTED',
+        requestId: params.id,
+      })
+    }
     return json(updated)
   }
 

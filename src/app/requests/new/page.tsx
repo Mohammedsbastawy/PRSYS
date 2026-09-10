@@ -12,6 +12,7 @@ interface CatTemplate {
   Name: string;
   Description: string | null;
   Status: string;
+  ownerName?: string | null;
 }
 interface Category {
   FormCategoryID: string;
@@ -144,6 +145,11 @@ function CatalogInner() {
                         <span className="mt-1 block text-[13px] text-ink-soft">
                           {t.Description || "Start a new request"}
                         </span>
+                        {t.ownerName && (
+                          <span className="mt-0.5 block text-xs text-ink-faint">
+                            Managed by {t.ownerName}
+                          </span>
+                        )}
                       </span>
                     </Link>
                   ))}
