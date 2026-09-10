@@ -1,0 +1,289 @@
+---
+title: PRSYS — Entity Relationship Diagram (MySQL 8 / Prisma)
+---
+erDiagram
+    %% ============ Identity & Organization ============
+    ROLES {
+        string RoleID PK
+        string Name
+        string Code UK
+        string Description
+        boolean IsSystemDefault
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    PERMISSIONS {
+        string PermissionID PK
+        string Code UK
+        string Module
+        string Name
+        string Description
+        datetime CreatedAt
+    }
+    ROLE_PERMISSIONS {
+        string RoleID PK_FK
+        string PermissionID PK_FK
+        datetime GrantedAt
+    }
+    DEP {
+        string DEPID PK
+        string Name
+        string Code UK
+        string ManagerID UK_FK
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    USERS {
+        string UserID PK
+        string Name
+        string Email UK
+        string PasswordHash
+        string AccountType
+        string RoleID FK
+        string DEPID
+        string DirectManagerID FK
+        boolean IsActive
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    GROUPS {
+        string GroupID PK
+        string Name
+        string Description
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    GROUP_MEMBERS {
+        string GroupID PK_FK
+        string UserID PK_FK
+        datetime AddedAt
+    }
+
+    %% ============ Form Builder ============
+    FORM_CATEGORIES {
+        string FormCategoryID PK
+        string Name
+        int SortOrder
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    WF_DEFINITIONS {
+        string WFDefinitionID PK
+        string Name
+        string Description
+        string Status
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    FORM_TEMPLATES {
+        string FormTemplateID PK
+        string Name
+        string Description
+        string FormCategoryID FK
+        string WFDefinitionID FK
+        string Status
+        int Version
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    FORM_FIELDS {
+        string FormFieldID PK
+        string FormTemplateID FK
+        string Label
+        string FieldKey
+        string FieldType
+        boolean IsRequired
+        int SortOrder
+        string Config
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    FORM_PERMISSIONS {
+        string FormPermissionID PK
+        string FormTemplateID FK
+        string PermissionType
+        string DEPID FK
+        string GroupID FK
+        string UserID FK
+        datetime CreatedAt
+    }
+    WF_STEPS {
+        string WFStepID PK
+        string WFDefinitionID FK
+        string StepName
+        int StepOrder
+        string ApproverType
+        string TargetUserID FK
+        string TargetGroupID FK
+        string TargetRoleID FK
+        string ApprovalMode
+        string RejectAction
+        string Condition
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+
+    %% ============ Catalog ============
+    ITEM_CATALOG_CACHE {
+        string ItemCatalogCacheID PK
+        string OracleItemID UK
+        string ItemCode UK
+        string ItemName
+        string Description
+        string Uom
+        string OrganizationCode
+        decimal LastPurchasedPrice
+        datetime FirstUsedAt
+        datetime LastUsedAt
+    }
+
+    %% ============ Requests Core ============
+    REQUESTS {
+        string RequestID PK
+        string TrackingNumber UK
+        string FormTemplateID FK
+        string RequesterID FK
+        string Status
+        string CurrentWFStepID FK
+        text FormSnapshot
+        string Priority
+        string AssigneeID FK
+        string FulfillmentType
+        string StockIssueNumber
+        string OraclePoNumber
+        string PoCreatedByUserID FK
+        datetime PoCreatedAt
+        string PoNotes
+        datetime SubmittedAt
+        datetime CompletedAt
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    REQUEST_FIELD_VALUES {
+        string RequestFieldValueID PK
+        string RequestID FK
+        string FormFieldID FK
+        string Value
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    REQUEST_ITEMS {
+        string RequestItemID PK
+        string RequestID FK
+        string FormFieldID FK
+        string RequestedItemName
+        string RequestedItemDetails
+        string RequestedUom
+        decimal RequestedQuantity
+        string ItemCatalogCacheID FK
+        string OracleItemID
+        string ItemCode
+        string ItemName
+        string Uom
+        string OrganizationCode
+        decimal OnHandQuantity
+        string ItemVerifiedByUserID FK
+        datetime ItemVerifiedAt
+        decimal IssuedFromStockQuantity
+        decimal ToPurchaseQuantity
+        decimal EstimatedPrice
+        string StockDecisionNotes
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    REQUEST_APPROVALS {
+        string RequestApprovalID PK
+        string RequestID FK
+        string WFStepID FK
+        string ApproverUserID FK
+        string Decision
+        string Comment
+        datetime DecidedAt
+        datetime CreatedAt
+    }
+    REQUEST_COMMENTS {
+        string RequestCommentID PK
+        string RequestID FK
+        string AuthorUserID FK
+        string CommentText
+        string CommentType
+        boolean IsInternal
+        datetime CreatedAt
+        datetime UpdatedAt
+    }
+    REQUEST_ATTACHMENTS {
+        string RequestAttachmentID PK
+        string RequestID FK
+        string UploadedByUserID FK
+        string FileName
+        string FilePath
+        string MimeType
+        bigint FileSize
+        datetime CreatedAt
+    }
+    NOTIFICATIONS {
+        string NotificationID PK
+        string UserID FK
+        string Title
+        string Message
+        string Type
+        string RelatedRequestID FK
+        boolean IsRead
+        datetime CreatedAt
+    }
+    REQUEST_AUDIT_LOG {
+        string AuditLogID PK
+        string RequestID FK
+        string ChangedByUserID FK
+        string FromStatus
+        string ToStatus
+        string Action
+        string Note
+        datetime CreatedAt
+    }
+
+    %% ============ Relationships ============
+    ROLES ||--o{ ROLE_PERMISSIONS : RoleID
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : PermissionID
+    ROLES ||--o{ USERS : RoleID
+    USERS ||--o{ USERS : DirectManagerID
+    USERS ||--o| DEP : ManagerID
+    DEP ||--o{ USERS : DEPID_logical
+    GROUPS ||--o{ GROUP_MEMBERS : GroupID
+    USERS ||--o{ GROUP_MEMBERS : UserID
+
+    FORM_CATEGORIES ||--o{ FORM_TEMPLATES : FormCategoryID
+    WF_DEFINITIONS ||--o{ FORM_TEMPLATES : WFDefinitionID
+    FORM_TEMPLATES ||--o{ FORM_FIELDS : FormTemplateID
+    FORM_TEMPLATES ||--o{ FORM_PERMISSIONS : FormTemplateID
+    DEP ||--o{ FORM_PERMISSIONS : DEPID
+    GROUPS ||--o{ FORM_PERMISSIONS : GroupID
+    USERS ||--o{ FORM_PERMISSIONS : UserID
+    WF_DEFINITIONS ||--o{ WF_STEPS : WFDefinitionID
+    USERS ||--o{ WF_STEPS : TargetUserID
+    GROUPS ||--o{ WF_STEPS : TargetGroupID
+    ROLES ||--o{ WF_STEPS : TargetRoleID
+
+    FORM_TEMPLATES ||--o{ REQUESTS : FormTemplateID
+    USERS ||--o{ REQUESTS : RequesterID
+    USERS ||--o{ REQUESTS : AssigneeID
+    USERS ||--o{ REQUESTS : PoCreatedByUserID
+    WF_STEPS ||--o{ REQUESTS : CurrentWFStepID
+
+    REQUESTS ||--o{ REQUEST_FIELD_VALUES : RequestID
+    FORM_FIELDS ||--o{ REQUEST_FIELD_VALUES : FormFieldID
+    REQUESTS ||--o{ REQUEST_ITEMS : RequestID
+    FORM_FIELDS ||--o{ REQUEST_ITEMS : FormFieldID
+    ITEM_CATALOG_CACHE ||--o{ REQUEST_ITEMS : ItemCatalogCacheID
+    USERS ||--o{ REQUEST_ITEMS : ItemVerifiedByUserID
+    REQUESTS ||--o{ REQUEST_APPROVALS : RequestID
+    WF_STEPS ||--o{ REQUEST_APPROVALS : WFStepID
+    USERS ||--o{ REQUEST_APPROVALS : ApproverUserID
+    REQUESTS ||--o{ REQUEST_COMMENTS : RequestID
+    USERS ||--o{ REQUEST_COMMENTS : AuthorUserID
+    REQUESTS ||--o{ REQUEST_ATTACHMENTS : RequestID
+    USERS ||--o{ REQUEST_ATTACHMENTS : UploadedByUserID
+    USERS ||--o{ NOTIFICATIONS : UserID
+    REQUESTS ||--o{ NOTIFICATIONS : RelatedRequestID
+    REQUESTS ||--o{ REQUEST_AUDIT_LOG : RequestID
+    USERS ||--o{ REQUEST_AUDIT_LOG : ChangedByUserID

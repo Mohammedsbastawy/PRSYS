@@ -1,0 +1,351 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Approver Queue - ProcurePro Enterprise</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e7e8ea",
+                        "on-error": "#ffffff",
+                        "secondary": "#505f76",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-secondary-container": "#54647a",
+                        "on-secondary-fixed": "#0b1c30",
+                        "error-container": "#ffdad6",
+                        "surface": "#f8f9fb",
+                        "on-background": "#191c1e",
+                        "tertiary": "#515659",
+                        "surface-container-low": "#f3f4f6",
+                        "outline-variant": "#c3c6d7",
+                        "tertiary-fixed-dim": "#c3c7cb",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary": "#ffffff",
+                        "surface-dim": "#d9dadc",
+                        "outline": "#737686",
+                        "inverse-primary": "#b4c5ff",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-surface-variant": "#434655",
+                        "on-error-container": "#93000a",
+                        "background": "#f8f9fb",
+                        "surface-bright": "#f8f9fb",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-surface": "#191c1e",
+                        "primary-container": "#2563eb",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "secondary-fixed": "#d3e4fe",
+                        "inverse-surface": "#2e3132",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-primary-container": "#eeefff",
+                        "tertiary-container": "#696e71",
+                        "primary": "#004ac6",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-container": "#edf1f5",
+                        "secondary-container": "#d0e1fb",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#171c1f",
+                        "tertiary-fixed": "#dfe3e7",
+                        "on-tertiary-fixed-variant": "#43474b",
+                        "surface-container": "#edeef0",
+                        "surface-tint": "#0053db",
+                        "surface-container-highest": "#e1e2e4",
+                        "error": "#ba1a1a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "lg": "24px",
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "xl": "32px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "sm": "8px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fb; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .material-symbols-outlined.fill { font-variation-settings: 'FILL' 1; }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex flex-col overflow-hidden text-on-surface">
+<!-- TopNavBar -->
+<nav class="bg-surface font-body-md text-body-md docked full-width top-0 border-b border-outline-variant z-50 shrink-0">
+<div class="flex justify-between items-center w-full px-margin-desktop h-16 mx-auto">
+<div class="flex items-center gap-xl h-full">
+<span class="font-headline-md text-headline-md font-bold text-primary">ProcurePro Enterprise</span>
+<div class="hidden md:flex gap-lg h-16 items-center">
+<a class="text-secondary font-medium hover:text-primary transition-colors duration-200" href="#">Dashboard</a>
+<a class="text-primary border-b-2 border-primary pb-2 font-semibold h-full flex items-center mt-[2px]" href="#">My Queue</a>
+<a class="text-secondary font-medium hover:text-primary transition-colors duration-200" href="#">Approval History</a>
+<a class="text-secondary font-medium hover:text-primary transition-colors duration-200" href="#">Reporting</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="pl-xl pr-sm py-1.5 rounded border border-outline-variant bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-64" placeholder="Search..." type="text">
+</div>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="text-on-surface-variant hover:bg-surface-container-low p-1.5 rounded-full transition-colors">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border border-outline-variant ml-sm">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate manager in a bright, modern office setting. Sharp focus, professional lighting, conveying trustworthiness and competence." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbnkXuHaXiinCAhMrEX6l8tsYw_tzSA5t2gkal3tvkIntXpjJfrD31CwY1dz4acziBOMCvEu3sFE-TgFHm1DxCdOajJQyezaBxWO1tjKF8DIjFiOPiwukDIy9hUXGK6jfTbBrVR_zQ3rJ5CJ7-_RrwRXB_o7-CBopZSHy6_sWEqJuejHf2fU72D1kpfU0AkCZ1eQtooIWdlbeHNoRipfDIuOAA0XFp_oOtun70akwAkwwtZqfQVso5">
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-background">
+<!-- Canvas -->
+<main class="flex-1 overflow-auto p-margin-mobile md:p-margin-desktop">
+<div class="max-w-[1440px] mx-auto space-y-xl">
+<!-- Page Header & Filters -->
+<div class="flex flex-col sm:flex-row sm:items-end justify-between gap-md">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-1">My Approval Queue</h2>
+<p class="font-body-md text-body-md text-secondary">3 requests awaiting your decision</p>
+</div>
+<div class="flex flex-wrap items-center gap-sm">
+<select class="bg-surface border border-outline-variant text-on-surface font-body-sm text-body-sm rounded px-3 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Request Type: All</option>
+<option>Raw Material</option>
+<option>General Items</option>
+</select>
+<select class="bg-surface border border-outline-variant text-on-surface font-body-sm text-body-sm rounded px-3 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Department: All</option>
+<option>Manufacturing</option>
+<option>IT</option>
+<option>Finance</option>
+<option>HR</option>
+</select>
+<select class="bg-surface border border-outline-variant text-on-surface font-body-sm text-body-sm rounded px-3 py-1.5 focus:border-primary focus:ring-1 focus:ring-primary">
+<option>Sort By: Oldest First</option>
+<option>Highest Value</option>
+</select>
+</div>
+</div>
+<!-- Table Surface -->
+<div class="bg-surface border border-outline-variant rounded-lg overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant font-label-md text-label-md text-secondary">
+<th class="py-2 px-3 font-semibold whitespace-nowrap">Reference / Title</th>
+<th class="py-2 px-3 font-semibold whitespace-nowrap">Requester</th>
+<th class="py-2 px-3 font-semibold whitespace-nowrap">Department</th>
+<th class="py-2 px-3 font-semibold whitespace-nowrap">Type</th>
+<th class="py-2 px-3 font-semibold whitespace-nowrap">Submitted</th>
+<th class="py-2 px-3 font-semibold whitespace-nowrap">Days Pending</th>
+<th class="py-2 px-3 font-semibold whitespace-nowrap">Current Status</th>
+<th class="py-2 px-3 font-semibold whitespace-nowrap text-right">Action</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm text-on-surface divide-y divide-surface-container-highest">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="py-2 px-3 border-l-2 border-primary">
+<div class="font-medium text-primary">PDR-2024-056</div>
+<div class="text-secondary text-[11px]">Q4 Buffer Solution</div>
+</td>
+<td class="py-2 px-3">John Doe</td>
+<td class="py-2 px-3">Manufacturing</td>
+<td class="py-2 px-3">Raw Material</td>
+<td class="py-2 px-3 text-secondary">Oct 24, 2024</td>
+<td class="py-2 px-3">5 days</td>
+<td class="py-2 px-3">
+<div class="flex items-center gap-1 text-primary">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-2 h-2 rounded-full bg-primary-container ring-2 ring-primary/20"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+</td>
+<td class="py-2 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary font-label-sm hover:underline">Review</button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="py-2 px-3 border-l-2 border-primary">
+<div class="font-medium text-primary">PDR-2024-061</div>
+<div class="text-secondary text-[11px]">Server Rack Mounts</div>
+</td>
+<td class="py-2 px-3">Jane Smith</td>
+<td class="py-2 px-3">IT</td>
+<td class="py-2 px-3">General Items</td>
+<td class="py-2 px-3 text-secondary">Oct 26, 2024</td>
+<td class="py-2 px-3">3 days</td>
+<td class="py-2 px-3">
+<div class="flex items-center gap-1 text-primary">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-2 h-2 rounded-full bg-primary-container ring-2 ring-primary/20"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+</td>
+<td class="py-2 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary font-label-sm hover:underline">Review</button>
+</td>
+</tr>
+<!-- Row 3 (Warning) -->
+<tr class="hover:bg-surface-container-lowest transition-colors group bg-error-container/10">
+<td class="py-2 px-3 border-l-2 border-primary">
+<div class="font-medium text-primary">PDR-2024-048</div>
+<div class="text-secondary text-[11px]">Q3 Audit Services</div>
+</td>
+<td class="py-2 px-3">Michael Chen</td>
+<td class="py-2 px-3">Finance</td>
+<td class="py-2 px-3">Raw Material</td>
+<td class="py-2 px-3 text-secondary">Oct 15, 2024</td>
+<td class="py-2 px-3">
+<span class="inline-flex items-center gap-1 text-[#b45309] bg-[#fef3c7] px-1.5 py-0.5 rounded text-[11px] font-medium border border-[#f59e0b]/30">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                                            14 days
+                                        </span>
+</td>
+<td class="py-2 px-3">
+<div class="flex items-center gap-1">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-2 h-2 rounded-full bg-primary-container ring-2 ring-primary/20"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+</td>
+<td class="py-2 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary font-label-sm hover:underline">Review</button>
+</td>
+</tr>
+<!-- Row 4 (Awaiting Clarification) -->
+<tr class="hover:bg-surface-container-lowest transition-colors group bg-surface-container-low text-on-surface-variant">
+<td class="py-2 px-3 border-l-2 border-outline-variant">
+<div class="flex items-center gap-2">
+<span class="bg-surface-variant text-tertiary px-1.5 py-0.5 rounded text-[10px] font-medium tracking-wide">AWAITING REPLY</span>
+<div class="font-medium">PDR-2024-065</div>
+</div>
+<div class="text-secondary text-[11px] mt-0.5">Team Offsite Venues</div>
+</td>
+<td class="py-2 px-3">Sarah Ahmed</td>
+<td class="py-2 px-3">HR</td>
+<td class="py-2 px-3">General Items</td>
+<td class="py-2 px-3 text-secondary">Oct 27, 2024</td>
+<td class="py-2 px-3">2 days</td>
+<td class="py-2 px-3">
+<div class="flex items-center gap-1 opacity-60">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-outline"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+</td>
+<td class="py-2 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-secondary font-label-sm hover:underline">View</button>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="py-2 px-3 border-l-2 border-primary">
+<div class="font-medium text-primary">PDR-2024-068</div>
+<div class="text-secondary text-[11px]">Industrial Solvents</div>
+</td>
+<td class="py-2 px-3">David Wilson</td>
+<td class="py-2 px-3">Operations</td>
+<td class="py-2 px-3">Raw Material</td>
+<td class="py-2 px-3 text-secondary">Oct 28, 2024</td>
+<td class="py-2 px-3">1 day</td>
+<td class="py-2 px-3">
+<div class="flex items-center gap-1">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-2 h-2 rounded-full bg-primary-container ring-2 ring-primary/20"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+</td>
+<td class="py-2 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary font-label-sm hover:underline">Review</button>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group border-b-0">
+<td class="py-2 px-3 border-l-2 border-primary">
+<div class="font-medium text-primary">PDR-2024-070</div>
+<div class="text-secondary text-[11px]">Lab Equipment Calibrations</div>
+</td>
+<td class="py-2 px-3">Emily Brown</td>
+<td class="py-2 px-3">R&amp;D</td>
+<td class="py-2 px-3">Raw Material</td>
+<td class="py-2 px-3 text-secondary">Oct 29, 2024</td>
+<td class="py-2 px-3">&lt;1 day</td>
+<td class="py-2 px-3">
+<div class="flex items-center gap-1">
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+<div class="w-2 h-2 rounded-full bg-primary-container ring-2 ring-primary/20"></div>
+<div class="w-1.5 h-1.5 rounded-full bg-surface-variant"></div>
+</div>
+</td>
+<td class="py-2 px-3 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-primary font-label-sm hover:underline">Review</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="bg-surface-container-low border-t border-outline-variant px-md py-sm flex justify-between items-center text-body-sm text-secondary">
+<span>Showing 1-6 of 6 entries</span>
+<div class="flex items-center gap-2">
+<button class="p-1 rounded hover:bg-surface-variant disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-[18px]">chevron_left</span></button>
+<span class="font-medium">1</span>
+<button class="p-1 rounded hover:bg-surface-variant disabled:opacity-50" disabled=""><span class="material-symbols-outlined text-[18px]">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

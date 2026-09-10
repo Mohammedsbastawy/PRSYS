@@ -5,9 +5,16 @@ import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { PageHeader } from "@/components/ui";
 
+interface WF {
+  WFDefinitionID: string;
+  Name: string;
+  Status: string;
+  Steps?: { WFStepID: string; StepName: string; ApproverType: string }[];
+}
+
 export default function WorkflowsPage() {
   const { token } = useAuth();
-  const [wfs, setWfs] = useState<any[]>([]);
+  const [wfs, setWfs] = useState<WF[]>([]);
 
   useEffect(() => {
     if (!token) return;
@@ -27,12 +34,12 @@ export default function WorkflowsPage() {
               <span className="badge bg-blue-100 text-blue-800">{w.Status}</span>
             </div>
             <div className="mt-3 flex items-center gap-2 text-sm">
-              {w.Steps?.map((s: any, i: number) => (
+              {w.Steps?.map((s, i) => (
                 <span key={s.WFStepID} className="flex items-center gap-2">
                   <span className="rounded bg-surface-muted px-2 py-1 text-ink-soft">
                     {i + 1}. {s.StepName} ({s.ApproverType})
                   </span>
-                  {i < w.Steps.length - 1 && <span className="text-ink-faint">→</span>}
+                  {i < w.Steps!.length - 1 && <span className="text-ink-faint">→</span>}
                 </span>
               ))}
             </div>

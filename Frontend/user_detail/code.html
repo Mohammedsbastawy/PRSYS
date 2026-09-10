@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ProcureFlow - Edit User: Sarah Ahmed</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#eeefff",
+                        "inverse-on-surface": "#f0f1f3",
+                        "secondary": "#505f76",
+                        "surface-container": "#edeef0",
+                        "surface-tint": "#0053db",
+                        "error-container": "#ffdad6",
+                        "on-tertiary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "on-tertiary-container": "#edf1f5",
+                        "surface": "#f8f9fb",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-fixed": "#0b1c30",
+                        "outline-variant": "#c3c6d7",
+                        "primary-container": "#2563eb",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "secondary-container": "#d0e1fb",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#b4c5ff",
+                        "surface-container-high": "#e7e8ea",
+                        "tertiary-container": "#696e71",
+                        "tertiary-fixed-dim": "#c3c7cb",
+                        "primary-fixed": "#dbe1ff",
+                        "background": "#f8f9fb",
+                        "on-error": "#ffffff",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-tertiary-fixed": "#171c1f",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f8f9fb",
+                        "on-tertiary-fixed-variant": "#43474b",
+                        "primary": "#004ac6",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-error-container": "#93000a",
+                        "tertiary-fixed": "#dfe3e7",
+                        "on-background": "#191c1e",
+                        "outline": "#737686",
+                        "surface-variant": "#e1e2e4",
+                        "surface-container-highest": "#e1e2e4",
+                        "tertiary": "#515659",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "inverse-surface": "#2e3132",
+                        "surface-container-low": "#f3f4f6",
+                        "on-secondary-container": "#54647a",
+                        "surface-dim": "#d9dadc",
+                        "on-surface-variant": "#434655",
+                        "on-surface": "#191c1e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "lg": "24px",
+                        "sm": "8px",
+                        "margin-mobile": "16px",
+                        "xl": "32px",
+                        "margin-desktop": "32px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "display": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .bg-surface-container-lowest { background-color: theme('colors.surface-container-lowest'); }
+            .bg-surface-container-low { background-color: theme('colors.surface-container-low'); }
+            .text-primary { color: theme('colors.primary'); }
+            .border-outline-variant { border-color: theme('colors.outline-variant'); }
+            .border-primary { border-color: theme('colors.primary'); }
+            .text-on-surface-variant { color: theme('colors.on-surface-variant'); }
+            .bg-surface-container-highest { background-color: theme('colors.surface-container-highest'); }
+        }
+    </style>
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased">
+<!-- TopNavBar -->
+<nav class="bg-surface-container-lowest border-b border-outline-variant docked full-width top-0 w-full">
+<div class="flex justify-between items-center w-full px-margin-desktop h-16 max-w-7xl mx-auto">
+<div class="flex items-center gap-6">
+<span class="text-headline-md font-display font-bold text-primary">ProcureFlow</span>
+<div class="hidden md:flex items-center gap-6 ml-8 h-16 pt-4">
+<a class="text-on-surface-variant font-label-md text-label-md pb-4 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Forms</a>
+<a class="text-on-surface-variant font-label-md text-label-md pb-4 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Workflows</a>
+<a class="text-primary border-b-2 border-primary font-label-md text-label-md pb-4 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Users &amp; Permissions</a>
+<a class="text-on-surface-variant font-label-md text-label-md pb-4 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Reporting</a>
+<a class="text-on-surface-variant font-label-md text-label-md pb-4 hover:text-primary transition-colors duration-200 cursor-pointer active:opacity-80" href="#">Admin</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="pl-8 pr-3 py-1.5 bg-surface rounded text-body-sm border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-48" placeholder="Search..." type="text"/>
+</div>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-[20px]" data-icon="notifications">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-[20px]" data-icon="settings">settings</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high">
+<span class="material-symbols-outlined text-[20px]" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 bg-surface-variant rounded-full flex items-center justify-center border border-outline-variant cursor-pointer ml-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[20px]">person</span>
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content -->
+<main class="max-w-7xl mx-auto px-margin-desktop py-xl">
+<!-- Breadcrumb & Header -->
+<div class="mb-lg">
+<a class="inline-flex items-center gap-2 text-on-surface-variant hover:text-primary font-body-sm text-body-sm transition-colors mb-6 group" href="#">
+<span class="material-symbols-outlined text-[16px] group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                Back to Users
+            </a>
+<div class="flex flex-col md:flex-row md:items-start justify-between gap-6 bg-surface-container-lowest p-6 rounded-lg border border-outline-variant shadow-sm">
+<div class="flex items-start gap-6">
+<div class="w-20 h-20 bg-secondary-container text-on-secondary-container rounded-lg flex items-center justify-center font-display text-display font-bold shrink-0">
+                        SA
+                    </div>
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-1 flex items-center gap-3">
+                            Sarah Ahmed
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-label-sm font-label-sm bg-primary/10 text-primary border border-primary/20">
+                                Microsoft 365
+                            </span>
+</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-2">Procurement Specialist</p>
+<div class="flex items-center gap-4 text-body-sm text-on-surface-variant">
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">mail</span>
+                                s.ahmed@company.com
+                            </span>
+<span class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">schedule</span>
+                                Last active: 2 hours ago
+                            </span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-3 self-start">
+<span class="font-label-md text-label-md text-on-surface-variant">Status</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-11 h-6 bg-surface-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-outline-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary border border-outline-variant"></div>
+<span class="ml-3 font-label-md text-label-md text-on-surface">Active</span>
+</label>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-lg">
+<!-- Left Column: Forms -->
+<div class="lg:col-span-2 space-y-lg">
+<!-- Profile Information Card -->
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-on-surface">Profile Information</h2>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+<div class="space-y-1.5">
+<label class="block font-label-md text-label-md text-on-surface-variant">Full Name</label>
+<input class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10" type="text" value="Sarah Ahmed"/>
+</div>
+<div class="space-y-1.5">
+<label class="block font-label-md text-label-md text-on-surface-variant">Job Title</label>
+<input class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10" type="text" value="Procurement Specialist"/>
+</div>
+<div class="space-y-1.5 md:col-span-2">
+<label class="block font-label-md text-label-md text-on-surface-variant">Email Address</label>
+<div class="relative">
+<input class="w-full px-3 py-2 bg-surface-container border border-outline-variant rounded font-body-md text-on-surface-variant cursor-not-allowed h-10" readonly="" type="email" value="s.ahmed@company.com"/>
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+                                    Synced from M365
+                                </div>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="block font-label-md text-label-md text-on-surface-variant">Phone Number</label>
+<input class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10" type="tel" value="+1 (555) 000-0000"/>
+</div>
+<div class="space-y-1.5">
+<label class="block font-label-md text-label-md text-on-surface-variant">Employee ID</label>
+<input class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10" type="text" value="ID-94210"/>
+</div>
+</div>
+</section>
+<!-- Organization Card -->
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-on-surface">Organization</h2>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="block font-label-md text-label-md text-on-surface-variant">Department</label>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-secondary-container text-on-secondary-container">Dept Manager</span>
+</div>
+<select class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10 appearance-none">
+<option>Procurement</option>
+<option>Finance</option>
+<option>Operations</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="block font-label-md text-label-md text-on-surface-variant">Location</label>
+<select class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10 appearance-none">
+<option>Chicago Office</option>
+<option>New York HQ</option>
+<option>London</option>
+</select>
+</div>
+<div class="space-y-1.5">
+<label class="block font-label-md text-label-md text-on-surface-variant">Manager</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[18px]">search</span>
+<input class="w-full pl-9 pr-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10" type="text" value="John Doe (VP Operations)"/>
+</div>
+</div>
+<div class="space-y-1.5">
+<label class="block font-label-md text-label-md text-on-surface-variant">Cost Center</label>
+<input class="w-full px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-md text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-10" type="text" value="CC-400 (Procurement Ops)"/>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Roles & Access -->
+<div class="space-y-lg">
+<!-- Role & Access Card -->
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-on-surface">System Role</h2>
+</div>
+<div class="p-6 space-y-4">
+<!-- Employee Option -->
+<label class="flex items-start gap-3 p-3 rounded border border-transparent hover:bg-surface-container-low cursor-pointer transition-colors">
+<input class="mt-1 w-4 h-4 text-primary border-outline-variant focus:ring-primary cursor-pointer" name="system_role" type="radio"/>
+<div>
+<span class="block font-label-md text-label-md text-on-surface mb-0.5">Employee</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Self-service access to submit new requests.</span>
+</div>
+</label>
+<!-- Agent Option (Selected) -->
+<label class="flex items-start gap-3 p-3 rounded border-l-2 border-primary bg-primary/5 cursor-pointer">
+<input checked="" class="mt-1 w-4 h-4 text-primary border-outline-variant focus:ring-primary cursor-pointer" name="system_role" type="radio"/>
+<div>
+<span class="block font-label-md text-label-md text-on-surface mb-0.5">Agent</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Workflow participant. Assigned as approver/reviewer/agent.</span>
+</div>
+</label>
+<!-- Admin Option -->
+<label class="flex items-start gap-3 p-3 rounded border border-transparent hover:bg-surface-container-low cursor-pointer transition-colors">
+<input class="mt-1 w-4 h-4 text-primary border-outline-variant focus:ring-primary cursor-pointer" name="system_role" type="radio"/>
+<div>
+<span class="block font-label-md text-label-md text-on-surface mb-0.5">Admin</span>
+<span class="block font-body-sm text-body-sm text-on-surface-variant">Full system configuration and global settings.</span>
+</div>
+</label>
+</div>
+</section>
+<!-- Group Memberships Card -->
+<section class="bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden">
+<div class="px-6 py-4 border-b border-outline-variant bg-surface-container-low">
+<h2 class="font-headline-md text-headline-md text-on-surface">Group Memberships</h2>
+</div>
+<div class="p-6 space-y-6">
+<div class="flex flex-wrap gap-2">
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface font-body-sm text-body-sm border border-outline-variant">
+                                Procurement Agents
+                                <button class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[16px] block">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface font-body-sm text-body-sm border border-outline-variant">
+                                Finance Approvers
+                                <button class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[16px] block">close</span></button>
+</span>
+<span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container text-on-surface font-body-sm text-body-sm border border-outline-variant">
+                                Chicago Operations
+                                <button class="text-on-surface-variant hover:text-error transition-colors"><span class="material-symbols-outlined text-[16px] block">close</span></button>
+</span>
+</div>
+<div class="flex gap-2">
+<input class="flex-1 px-3 py-2 bg-surface-container-lowest border border-outline-variant rounded font-body-sm text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-shadow h-9" placeholder="Search to add to group..." type="text"/>
+<button class="px-4 py-2 bg-surface-container-low border border-outline-variant text-on-surface font-label-md text-label-md rounded hover:bg-surface-container-highest transition-colors h-9">
+                                Add
+                            </button>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Footer Actions -->
+<div class="mt-xl pt-6 border-t border-outline-variant flex flex-col md:flex-row justify-between items-center gap-4">
+<button class="px-4 py-2 border border-error text-error font-label-md text-label-md rounded hover:bg-error/5 transition-colors w-full md:w-auto">
+                Deactivate User
+            </button>
+<div class="flex gap-3 w-full md:w-auto">
+<button class="px-6 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md rounded hover:bg-surface-container-low transition-colors w-full md:w-auto">
+                    Cancel
+                </button>
+<button class="px-6 py-2 bg-primary text-on-primary font-label-md text-label-md rounded hover:bg-primary/90 transition-colors shadow-sm w-full md:w-auto">
+                    Save Changes
+                </button>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low border-t border-outline-variant full-width bottom-0 w-full mt-xl">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-margin-desktop py-4 max-w-7xl mx-auto gap-4">
+<span class="font-display font-bold text-on-surface">ProcureFlow</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">© 2024 ProcureFlow Enterprise. All rights reserved.</span>
+<div class="flex gap-6">
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">System Status</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Documentation</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Support</a>
+</div>
+</div>
+</footer>
+</body></html>

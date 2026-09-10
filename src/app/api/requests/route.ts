@@ -26,6 +26,7 @@ const itemSchema = z.object({
 
 const createSchema = z.object({
   formTemplateId: z.string().min(1),
+  title: z.string().max(200).optional().nullable(),
   priority: z.string().default('MEDIUM'),
   fieldValues: z.array(fieldValueSchema).default([]),
   items: z.array(itemSchema).default([]),
@@ -104,9 +105,13 @@ export async function POST(req: NextRequest) {
     EstimatedPrice: it.estimatedPrice ?? null,
   }))
 
+  const title =
+    data!.title?.trim() || items[0]?.RequestedItemName || tmpl.Name
+
   const request = await prisma.requests.create({
     data: {
       TrackingNumber: tracking,
+      Title: title,
       FormTemplateID: data!.formTemplateId,
       RequesterID: payload.userId,
       Status: 'DRAFT',

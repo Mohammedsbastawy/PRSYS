@@ -1,75 +1,130 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { Icon } from "@/components/ui";
+
+function MicrosoftLogo() {
+  return (
+    <svg height="20" viewBox="0 0 21 21" width="20" xmlns="http://www.w3.org/2000/svg">
+      <rect fill="#f25022" height="9" width="9" x="1" y="1"></rect>
+      <rect fill="#7fba00" height="9" width="9" x="11" y="1"></rect>
+      <rect fill="#00a4ef" height="9" width="9" x="1" y="11"></rect>
+      <rect fill="#ffb900" height="9" width="9" x="11" y="11"></rect>
+    </svg>
+  );
+}
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, token, loading } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState("admin@prsys.local");
-  const [password, setPassword] = useState("Admin@123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [ssoNote, setSsoNote] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  useEffect(() => {
+    if (!loading && token) router.push("/");
+  }, [loading, token, router]);
+
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    setLoading(true);
+    setBusy(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Incorrect username or password");
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-surface">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary text-xl font-bold text-white">
-            P
-          </div>
-          <h1 className="text-2xl font-bold text-ink">PRSYS</h1>
-          <p className="text-sm text-ink-soft">Procurement Request System</p>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-surface p-4 md:p-8">
+      <main className="flex w-full max-w-[440px] flex-col gap-8">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <Icon name="account_balance" filled className="text-5xl text-primary-dark" />
+          <h1 className="text-4xl font-bold tracking-tight text-ink">PRSYS</h1>
+          <p className="text-base text-ink-soft">Procurement Request System</p>
         </div>
-        <form onSubmit={handleSubmit} className="card space-y-4 p-6">
-          {error && (
-            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-danger">
-              {error}
+
+        <div className="card flex flex-col gap-6 p-6 shadow-sm md:p-8">
+          <button
+            type="button"
+            onClick={() => setSsoNote(true)}
+            className="flex h-10 w-full items-center justify-center gap-2 rounded border border-surface-border bg-white px-4 text-sm font-semibold text-ink transition-colors hover:bg-surface"
+          >
+            <MicrosoftLogo />
+            <span>Sign in with Microsoft 365</span>
+          </button>
+          {ssoNote && (
+            <div className="flex items-start gap-2 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+              <Icon name="info" className="mt-0.5 text-[16px]" />
+              <span>
+                Microsoft 365 sign-in isn&apos;t configured for this workspace yet. Please use your
+                local account below.
+              </span>
             </div>
           )}
-          <div>
-            <label className="label">Email</label>
-            <input
-              className="input"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+
+          <div className="relative flex items-center">
+            <div className="flex-grow border-t border-surface-border"></div>
+            <span className="mx-2 flex-shrink-0 text-[11px] font-medium text-ink-soft">
+              or sign in with local account
+            </span>
+            <div className="flex-grow border-t border-surface-border"></div>
           </div>
-          <div>
-            <label className="label">Password</label>
-            <input
-              className="input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn-primary w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
-        </form>
-        <p className="mt-4 text-center text-xs text-ink-faint">
-          Default admin: admin@prsys.local / Admin@123
-        </p>
-      </div>
+
+          <form className="flex flex-col gap-4" onSubmit={submit}>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-ink" htmlFor="email">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                autoComplete="username"
+                className="input h-10"
+                placeholder="you@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-ink" htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                autoComplete="current-password"
+                className="input h-10"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {error && <span className="mt-1 text-xs font-medium text-danger">{error}</span>}
+            </div>
+            <button type="submit" disabled={busy} className="btn-primary mt-1 h-10 w-full">
+              {busy ? "Signing in..." : "Login"}
+            </button>
+          </form>
+        </div>
+
+        <div className="text-center text-xs text-ink-soft">
+          © {new Date().getFullYear()} PRSYS | Need help?{" "}
+          <Link href="/help" className="text-primary-dark hover:underline">
+            Contact IT Support
+          </Link>
+        </div>
+      </main>
     </div>
   );
 }

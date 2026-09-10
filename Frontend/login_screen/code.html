@@ -1,0 +1,164 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Login - PDR Portal</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#434655",
+                        "surface-container-low": "#f3f4f6",
+                        "primary": "#004ac6",
+                        "surface-variant": "#e1e2e4",
+                        "surface-bright": "#f8f9fb",
+                        "on-primary-container": "#eeefff",
+                        "on-secondary": "#ffffff",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#515659",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#737686",
+                        "secondary-fixed": "#d3e4fe",
+                        "background": "#f8f9fb",
+                        "tertiary-container": "#696e71",
+                        "surface-container": "#edeef0",
+                        "on-error": "#ffffff",
+                        "on-surface": "#191c1e",
+                        "primary-fixed": "#dbe1ff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "on-primary-fixed": "#00174b",
+                        "on-secondary-container": "#54647a",
+                        "on-background": "#191c1e",
+                        "outline-variant": "#c3c6d7",
+                        "surface-tint": "#0053db",
+                        "inverse-primary": "#b4c5ff",
+                        "error": "#ba1a1a",
+                        "surface": "#f8f9fb",
+                        "on-tertiary-container": "#edf1f5",
+                        "primary-container": "#2563eb",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed": "#171c1f",
+                        "inverse-surface": "#2e3132",
+                        "on-primary": "#ffffff",
+                        "on-tertiary": "#ffffff",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "secondary": "#505f76",
+                        "surface-container-high": "#e7e8ea",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary-fixed": "#0b1c30",
+                        "tertiary-fixed": "#dfe3e7",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#d0e1fb",
+                        "tertiary-fixed-dim": "#c3c7cb",
+                        "on-tertiary-fixed-variant": "#43474b",
+                        "surface-dim": "#d9dadc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "margin-desktop": "32px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background min-h-screen flex flex-col items-center justify-center font-body-md text-on-surface antialiased p-margin-mobile md:p-margin-desktop">
+<main class="w-full max-w-[440px] flex flex-col gap-xl">
+<div class="text-center flex flex-col items-center gap-sm">
+<span class="material-symbols-outlined text-4xl text-primary" style="font-variation-settings: 'FILL' 1;">account_balance</span>
+<h1 class="font-display text-display text-on-surface">PDR Portal</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Purchase &amp; Disbursement Request</p>
+</div>
+<div class="bg-surface-container-lowest border border-surface-variant rounded-xl p-lg md:p-xl shadow-sm flex flex-col gap-lg">
+<button class="w-full flex items-center justify-center gap-sm bg-surface-container-lowest border border-surface-variant hover:bg-surface-container-low transition-colors py-sm px-md rounded text-on-surface font-label-md text-label-md h-[40px]" id="sso-button" onclick="handleSSOClick()">
+<svg height="20" viewBox="0 0 21 21" width="20" xmlns="http://www.w3.org/2000/svg">
+<rect fill="#f25022" height="9" width="9" x="1" y="1"></rect>
+<rect fill="#7fba00" height="9" width="9" x="11" y="1"></rect>
+<rect fill="#00a4ef" height="9" width="9" x="1" y="11"></rect>
+<rect fill="#ffb900" height="9" width="9" x="11" y="11"></rect>
+</svg>
+<span id="sso-text">Sign in with Microsoft 365</span>
+</button>
+<div class="relative flex py-xs items-center">
+<div class="flex-grow border-t border-surface-variant"></div>
+<span class="flex-shrink-0 mx-sm text-on-surface-variant font-label-sm text-label-sm">or sign in with local account</span>
+<div class="flex-grow border-t border-surface-variant"></div>
+</div>
+<form class="flex flex-col gap-md" onsubmit="handleLocalLogin(event)">
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="username">Username</label>
+<input class="w-full bg-surface-container-lowest border border-surface-variant rounded h-[40px] px-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-shadow" id="username" name="username" placeholder="Enter username" required="" type="text">
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-md text-label-md text-on-surface" for="password">Password</label>
+<input class="w-full bg-surface-container-lowest border border-surface-variant rounded h-[40px] px-sm font-body-md text-body-md text-on-surface focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-shadow" id="password" name="password" placeholder="Enter password" required="" type="password">
+<span class="hidden text-error font-label-sm text-label-sm mt-unit" id="error-message">Incorrect username or password</span>
+</div>
+<button class="w-full bg-primary-container text-on-primary border border-transparent hover:opacity-90 transition-opacity py-sm px-md rounded font-label-md text-label-md h-[40px] mt-sm flex items-center justify-center" type="submit">
+                    Login
+                </button>
+</form>
+</div>
+<div class="text-center font-label-sm text-label-sm text-on-surface-variant">
+            © 2024 PDR Portal | Need help? <a class="text-primary hover:underline" href="#">Contact IT Support</a>
+</div>
+</main>
+<script>
+        function handleSSOClick() {
+            const btn = document.getElementById('sso-button');
+            const txt = document.getElementById('sso-text');
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+            txt.textContent = 'Redirecting to Microsoft...';
+            setTimeout(() => {
+                btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                txt.textContent = 'Sign in with Microsoft 365';
+            }, 2000);
+        }
+
+        function handleLocalLogin(e) {
+            e.preventDefault();
+            const errorMsg = document.getElementById('error-message');
+            errorMsg.classList.remove('hidden');
+        }
+    </script>
+</body></html>

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>PDR System Admin - Settings</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#e7e8ea",
+                        "tertiary-container": "#696e71",
+                        "on-primary-fixed": "#00174b",
+                        "surface-dim": "#d9dadc",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-container": "#edf1f5",
+                        "on-secondary-container": "#54647a",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-primary-container": "#eeefff",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "inverse-on-surface": "#f0f1f3",
+                        "tertiary-fixed": "#dfe3e7",
+                        "secondary": "#505f76",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-container-low": "#f3f4f6",
+                        "on-primary": "#ffffff",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-secondary": "#ffffff",
+                        "surface-bright": "#f8f9fb",
+                        "outline": "#737686",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "on-error": "#ffffff",
+                        "primary-fixed": "#dbe1ff",
+                        "on-tertiary-fixed": "#171c1f",
+                        "secondary-fixed": "#d3e4fe",
+                        "tertiary-fixed-dim": "#c3c7cb",
+                        "outline-variant": "#c3c6d7",
+                        "on-background": "#191c1e",
+                        "on-surface": "#191c1e",
+                        "on-tertiary-fixed-variant": "#43474b",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#0b1c30",
+                        "inverse-primary": "#b4c5ff",
+                        "background": "#f8f9fb",
+                        "primary": "#004ac6",
+                        "on-surface-variant": "#434655",
+                        "inverse-surface": "#2e3132",
+                        "tertiary": "#515659",
+                        "surface": "#f8f9fb",
+                        "surface-tint": "#0053db",
+                        "error": "#ba1a1a",
+                        "surface-container": "#edeef0",
+                        "primary-container": "#2563eb",
+                        "secondary-container": "#d0e1fb",
+                        "surface-variant": "#e1e2e4"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "sm": "8px",
+                        "xl": "32px",
+                        "margin-desktop": "32px",
+                        "xs": "4px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+            font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen">
+<!-- Top Navigation from Shared Components -->
+<nav class="bg-surface-container-lowest dark:bg-inverse-surface border-b border-outline-variant dark:border-outline flex justify-between items-center w-full px-margin-desktop h-16 w-full top-0">
+<div class="flex items-center gap-xl h-full">
+<div class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary mr-lg flex items-center">
+                System Admin
+            </div>
+<!-- Desktop Nav Links -->
+<div class="hidden md:flex h-full items-center gap-lg">
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors flex items-center h-full text-label-md font-label-md px-1" href="#">Forms</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors flex items-center h-full text-label-md font-label-md px-1" href="#">Workflows</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors flex items-center h-full text-label-md font-label-md px-1" href="#">Users &amp; Permissions</a>
+<a class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-inverse-primary transition-colors flex items-center h-full text-label-md font-label-md px-1" href="#">Reporting</a>
+<a class="text-primary dark:text-inverse-primary border-b-2 border-primary dark:border-inverse-primary pb-1 flex items-center h-full text-label-md font-label-md px-1" href="#">Admin/Settings</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="text-secondary hover:text-primary p-1 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-secondary hover:text-primary p-1 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<button class="text-secondary hover:text-primary p-1 rounded-full transition-colors flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-surface-container overflow-hidden ml-2 border border-outline-variant">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate system administrator in a brightly lit modern office setting, facing the camera with a neutral expression. Soft daylight illumination." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGAKq20GNL9DbxhfxyawmbANUfTRrEXbCnGbddr_WMIVw5tqEsdcJxrDdAGwwmB86uhKjKO7Rdel5cyODiApqN7QTAdsEXccotYzjyxNU9E1csOm4zZimotcem3KWH6ZMLaR6lGfQTBVx-5hnbVf-F4t8_ET4rTZkIOcwOCnkH2s8B3A0prB5KjEYkUqXp0MBbDzj5zFAZLQtAdS5BevrKaMq-4TAIQhfBF6xOBMQB49NjCCeKO9Ma"/>
+</div>
+</div>
+</nav>
+<!-- Main Canvas -->
+<main class="max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+<header class="mb-xl flex justify-between items-end">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-sm">System Settings</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage integrations, global configurations, and core system preferences.</p>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-xl">
+<!-- Main Content Area - Grid of Cards -->
+<div class="lg:col-span-12 flex flex-col gap-lg">
+<!-- Card 1: Microsoft 365 -->
+<section class="bg-surface-container-lowest border border-surface-container-highest rounded-lg p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] relative overflow-hidden group">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-primary rounded-l-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-[#f3f2f1] rounded flex items-center justify-center border border-[#edebe9]">
+<span class="material-symbols-outlined text-[#00a4ef]" data-icon="grid_view" data-weight="fill">grid_view</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Microsoft 365 Integration</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Active Directory &amp; Entra ID Sync</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-xs px-2 py-1 rounded bg-[#e8f5e9] text-[#1b5e20] font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#4caf50]"></span> Connected
+                        </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md py-md border-y border-surface-container">
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Tenant ID</span>
+<span class="font-body-md text-body-md text-on-surface font-medium font-mono text-[13px]">macro-egy.onmicrosoft.com</span>
+</div>
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Connected Since</span>
+<span class="font-body-md text-body-md text-on-surface">Jan 12, 2024</span>
+</div>
+</div>
+<div class="py-md">
+<span class="font-label-md text-label-md text-on-surface-variant block mb-sm">Synced Fields</span>
+<div class="flex flex-wrap gap-sm">
+<span class="px-2 py-1 bg-surface-container-low border border-surface-container rounded text-on-surface text-body-sm font-body-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="check">check</span> Name
+                            </span>
+<span class="px-2 py-1 bg-surface-container-low border border-surface-container rounded text-on-surface text-body-sm font-body-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="check">check</span> Email
+                            </span>
+<span class="px-2 py-1 bg-surface-container-low border border-surface-container rounded text-on-surface text-body-sm font-body-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="check">check</span> Department
+                            </span>
+<span class="px-2 py-1 bg-surface-container-low border border-surface-container rounded text-on-surface text-body-sm font-body-sm flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="check">check</span> Manager
+                            </span>
+</div>
+</div>
+<div class="flex items-center justify-between py-md border-t border-surface-container mt-sm">
+<div class="flex items-center gap-sm">
+<!-- Toggle -->
+<button aria-checked="true" class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-primary transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" role="switch" type="button">
+<span aria-hidden="true" class="translate-x-4 pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+</button>
+<span class="font-body-sm text-body-sm text-on-surface">Allow local accounts for employees without M365 email</span>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-between pt-md mt-sm border-t border-surface-container gap-md">
+<div class="flex gap-md">
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md rounded hover:bg-surface-container-low transition-colors">Test Connection</button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md rounded hover:bg-surface-container-low transition-colors">Reconnect</button>
+</div>
+<button class="text-error font-label-md text-label-md hover:underline bg-transparent border-none">Disconnect</button>
+</div>
+</section>
+<!-- Card 2: Oracle Cloud -->
+<section class="bg-surface-container-lowest border border-surface-container-highest rounded-lg p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)] relative group">
+<div class="absolute left-0 top-0 bottom-0 w-[4px] bg-primary rounded-l-lg opacity-0 group-hover:opacity-100 transition-opacity"></div>
+<div class="flex justify-between items-start mb-md">
+<div class="flex items-center gap-md">
+<div class="w-10 h-10 bg-[#fff3e0] rounded flex items-center justify-center border border-[#ffe0b2]">
+<span class="material-symbols-outlined text-[#e65100]" data-icon="database" data-weight="fill">database</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Oracle Fusion Cloud SCM Integration</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Supply Chain Data Synchronization</p>
+</div>
+</div>
+<span class="inline-flex items-center gap-xs px-2 py-1 rounded bg-[#e8f5e9] text-[#1b5e20] font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-[#4caf50]"></span> Connected
+                        </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md py-md border-y border-surface-container">
+<div class="flex flex-col gap-xs">
+<span class="font-label-sm text-label-sm text-on-surface-variant">API Endpoint</span>
+<span class="font-body-md text-body-md text-on-surface font-medium font-mono text-[13px] text-ellipsis overflow-hidden whitespace-nowrap" title="https://••••••.fa.ocs.oraclecloud.com/fscmRestApi/resources/11.13.18.05">https://••••••.fa.ocs.oraclecloud.com/...</span>
+</div>
+<div class="flex flex-col gap-xs">
+<label class="font-label-sm text-label-sm text-on-surface-variant" for="syncFreq">Sync Frequency</label>
+<select class="block w-full rounded-md border-outline-variant py-1.5 text-on-surface shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 text-body-sm sm:max-w-xs h-8" id="syncFreq">
+<option>Every 15 minutes</option>
+<option>Every 30 minutes</option>
+<option selected="">Every 1 hour</option>
+<option>Every 4 hours</option>
+<option>Daily</option>
+</select>
+</div>
+</div>
+<div class="py-md flex items-center gap-xl">
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Last Sync</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="schedule">schedule</span> 2 hours ago
+                            </span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface-variant">Items Updated</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-xs">
+<span class="material-symbols-outlined text-[16px] text-secondary" data-icon="sync_alt">sync_alt</span> 4,382
+                            </span>
+</div>
+</div>
+<div class="flex flex-wrap items-center justify-start pt-md mt-sm border-t border-surface-container gap-md">
+<button class="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded hover:bg-on-primary-fixed-variant transition-colors border border-transparent shadow-sm">Sync Now</button>
+<button class="px-4 py-2 bg-surface-container-lowest border border-outline-variant text-on-surface font-label-md text-label-md rounded hover:bg-surface-container-low transition-colors">Test Connection</button>
+</div>
+</section>
+<!-- Card 3: General Settings -->
+<section class="bg-surface-container-lowest border border-surface-container-highest rounded-lg p-lg shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+<div class="flex items-center gap-md mb-lg border-b border-surface-container pb-md">
+<div class="w-10 h-10 bg-surface-container-low rounded flex items-center justify-center border border-surface-container-highest">
+<span class="material-symbols-outlined text-secondary" data-icon="tune">tune</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">General Settings</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">Core application preferences</p>
+</div>
+</div>
+<form class="space-y-md max-w-2xl">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md items-center">
+<label class="font-label-md text-label-md text-on-surface md:text-right" for="systemName">System Name</label>
+<div class="md:col-span-2">
+<input class="block w-full rounded border-outline-variant shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-10 text-body-md" id="systemName" type="text" value="MACRO GROUP Pharmaceuticals"/>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md items-center">
+<label class="font-label-md text-label-md text-on-surface md:text-right" for="defaultLang">Default Language</label>
+<div class="md:col-span-2">
+<select class="block w-full rounded border-outline-variant shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-10 text-body-md" id="defaultLang">
+<option selected="">English (US)</option>
+<option>Arabic (Egypt)</option>
+<option>French</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md items-center">
+<label class="font-label-md text-label-md text-on-surface md:text-right" for="timeZone">Time Zone</label>
+<div class="md:col-span-2">
+<select class="block w-full rounded border-outline-variant shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-10 text-body-md" id="timeZone">
+<option>UTC+1 (Central European Time)</option>
+<option selected="">UTC+2 (Eastern European Time)</option>
+<option>UTC+3 (Arabia Standard Time)</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-md items-center pt-md border-t border-surface-container mt-lg">
+<div class="md:col-start-2 md:col-span-2">
+<button class="px-4 py-2 bg-primary text-on-primary font-label-md text-label-md rounded hover:bg-on-primary-fixed-variant transition-colors border border-transparent shadow-sm" type="button">Save Changes</button>
+</div>
+</div>
+</form>
+</section>
+</div>
+</div>
+</main>
+</body></html>

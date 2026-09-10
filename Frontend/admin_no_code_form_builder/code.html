@@ -1,0 +1,451 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Admin No-Code Form Builder - ProcureFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-error-container": "#93000a",
+                        "tertiary-container": "#696e71",
+                        "on-tertiary-container": "#edf1f5",
+                        "primary-fixed": "#dbe1ff",
+                        "on-secondary-container": "#54647a",
+                        "primary": "#004ac6",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed": "#0b1c30",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "on-tertiary-fixed-variant": "#43474b",
+                        "on-surface-variant": "#434655",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "inverse-surface": "#2e3132",
+                        "background": "#f8f9fb",
+                        "inverse-primary": "#b4c5ff",
+                        "surface-container-high": "#e7e8ea",
+                        "error": "#ba1a1a",
+                        "tertiary": "#515659",
+                        "secondary": "#505f76",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#dfe3e7",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "primary-container": "#2563eb",
+                        "on-background": "#191c1e",
+                        "surface-tint": "#0053db",
+                        "inverse-on-surface": "#f0f1f3",
+                        "outline-variant": "#c3c6d7",
+                        "outline": "#737686",
+                        "surface-container": "#edeef0",
+                        "surface-container-low": "#f3f4f6",
+                        "on-primary": "#ffffff",
+                        "on-primary-fixed": "#00174b",
+                        "surface-bright": "#f8f9fb",
+                        "secondary-container": "#d0e1fb",
+                        "surface-dim": "#d9dadc",
+                        "on-primary-container": "#eeefff",
+                        "on-tertiary-fixed": "#171c1f",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#c3c7cb",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "surface": "#f8f9fb",
+                        "secondary-fixed": "#d3e4fe"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "xs": "4px",
+                        "gutter": "16px",
+                        "margin-desktop": "32px",
+                        "xl": "32px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "lg": "24px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "body-md": ["Inter"],
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f9fb; }
+        .h-builder-calc { height: calc(100vh - 64px - 56px); } /* 100vh - TopNav - Toolbar */
+        
+        /* Drag handle dots pattern */
+        .drag-dots {
+            background-image: radial-gradient(#a3a3a3 1px, transparent 1px);
+            background-size: 4px 4px;
+        }
+        
+        /* Custom scrollbar for builder columns */
+        .builder-scroll::-webkit-scrollbar { width: 6px; }
+        .builder-scroll::-webkit-scrollbar-track { background: transparent; }
+        .builder-scroll::-webkit-scrollbar-thumb { background: #d9dadc; border-radius: 4px; }
+        .builder-scroll:hover::-webkit-scrollbar-thumb { background: #c3c6d7; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar (Shared Component) -->
+<header class="bg-surface dark:bg-surface border-b border-outline-variant dark:border-outline flex justify-between items-center w-full px-margin-desktop h-16 shrink-0 z-50">
+<div class="flex items-center gap-xl h-full">
+<div class="flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed-dim" data-icon="hub" data-weight="fill" style="font-variation-settings: 'FILL' 1;">hub</span>
+<span class="text-headline-md font-headline-md text-primary dark:text-primary-fixed">ProcureFlow</span>
+</div>
+<nav class="hidden md:flex h-full items-center gap-lg">
+<a class="h-full flex items-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80" href="#">
+<span class="font-body-md text-body-md">Dashboard</span>
+</a>
+<a class="h-full flex items-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80" href="#">
+<span class="font-body-md text-body-md">My Queue</span>
+</a>
+<a class="h-full flex items-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80" href="#">
+<span class="font-body-md text-body-md">Approval History</span>
+</a>
+<a class="h-full flex items-center text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80" href="#">
+<span class="font-body-md text-body-md">Reporting</span>
+</a>
+<a class="h-full flex items-center text-primary dark:text-primary-fixed-dim font-bold border-b-2 border-primary dark:border-primary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors cursor-pointer active:opacity-80 relative pt-1" href="#">
+<span class="font-body-md text-body-md">Admin</span>
+</a>
+</nav>
+</div>
+<div class="flex items-center gap-md">
+<!-- Search placeholder (on_left config, but placing right for cleaner header) -->
+<div class="hidden lg:flex relative items-center mr-md">
+<span class="material-symbols-outlined absolute left-sm text-outline" data-icon="search">search</span>
+<input class="bg-surface-container-lowest border border-outline-variant rounded-full pl-xl pr-md py-sm text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none w-48 transition-all focus:w-64" placeholder="Search..." type="text">
+</div>
+<button class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<button class="text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-low mr-sm">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+<div class="w-8 h-8 rounded-full bg-secondary-container overflow-hidden border border-outline-variant cursor-pointer">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A hyper-realistic, professional corporate headshot of a business user in a modern office environment. Soft, diffuse lighting, light mode aesthetic, crisp focus, neutral background, suitable for a UI avatar placeholder. Professional attire, subtle smile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDN4NwisxowMDiTTuxNaEc9W2oLPyH5lYTGXXzWPkD-GwC4upkQ8RA-zK0DrQ8YlB9IYSVv5zc4K7jrZYnDI2Dx656De5fVIIAdrdZyT3tbOKAGtFdw_ZS6N7X7fIKwbO8Wl8DHNfOGyniWtHjhN50xhHHw-bFtKDdPCSrKC3NvNszj6cUUz4oUkxu4vqXxHLwRR_Eyc5kWBKqaIr27YrrV_yD12iTjtb3vGAptkYs9IVSy79-IkYVU">
+</div>
+</div>
+</header>
+<!-- Builder Toolbar -->
+<div class="bg-surface-container-lowest border-b border-outline-variant h-[56px] px-margin-desktop flex items-center justify-between shrink-0 z-40 shadow-sm relative">
+<div class="flex items-center gap-md">
+<button class="w-8 h-8 flex items-center justify-center rounded hover:bg-surface-container-low text-secondary transition-colors" title="Back to Forms">
+<span class="material-symbols-outlined text-[20px]" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="h-4 w-px bg-outline-variant"></div>
+<div class="flex items-center gap-xs cursor-pointer group">
+<h1 class="font-headline-md text-headline-md text-on-surface group-hover:text-primary transition-colors">Edit Form: Raw Material Request</h1>
+<span class="material-symbols-outlined text-outline group-hover:text-primary text-[16px] opacity-0 group-hover:opacity-100 transition-opacity" data-icon="edit">edit</span>
+</div>
+<span class="bg-surface-container border border-outline-variant px-sm py-[2px] rounded font-label-sm text-label-sm text-secondary ml-sm">Draft</span>
+</div>
+<div class="flex items-center gap-md">
+<button class="px-md py-sm bg-surface-container-lowest border border-outline-variant text-on-surface rounded font-label-md text-label-md hover:bg-surface-container-low transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]" data-icon="visibility">visibility</span>
+                Preview
+            </button>
+<button class="px-md py-sm bg-primary-container text-on-primary rounded font-label-md text-label-md hover:bg-primary transition-colors flex items-center gap-xs shadow-sm">
+<span class="material-symbols-outlined text-[18px]" data-icon="save">save</span>
+                Save Changes
+            </button>
+</div>
+</div>
+<!-- Main Builder Workspace -->
+<div class="flex flex-1 overflow-hidden bg-background">
+<!-- Left Column: Field Palette -->
+<aside class="w-[280px] bg-surface-container-lowest border-r border-outline-variant flex flex-col shrink-0">
+<div class="p-md border-b border-outline-variant">
+<h2 class="font-label-md text-label-md text-on-surface uppercase tracking-wider text-secondary">Field Types</h2>
+</div>
+<div class="flex-1 overflow-y-auto p-md space-y-md builder-scroll">
+<!-- Category: Basic -->
+<div>
+<h3 class="font-label-sm text-label-sm text-outline mb-sm ml-xs">Basic Input</h3>
+<div class="grid grid-cols-2 gap-sm">
+<!-- Draggable Block -->
+<div class="bg-surface border border-outline-variant rounded p-sm flex flex-col items-center justify-center gap-xs cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="short_text">short_text</span>
+<span class="font-body-sm text-label-sm text-center">Text Input</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded p-sm flex flex-col items-center justify-center gap-xs cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="notes">notes</span>
+<span class="font-body-sm text-label-sm text-center">Textarea</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded p-sm flex flex-col items-center justify-center gap-xs cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="123">123</span>
+<span class="font-body-sm text-label-sm text-center">Number</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded p-sm flex flex-col items-center justify-center gap-xs cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="calendar_month">calendar_month</span>
+<span class="font-body-sm text-label-sm text-center">Date Picker</span>
+</div>
+</div>
+</div>
+<!-- Category: Selection -->
+<div>
+<h3 class="font-label-sm text-label-sm text-outline mb-sm ml-xs">Selection</h3>
+<div class="grid grid-cols-2 gap-sm">
+<div class="bg-surface border border-outline-variant rounded p-sm flex flex-col items-center justify-center gap-xs cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="arrow_drop_down_circle">arrow_drop_down_circle</span>
+<span class="font-body-sm text-label-sm text-center">Dropdown</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded p-sm flex flex-col items-center justify-center gap-xs cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="check_box">check_box</span>
+<span class="font-body-sm text-label-sm text-center">Checkbox</span>
+</div>
+</div>
+</div>
+<!-- Category: Advanced -->
+<div>
+<h3 class="font-label-sm text-label-sm text-outline mb-sm ml-xs">Advanced Data</h3>
+<div class="grid grid-cols-1 gap-sm">
+<div class="bg-surface border border-outline-variant rounded p-sm flex items-center gap-sm cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="database">database</span>
+<span class="font-body-sm text-body-sm flex-1">Item Picker (Oracle)</span>
+<span class="material-symbols-outlined text-outline text-[16px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="bg-surface border border-outline-variant rounded p-sm flex items-center gap-sm cursor-grab hover:border-primary hover:shadow-sm transition-all hover:bg-surface-container-lowest group">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" data-icon="upload_file">upload_file</span>
+<span class="font-body-sm text-body-sm flex-1">File Attachment</span>
+<span class="material-symbols-outlined text-outline text-[16px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Center Column: Canvas -->
+<main class="flex-1 overflow-y-auto p-xl builder-scroll relative flex justify-center">
+<!-- The Form Paper -->
+<div class="bg-surface-container-lowest border border-outline-variant shadow-sm w-full max-w-[720px] rounded-lg min-h-full pb-xl flex flex-col">
+<!-- Form Header -->
+<div class="p-lg border-b border-outline-variant border-dashed group relative hover:bg-surface-container-low transition-colors rounded-t-lg">
+<div class="absolute inset-0 border-2 border-transparent group-hover:border-primary/20 rounded-t-lg pointer-events-none transition-colors"></div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Raw Material Request</h2>
+<p class="font-body-sm text-body-sm text-secondary">Request new raw materials for procurement from the authorized vendor catalog.</p>
+</div>
+<!-- Canvas Drop Zone -->
+<div class="p-lg flex flex-col gap-md flex-1">
+<!-- Field: Department (Standard unselected state) -->
+<div class="border border-transparent hover:border-outline-variant p-md rounded group relative transition-colors">
+<div class="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab px-1 text-outline hover:text-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="pl-md">
+<label class="block font-label-md text-label-md text-on-surface mb-xs">Department / Cost Center <span class="text-error">*</span></label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-sm text-body-md text-secondary appearance-none opacity-80 cursor-not-allowed" disabled="">
+<option>Select department...</option>
+</select>
+<span class="material-symbols-outlined absolute right-sm top-1/2 -translate-y-1/2 text-outline pointer-events-none" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Field: Required Date (Standard unselected state) -->
+<div class="border border-transparent hover:border-outline-variant p-md rounded group relative transition-colors">
+<div class="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab px-1 text-outline hover:text-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="pl-md">
+<label class="block font-label-md text-label-md text-on-surface mb-xs">Required By Date <span class="text-error">*</span></label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-sm text-body-md text-secondary opacity-80 cursor-not-allowed pl-10" disabled="" placeholder="YYYY-MM-DD" type="text">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[20px]" data-icon="calendar_today">calendar_today</span>
+</div>
+</div>
+</div>
+<!-- ACTIVE SELECTED FIELD: Item Picker (Oracle) -->
+<div class="border-2 border-primary bg-primary-fixed/20 p-md rounded relative ring-4 ring-primary/10 transition-all shadow-sm">
+<!-- Active Controls -->
+<div class="absolute -top-[14px] left-md bg-primary text-on-primary text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-t">
+                            Item Picker (Oracle)
+                        </div>
+<div class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 bg-surface-container-lowest border border-outline-variant rounded-full p-1 cursor-grab shadow-sm text-outline hover:text-primary hover:border-primary z-10 bg-white">
+<span class="material-symbols-outlined text-[16px] block" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="absolute right-sm top-sm flex items-center gap-xs bg-surface-container-lowest border border-outline-variant rounded p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:opacity-100" style="opacity: 1;"> <!-- Forced opacity for demo -->
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-surface-container-low text-secondary" title="Duplicate">
+<span class="material-symbols-outlined text-[16px]" data-icon="content_copy">content_copy</span>
+</button>
+<button class="w-6 h-6 flex items-center justify-center rounded hover:bg-error-container hover:text-error text-secondary transition-colors" title="Delete">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span>
+</button>
+</div>
+<!-- Field Preview -->
+<div class="pl-sm pr-xl mt-xs pointer-events-none"> <!-- Pointer events none so it feels like a canvas object -->
+<label class="block font-label-md text-label-md text-on-surface mb-xs flex items-center gap-xs">
+                                Select Material <span class="text-error">*</span>
+<span class="material-symbols-outlined text-outline text-[14px]" data-icon="info">info</span>
+</label>
+<div class="font-body-sm text-label-sm text-secondary mb-sm">Search the Oracle catalog for raw materials...</div>
+<div class="relative">
+<div class="w-full bg-surface-container-lowest border border-primary/50 rounded px-sm py-sm text-body-md text-outline flex items-center gap-sm">
+<span class="material-symbols-outlined text-outline text-[20px]" data-icon="search">search</span>
+<span>Search by name or code...</span>
+</div>
+<div class="absolute right-xs top-1/2 -translate-y-1/2 bg-surface-container px-2 py-1 rounded text-[10px] font-bold text-secondary tracking-wide border border-outline-variant">
+                                    ORACLE DB
+                                </div>
+</div>
+</div>
+</div>
+<!-- Field: Quantity & Unit -->
+<div class="border border-transparent hover:border-outline-variant p-md rounded group relative transition-colors">
+<div class="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab px-1 text-outline hover:text-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="pl-md flex gap-md">
+<div class="flex-1">
+<label class="block font-label-md text-label-md text-on-surface mb-xs">Quantity <span class="text-error">*</span></label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-sm text-body-md text-secondary opacity-80 cursor-not-allowed" disabled="" placeholder="0" type="number">
+</div>
+<div class="flex-1">
+<label class="block font-label-md text-label-md text-on-surface mb-xs">Unit of Measure</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-sm text-body-md text-secondary appearance-none opacity-80 cursor-not-allowed" disabled="">
+<option>Auto-populated</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Field: Justification -->
+<div class="border border-transparent hover:border-outline-variant p-md rounded group relative transition-colors">
+<div class="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 cursor-grab px-1 text-outline hover:text-primary">
+<span class="material-symbols-outlined text-[16px]" data-icon="drag_indicator">drag_indicator</span>
+</div>
+<div class="pl-md">
+<label class="block font-label-md text-label-md text-on-surface mb-xs">Justification</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-sm text-body-md text-secondary opacity-80 cursor-not-allowed" disabled="" placeholder="Explain the need for this request..." rows="3"></textarea>
+</div>
+</div>
+<!-- Add Field Dropzone Placeholder -->
+<div class="border-2 border-dashed border-outline-variant rounded p-lg flex flex-col items-center justify-center gap-sm text-secondary hover:border-primary hover:text-primary hover:bg-surface-container-lowest transition-all cursor-pointer mt-md">
+<span class="material-symbols-outlined text-[24px]" data-icon="add_circle">add_circle</span>
+<span class="font-body-md text-body-md">Drag &amp; Drop fields here</span>
+</div>
+</div>
+</div>
+</main>
+<!-- Right Column: Properties Inspector -->
+<aside class="w-[320px] bg-surface-container-lowest border-l border-outline-variant flex flex-col shrink-0 z-10 shadow-[-4px_0_12px_rgba(0,0,0,0.02)]">
+<!-- Inspector Tabs -->
+<div class="flex border-b border-outline-variant px-sm pt-sm bg-surface">
+<button class="flex-1 pb-sm border-b-2 border-primary text-primary font-label-md text-label-md text-center transition-colors">
+                    Field Settings
+                </button>
+<button class="flex-1 pb-sm border-b-2 border-transparent text-secondary hover:text-on-surface font-label-md text-label-md text-center transition-colors">
+                    Form Settings
+                </button>
+</div>
+<!-- Inspector Content (Field Settings active) -->
+<div class="flex-1 overflow-y-auto p-md space-y-lg builder-scroll">
+<!-- Field Identifier Header -->
+<div class="flex items-start gap-sm pb-md border-b border-outline-variant">
+<div class="w-10 h-10 rounded bg-primary-fixed flex items-center justify-center text-on-primary-fixed-variant shrink-0 mt-1">
+<span class="material-symbols-outlined" data-icon="database">database</span>
+</div>
+<div>
+<h3 class="font-headline-md text-body-lg text-on-surface">Item Picker</h3>
+<p class="font-body-sm text-label-sm text-secondary font-mono text-[10px] mt-1">ID: fld_oracle_item_3a2b</p>
+</div>
+</div>
+<!-- Properties Form -->
+<div class="space-y-md">
+<!-- Property: Label -->
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-1">Field Label</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-1.5 text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Select Material">
+</div>
+<!-- Property: Required Toggle -->
+<div class="flex items-center justify-between py-1">
+<label class="font-label-sm text-label-sm text-on-surface cursor-pointer">Required Field</label>
+<!-- Custom Toggle Switch Active -->
+<div class="w-9 h-5 bg-primary rounded-full relative cursor-pointer transition-colors shadow-inner">
+<div class="w-4 h-4 bg-white rounded-full absolute top-0.5 right-0.5 shadow-sm transition-transform"></div>
+</div>
+</div>
+<!-- Property: Help Text -->
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-1 flex justify-between">
+                            Help Text
+                            <span class="text-outline font-normal text-[10px]">Optional</span>
+</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-1.5 text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none" rows="3">Search the Oracle catalog for raw materials...</textarea>
+</div>
+<div class="h-px bg-outline-variant w-full my-sm"></div>
+<!-- Data Source Specific Settings -->
+<div>
+<h4 class="font-label-md text-label-sm text-on-surface uppercase tracking-wide text-secondary mb-md">Integration Settings</h4>
+<!-- Property: Data Source -->
+<div class="mb-md">
+<label class="block font-label-sm text-label-sm text-on-surface mb-1">Data Source Connector</label>
+<div class="relative">
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-1.5 text-body-sm text-on-surface appearance-none focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+<option selected="" value="oracle_catalog">Oracle Item Catalog</option>
+<option value="sap_materials">SAP Material Master</option>
+<option value="custom_api">Custom REST API</option>
+</select>
+<span class="material-symbols-outlined absolute right-sm top-1/2 -translate-y-1/2 text-outline pointer-events-none text-[16px]" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+<!-- Property: Data Filter -->
+<div class="mb-md">
+<label class="block font-label-sm text-label-sm text-on-surface mb-1">Catalog Filter (SQL/JSON)</label>
+<div class="relative font-mono">
+<textarea class="w-full bg-inverse-surface text-inverse-on-surface border border-outline rounded px-sm py-1.5 text-[11px] focus:border-primary outline-none transition-colors resize-none" rows="2">{"category": "RAW_MAT", "status": "ACTIVE"}</textarea>
+</div>
+</div>
+<!-- Property: Placeholder -->
+<div>
+<label class="block font-label-sm text-label-sm text-on-surface mb-1">Search Placeholder</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded px-sm py-1.5 text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" type="text" value="Search by name or code...">
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions at bottom of inspector -->
+<div class="p-md border-t border-outline-variant bg-surface-container flex gap-sm">
+<button class="flex-1 py-1.5 border border-outline-variant rounded bg-surface-container-lowest text-error font-label-sm hover:bg-error-container transition-colors flex items-center justify-center gap-xs">
+<span class="material-symbols-outlined text-[16px]" data-icon="delete">delete</span>
+                    Remove
+                </button>
+</div>
+</aside>
+</div>
+</body></html>

@@ -5,9 +5,16 @@ import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { PageHeader } from "@/components/ui";
 
+interface GroupRow {
+  id: string;
+  name: string;
+  description?: string | null;
+  members?: { UserID: string }[];
+}
+
 export default function GroupsPage() {
   const { token } = useAuth();
-  const [groups, setGroups] = useState<any[]>([]);
+  const [groups, setGroups] = useState<GroupRow[]>([]);
 
   useEffect(() => {
     if (!token) return;

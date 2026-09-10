@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ProcureFlow - Departments</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary-fixed-variant": "#003ea8",
+                    "surface-container-low": "#f3f4f6",
+                    "surface": "#f8f9fb",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-container": "#54647a",
+                    "on-tertiary-fixed-variant": "#43474b",
+                    "surface-container-lowest": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#00174b",
+                    "inverse-on-surface": "#f0f1f3",
+                    "secondary": "#505f76",
+                    "on-background": "#191c1e",
+                    "outline-variant": "#c3c6d7",
+                    "on-secondary-fixed": "#0b1c30",
+                    "on-surface": "#191c1e",
+                    "primary-container": "#2563eb",
+                    "secondary-fixed-dim": "#b7c8e1",
+                    "inverse-primary": "#b4c5ff",
+                    "tertiary-fixed": "#dfe3e7",
+                    "background": "#f8f9fb",
+                    "inverse-surface": "#2e3132",
+                    "on-tertiary-fixed": "#171c1f",
+                    "primary-fixed-dim": "#b4c5ff",
+                    "tertiary-fixed-dim": "#c3c7cb",
+                    "on-surface-variant": "#434655",
+                    "secondary-fixed": "#d3e4fe",
+                    "on-error": "#ffffff",
+                    "primary": "#004ac6",
+                    "surface-dim": "#d9dadc",
+                    "surface-container": "#edeef0",
+                    "on-tertiary-container": "#edf1f5",
+                    "primary-fixed": "#dbe1ff",
+                    "on-primary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "surface-container-high": "#e7e8ea",
+                    "surface-bright": "#f8f9fb",
+                    "error": "#ba1a1a",
+                    "surface-tint": "#0053db",
+                    "on-secondary-fixed-variant": "#38485d",
+                    "outline": "#737686",
+                    "secondary-container": "#d0e1fb",
+                    "on-tertiary": "#ffffff",
+                    "surface-variant": "#e1e2e4",
+                    "tertiary-container": "#696e71",
+                    "on-primary-container": "#eeefff",
+                    "surface-container-highest": "#e1e2e4",
+                    "tertiary": "#515659"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "margin-mobile": "16px",
+                    "unit": "4px",
+                    "gutter": "16px",
+                    "margin-desktop": "32px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "sm": "8px",
+                    "md": "16px",
+                    "xs": "4px"
+            },
+            "fontFamily": {
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "display": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "body-sm": ["Inter"],
+                    "body-md": ["Inter"]
+            },
+            "fontSize": {
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                    "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased min-h-screen flex flex-col">
+<!-- TopNavBar Component -->
+<nav class="flex items-center justify-between px-margin-desktop w-full h-14 bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline font-body-md text-body-md sticky top-0 z-50">
+<div class="flex items-center gap-xl h-full">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-inverse-primary cursor-pointer active:opacity-80">EnterpriseAdmin</span>
+<div class="hidden md:flex h-full gap-lg">
+<div class="flex items-center h-full cursor-pointer active:opacity-80 hover:bg-surface-container-low transition-colors text-secondary">
+<span>Forms</span>
+</div>
+<div class="flex items-center h-full cursor-pointer active:opacity-80 hover:bg-surface-container-low transition-colors text-secondary">
+<span>Workflows</span>
+</div>
+<div class="flex items-center h-full cursor-pointer active:opacity-80 hover:bg-surface-container-low transition-colors text-primary border-b-2 border-primary pb-1 font-bold">
+<span>Users &amp; Permissions</span>
+</div>
+<div class="flex items-center h-full cursor-pointer active:opacity-80 hover:bg-surface-container-low transition-colors text-secondary">
+<span>Reporting</span>
+</div>
+<div class="flex items-center h-full cursor-pointer active:opacity-80 hover:bg-surface-container-low transition-colors text-secondary">
+<span>Admin</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<button class="font-label-md text-label-md text-primary hover:bg-primary-container/10 px-md py-sm rounded-DEFAULT transition-colors">
+                Create New
+            </button>
+<div class="flex items-center gap-sm text-secondary">
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container-low p-sm rounded-full transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container-low p-sm rounded-full transition-colors" data-icon="help">help</span>
+<span class="material-symbols-outlined cursor-pointer hover:bg-surface-container-low p-sm rounded-full transition-colors" data-icon="settings">settings</span>
+</div>
+<div class="w-8 h-8 rounded-full bg-secondary-container overflow-hidden cursor-pointer border border-outline-variant">
+<img alt="Admin User Profile" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate admin user in a modern office setting. Light neutral background, soft professional lighting, clear facial features, corporate attire. High-quality corporate portrait photography." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQFMUSjQq3SzdceHmmxiJoOVdApSFR7E0M6QKbRwYqUn9tbExP8nK0crRMvem6OlRPiWOXGIC-vycrrpJxQ5b8wpY4XNpwDFFsltbAHvH_Q5NswblLw1LkHaJWnvg0BNztg9rwHFiDLNIPJSJiFUlksGX7-RFHXxn6iW2NfC8BSeAb0r66bit_T6fygp-tkt34QRXA5sIjeC3ARNbM7-XwwGDXWpucUD_22TI4QjmMtzQuwKuk5mMX"/>
+</div>
+</div>
+</nav>
+<!-- Sub Navigation -->
+<div class="w-full bg-surface-container-lowest border-b border-outline-variant px-margin-desktop">
+<div class="max-w-[1440px] mx-auto flex gap-lg font-body-sm text-body-sm h-12">
+<div class="flex items-center h-full cursor-pointer text-secondary hover:text-primary border-b-2 border-transparent hover:border-outline-variant transition-colors">
+                Users
+            </div>
+<div class="flex items-center h-full cursor-pointer text-primary border-b-2 border-primary font-semibold">
+                Departments
+            </div>
+<div class="flex items-center h-full cursor-pointer text-secondary hover:text-primary border-b-2 border-transparent hover:border-outline-variant transition-colors">
+                Groups
+            </div>
+</div>
+</div>
+<!-- Main Content Area -->
+<main class="flex-1 w-full max-w-[1440px] mx-auto px-margin-desktop py-xl">
+<!-- Page Header -->
+<div class="flex justify-between items-end mb-lg">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-xs">Departments</h1>
+<p class="font-body-md text-body-md text-secondary">Define departments, managers, and reporting lines.</p>
+</div>
+<button class="bg-primary hover:bg-on-primary-fixed-variant text-white font-label-md text-label-md px-md py-sm rounded-DEFAULT transition-colors flex items-center gap-xs shadow-sm">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                Add Department
+            </button>
+</div>
+<!-- Data Table Surface -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-lg overflow-hidden shadow-sm">
+<!-- Table Header -->
+<div class="grid grid-cols-[2fr_2fr_1fr_100px] gap-md px-md py-sm bg-surface-container-low border-b border-outline-variant font-label-sm text-label-sm text-secondary uppercase tracking-wider">
+<div class="flex items-center gap-sm">
+                    Department Name
+                    <span class="material-symbols-outlined text-[14px] cursor-pointer" data-icon="arrow_upward">arrow_upward</span>
+</div>
+<div>Manager</div>
+<div>Employees</div>
+<div class="text-right">Actions</div>
+</div>
+<!-- Row 1: Finance -->
+<div class="grid grid-cols-[2fr_2fr_1fr_100px] gap-md px-md py-sm border-b border-surface-variant hover:bg-surface-bright transition-colors items-center group">
+<div class="font-body-sm text-body-sm text-on-surface font-medium flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="chevron_right">chevron_right</span>
+                    Finance
+                </div>
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-secondary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of Michael Chen, an Asian male manager in corporate attire, light grey background, soft studio lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUE6LdUPu4-EdeEANgQXqLwDqK7sNKx9nPU8QMkix1-TjQCrO1uIRYlx8rgOY1PPQ4sh0pMeanD_CaVEboyIPRnn4zgEdOSR9C4K2lkj4ppnNyp182pH-f_xkvH5Qui-fatMmy5JC8z_qzaqhF4_1aqdZftl0fzZkLEAkwl0UuYMJIWIDPhDPr66KlimIYadul-H4HuejT4Ud1fKm5M67eoVbgRIGkNmg2SZkzV04eu6dC2yQCojf9"/>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface">Michael Chen</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary">8</div>
+<div class="text-right flex justify-end gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary hover:text-primary cursor-pointer text-[18px]" data-icon="edit">edit</span>
+<span class="material-symbols-outlined text-secondary hover:text-error cursor-pointer text-[18px]" data-icon="delete">delete</span>
+</div>
+</div>
+<!-- Row 2: Procurement (Expanded) -->
+<div class="flex flex-col border-b border-primary/20 bg-surface-bright">
+<!-- Main Row -->
+<div class="grid grid-cols-[2fr_2fr_1fr_100px] gap-md px-md py-sm items-center border-l-2 border-primary">
+<div class="font-body-sm text-body-sm text-on-surface font-medium flex items-center gap-sm">
+<span class="material-symbols-outlined text-primary text-[20px] rotate-90 transition-transform" data-icon="chevron_right">chevron_right</span>
+                        Procurement
+                    </div>
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-secondary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Professional headshot of Sarah Ahmed, a Middle Eastern female manager in a modern office, wearing a blazer, bright natural lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBz8IQQ7hnOBZQ552oF2x4MKYR-KlyxaAOTbc_6tynO7J012rwBQHtEEDGTPBjta9QO2Ar0SMou_5wX7-__cduQzQoF4I1LsjOTmtYiRrvTzUVx3MYcZGrNKRbug6hcHQVZbU31KS2wT2hmrYDlM5Z2HIjv-SL12V23s0bLTyt4OWzBYppxCaTsb4c-VW9ZbGX74UX8Wio8PX76155LdJpkAhwKEFVOMeDwj02aAM2C250PrDj7IEKX"/>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface">Sarah Ahmed</span>
+<div class="relative group/tooltip flex items-center">
+<span class="material-symbols-outlined text-secondary hover:text-primary text-[14px] cursor-help" data-icon="info">info</span>
+<!-- Tooltip -->
+<div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-xs w-max max-w-[200px] bg-inverse-surface text-inverse-on-surface font-body-sm text-[11px] p-xs rounded shadow-sm opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-10 text-center">
+                                This person receives approval requests routed to "Department Manager" in workflows.
+                            </div>
+</div>
+</div>
+<div class="font-body-sm text-body-sm text-secondary">15</div>
+<div class="text-right flex justify-end gap-sm">
+<span class="material-symbols-outlined text-secondary hover:text-primary cursor-pointer text-[18px]" data-icon="edit">edit</span>
+</div>
+</div>
+<!-- Expanded Content Area -->
+<div class="pl-xl pr-md py-md bg-surface-container-lowest border-t border-surface-variant ml-md">
+<div class="border border-outline-variant rounded-DEFAULT bg-white overflow-hidden shadow-sm">
+<div class="grid grid-cols-[2fr_2fr_1fr_40px] gap-sm px-sm py-xs bg-surface-container-low border-b border-outline-variant font-label-sm text-[10px] text-secondary uppercase tracking-wider">
+<div>Employee</div>
+<div>Email</div>
+<div>Role</div>
+<div></div>
+</div>
+<!-- Employee List -->
+<div class="grid grid-cols-[2fr_2fr_1fr_40px] gap-sm px-sm py-xs border-b border-surface-variant items-center hover:bg-surface-bright group/emp">
+<div class="font-body-sm text-body-sm text-on-surface flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-secondary-container overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Sarah Ahmed small profile photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDaZZCYKITn9QkEbZmuSHNyoVgvSKQxWZdK6UutypJ5yJwtR-N0yGKKrtFY5MONlgJg0p9meeLtXnco4ABdDWJy85gwGjozSns5_HrVcAu1Av5LczyepkLwPccH9G0I6Aalxj_9CH0KPCs-Dje2J2QfiedGpd2MC_NI_N6xVerGhbukCLbKfZvEMgkPdEpoSPBkbibD9o9Q7A8HllKKO_57SOIzM8lN0t3OHxN65nuQaaG3-kx9DZNx"/>
+</div>
+                                Sarah Ahmed
+                            </div>
+<div class="font-body-sm text-[12px] text-secondary">s.ahmed@company.com</div>
+<div class="flex items-center gap-xs">
+<span class="font-body-sm text-[12px] text-on-surface">Procurement Agent</span>
+<span class="bg-primary-container/20 text-primary font-label-sm text-[9px] px-1 py-0.5 rounded uppercase tracking-wide">Manager</span>
+</div>
+<div class="text-right">
+<span class="material-symbols-outlined text-secondary hover:text-error cursor-pointer text-[16px] opacity-0 group-hover/emp:opacity-100 transition-opacity" data-icon="close">close</span>
+</div>
+</div>
+<div class="grid grid-cols-[2fr_2fr_1fr_40px] gap-sm px-sm py-xs border-b border-surface-variant items-center hover:bg-surface-bright group/emp">
+<div class="font-body-sm text-body-sm text-on-surface flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-label-sm text-[10px]">JD</div>
+                                John Doe
+                            </div>
+<div class="font-body-sm text-[12px] text-secondary">j.doe@company.com</div>
+<div class="font-body-sm text-[12px] text-secondary">Employee</div>
+<div class="text-right">
+<span class="material-symbols-outlined text-secondary hover:text-error cursor-pointer text-[16px] opacity-0 group-hover/emp:opacity-100 transition-opacity" data-icon="close">close</span>
+</div>
+</div>
+<div class="grid grid-cols-[2fr_2fr_1fr_40px] gap-sm px-sm py-xs border-b border-surface-variant items-center hover:bg-surface-bright group/emp">
+<div class="font-body-sm text-body-sm text-on-surface flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-label-sm text-[10px]">MJ</div>
+                                Michael Jones
+                            </div>
+<div class="font-body-sm text-[12px] text-secondary">m.jones@company.com</div>
+<div class="font-body-sm text-[12px] text-secondary">Employee</div>
+<div class="text-right">
+<span class="material-symbols-outlined text-secondary hover:text-error cursor-pointer text-[16px] opacity-0 group-hover/emp:opacity-100 transition-opacity" data-icon="close">close</span>
+</div>
+</div>
+<div class="grid grid-cols-[2fr_2fr_1fr_40px] gap-sm px-sm py-xs border-b border-surface-variant items-center hover:bg-surface-bright group/emp">
+<div class="font-body-sm text-body-sm text-on-surface flex items-center gap-sm">
+<div class="w-5 h-5 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-label-sm text-[10px]">LT</div>
+                                Linda Taylor
+                            </div>
+<div class="font-body-sm text-[12px] text-secondary">l.taylor@company.com</div>
+<div class="font-body-sm text-[12px] text-secondary">Employee</div>
+<div class="text-right">
+<span class="material-symbols-outlined text-secondary hover:text-error cursor-pointer text-[16px] opacity-0 group-hover/emp:opacity-100 transition-opacity" data-icon="close">close</span>
+</div>
+</div>
+<!-- Add Employee Row -->
+<div class="px-sm py-xs flex items-center cursor-pointer hover:bg-surface-bright transition-colors text-primary font-label-sm text-[12px]">
+<span class="material-symbols-outlined text-[16px] mr-xs" data-icon="add">add</span>
+                            Add Employee
+                        </div>
+</div>
+</div>
+</div>
+<!-- Row 3: Production -->
+<div class="grid grid-cols-[2fr_2fr_1fr_100px] gap-md px-md py-sm border-b border-surface-variant hover:bg-surface-bright transition-colors items-center group">
+<div class="font-body-sm text-body-sm text-on-surface font-medium flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="chevron_right">chevron_right</span>
+                    Production
+                </div>
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-label-sm text-[10px]">
+                        DW
+                    </div>
+<span class="font-body-sm text-body-sm text-on-surface">David Wilson</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary">42</div>
+<div class="text-right flex justify-end gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary hover:text-primary cursor-pointer text-[18px]" data-icon="edit">edit</span>
+</div>
+</div>
+<!-- Row 4: QA -->
+<div class="grid grid-cols-[2fr_2fr_1fr_100px] gap-md px-md py-sm border-b border-surface-variant hover:bg-surface-bright transition-colors items-center group">
+<div class="font-body-sm text-body-sm text-on-surface font-medium flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="chevron_right">chevron_right</span>
+                    Quality Assurance
+                </div>
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-label-sm text-[10px]">
+                        EB
+                    </div>
+<span class="font-body-sm text-body-sm text-on-surface">Emily Brown</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary">12</div>
+<div class="text-right flex justify-end gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary hover:text-primary cursor-pointer text-[18px]" data-icon="edit">edit</span>
+</div>
+</div>
+<!-- Row 5: IT -->
+<div class="grid grid-cols-[2fr_2fr_1fr_100px] gap-md px-md py-sm border-b border-surface-variant hover:bg-surface-bright transition-colors items-center group">
+<div class="font-body-sm text-body-sm text-on-surface font-medium flex items-center gap-sm">
+<span class="material-symbols-outlined text-secondary text-[20px]" data-icon="chevron_right">chevron_right</span>
+                    IT
+                </div>
+<div class="flex items-center gap-sm">
+<div class="w-6 h-6 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-label-sm text-[10px]">
+                        JS
+                    </div>
+<span class="font-body-sm text-body-sm text-on-surface">Jane Smith</span>
+</div>
+<div class="font-body-sm text-body-sm text-secondary">10</div>
+<div class="text-right flex justify-end gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-secondary hover:text-primary cursor-pointer text-[18px]" data-icon="edit">edit</span>
+</div>
+</div>
+</div>
+</main>
+</body></html>

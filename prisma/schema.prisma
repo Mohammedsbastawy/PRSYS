@@ -225,6 +225,7 @@ model ItemCatalogCache {
 model Requests {
   RequestID          String   @id @default(uuid())
   TrackingNumber     String   @unique
+  Title              String?
   FormTemplateID     String  
   RequesterID        String  
   Status             String   @default("DRAFT")

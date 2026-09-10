@@ -1,0 +1,343 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Request Detail - PharmaFlow PDR</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#f8f9fb",
+                        "primary-container": "#2563eb",
+                        "error": "#ba1a1a",
+                        "surface": "#f8f9fb",
+                        "surface-container-high": "#e7e8ea",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "outline-variant": "#c3c6d7",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-secondary-fixed": "#0b1c30",
+                        "inverse-primary": "#b4c5ff",
+                        "on-primary-fixed": "#00174b",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-container": "#edeef0",
+                        "on-error": "#ffffff",
+                        "primary": "#004ac6",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "outline": "#737686",
+                        "surface-container-low": "#f3f4f6",
+                        "error-container": "#ffdad6",
+                        "on-secondary-container": "#54647a",
+                        "secondary": "#505f76",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-primary-container": "#eeefff",
+                        "tertiary-fixed-dim": "#c3c7cb",
+                        "tertiary-fixed": "#dfe3e7",
+                        "surface-bright": "#f8f9fb",
+                        "on-secondary": "#ffffff",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-dim": "#d9dadc",
+                        "on-tertiary-fixed": "#171c1f",
+                        "inverse-surface": "#2e3132",
+                        "on-background": "#191c1e",
+                        "on-tertiary-container": "#edf1f5",
+                        "tertiary-container": "#696e71",
+                        "tertiary": "#515659",
+                        "on-surface": "#191c1e",
+                        "surface-tint": "#0053db",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#e1e2e4",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#43474b",
+                        "on-surface-variant": "#434655",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#d0e1fb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "margin-desktop": "32px",
+                        "md": "16px",
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "sm": "8px",
+                        "lg": "24px",
+                        "unit": "4px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "display": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background min-h-screen flex flex-col">
+<nav class="bg-surface dark:bg-surface-dim font-body-md text-body-md docked full-width top-0 border-b border-outline-variant z-50">
+<div class="flex justify-between items-center w-full px-xl h-16 max-w-[1440px] mx-auto">
+<div class="flex items-center gap-xl">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">PharmaFlow PDR</span>
+<div class="hidden md:flex gap-lg h-16 items-center">
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Dashboard</a>
+<a class="text-primary dark:text-primary-fixed border-b-2 border-primary dark:border-primary-fixed pb-2 font-semibold h-full flex items-center mt-[2px] opacity-80" href="#">My Requests</a>
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">New Request</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative hidden md:block">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+<input class="pl-xl pr-sm py-sm rounded border border-outline-variant bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all w-64" placeholder="Search..." type="text">
+</div>
+<button class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200 font-label-md text-label-md flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">help</span>
+                    Support
+                </button>
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center overflow-hidden border border-outline-variant ml-sm">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A small circular avatar placeholder image for a user profile in an enterprise web application." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOSFaZqwbRxskp0N8nDisMunw4kTlV9AG2IeTIW49rXEaPLub3Uzfc_qFDZEO23ZALGc6dGMi3XbrrGe912Cm192cFvBumRjDYuQW_HgOX-Fa4rtz5eLnHDKnE903mjlu8B1IO-QescyVk0cx8mlG8gTaspeLsXLDMj0XXylxRJ4PbAvH63Yv1jBMdqVrZ2fwU4_LjtRiJuTdKL3qx4cjfZrYSCEKSBoG5TvbLAtUi7k5IQY8UyfzN">
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-grow w-full max-w-[1440px] mx-auto px-gutter md:px-xl py-margin-desktop space-y-xl">
+<div class="space-y-md">
+<a class="font-label-md text-label-md text-secondary hover:text-primary flex items-center gap-xs w-fit transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                Back to My Requests
+            </a>
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-outline-variant pb-md">
+<div class="flex flex-col md:flex-row md:items-center gap-md">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Q4 Buffer Solution Batch A (PDR-2024-056)</h1>
+<span class="inline-flex items-center px-sm py-xs rounded-sm bg-surface-container-high border border-outline-variant text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+                        Pending Approval
+                    </span>
+</div>
+<div class="flex gap-sm">
+<button class="font-label-md text-label-md border border-error text-error hover:bg-error-container px-md py-sm rounded transition-colors flex items-center gap-xs">
+<span class="material-symbols-outlined text-[18px]">close</span>
+                        Reject
+                    </button>
+<button class="font-label-md text-label-md bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary px-md py-sm rounded transition-colors flex items-center gap-xs shadow-sm">
+<span class="material-symbols-outlined text-[18px]">check</span>
+                        Approve
+                    </button>
+</div>
+</div>
+</div>
+<section class="bg-surface border border-outline-variant rounded-lg p-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-xl">Workflow Status</h2>
+<div class="relative flex justify-between items-start w-full">
+<div class="absolute top-[14px] left-[20px] right-[20px] h-[2px] bg-surface-variant z-0"></div>
+<div class="absolute top-[14px] left-[20px] w-1/2 h-[2px] bg-primary z-0"></div>
+<div class="flex flex-col items-center gap-sm relative z-10 w-1/5">
+<div class="w-[30px] h-[30px] rounded-full bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface text-center">Submitted</span>
+</div>
+<div class="flex flex-col items-center gap-sm relative z-10 w-1/5">
+<div class="w-[30px] h-[30px] rounded-full bg-primary flex items-center justify-center text-on-primary shadow-sm">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface text-center">Manager Review</span>
+</div>
+<div class="flex flex-col items-center gap-sm relative z-10 w-1/5">
+<div class="w-[30px] h-[30px] rounded-full bg-surface border-2 border-primary flex items-center justify-center text-primary shadow-sm">
+<span class="w-[10px] h-[10px] rounded-full bg-primary"></span>
+</div>
+<div class="text-center">
+<span class="font-label-md text-label-md text-on-surface block">Finance Review</span>
+<span class="font-body-sm text-body-sm text-secondary mt-xs block">Awaiting: Sarah Ahmed, Finance Manager</span>
+</div>
+</div>
+<div class="flex flex-col items-center gap-sm relative z-10 w-1/5 opacity-50">
+<div class="w-[30px] h-[30px] rounded-full bg-surface border-2 border-outline-variant flex items-center justify-center">
+</div>
+<span class="font-label-md text-label-md text-secondary text-center">CFO Approval</span>
+</div>
+<div class="flex flex-col items-center gap-sm relative z-10 w-1/5 opacity-50">
+<div class="w-[30px] h-[30px] rounded-full bg-surface border-2 border-outline-variant flex items-center justify-center">
+</div>
+<span class="font-label-md text-label-md text-secondary text-center">Approved</span>
+</div>
+</div>
+</section>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-lg">
+<section class="md:col-span-1 bg-surface border border-outline-variant rounded-lg p-lg space-y-md">
+<h2 class="font-headline-md text-headline-md text-on-surface border-b border-outline-variant pb-sm">Request Summary</h2>
+<div class="space-y-sm">
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider block mb-xs">Requestor</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-outline">person</span>
+                            John Doe
+                        </span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider block mb-xs">Department</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-outline">domain</span>
+                            Manufacturing
+                        </span>
+</div>
+<div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider block mb-xs">Needed By</span>
+<span class="font-body-md text-body-md text-on-surface flex items-center gap-sm">
+<span class="material-symbols-outlined text-[18px] text-outline">calendar_today</span>
+                            Nov 15, 2024
+                        </span>
+</div>
+</div>
+</section>
+<section class="md:col-span-2 bg-surface border border-outline-variant rounded-lg overflow-hidden flex flex-col">
+<div class="p-md border-b border-outline-variant bg-surface-bright flex justify-between items-center">
+<h2 class="font-headline-md text-headline-md text-on-surface">Requested Items</h2>
+<span class="font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant px-sm py-xs rounded-sm">3 Items</span>
+</div>
+<div class="overflow-x-auto flex-grow">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="font-label-md text-label-md text-secondary py-sm px-md font-semibold">Material</th>
+<th class="font-label-md text-label-md text-secondary py-sm px-md font-semibold">Grade / Spec</th>
+<th class="font-label-md text-label-md text-secondary py-sm px-md font-semibold text-right">Quantity</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors">
+<td class="py-sm px-md font-medium">Sodium Chloride</td>
+<td class="py-sm px-md text-on-surface-variant">USP Grade</td>
+<td class="py-sm px-md text-right">500 kg</td>
+</tr>
+<tr class="border-b border-surface-variant hover:bg-surface-container-lowest transition-colors">
+<td class="py-sm px-md font-medium">Sodium Hydroxide</td>
+<td class="py-sm px-md text-on-surface-variant">1N Solution</td>
+<td class="py-sm px-md text-right">200 L</td>
+</tr>
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="py-sm px-md font-medium">Sodium Carbonate</td>
+<td class="py-sm px-md text-on-surface-variant">Anhydrous</td>
+<td class="py-sm px-md text-right">150 kg</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+<section class="bg-surface border border-outline-variant rounded-lg p-lg space-y-lg">
+<h2 class="font-headline-md text-headline-md text-on-surface border-b border-outline-variant pb-sm">Comments &amp; Discussion</h2>
+<div class="space-y-md">
+<div class="flex gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex-shrink-0 flex items-center justify-center border border-outline-variant">
+<span class="font-label-md text-label-md text-secondary">JD</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-md flex-grow border border-surface-variant">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-sm">
+<span class="font-label-md text-label-md text-on-surface">John Doe</span>
+<span class="font-label-sm text-label-sm bg-primary-container text-on-primary-container px-sm py-xs rounded-sm">Requester</span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">Oct 24, 09:15 AM</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface">Attaching the spec sheet from the supplier.</p>
+<div class="mt-sm flex items-center gap-xs text-primary font-label-sm text-label-sm hover:underline cursor-pointer w-fit">
+<span class="material-symbols-outlined text-[16px]">attach_file</span>
+                            spec_sheet_v2.pdf
+                        </div>
+</div>
+</div>
+<div class="flex gap-md items-center justify-center py-sm">
+<div class="h-px bg-outline-variant flex-grow"></div>
+<div class="bg-secondary-container text-on-secondary-container px-md py-xs rounded-full font-label-sm text-label-sm flex items-center gap-xs border border-secondary-fixed">
+<span class="material-symbols-outlined text-[16px]">verified</span>
+                        Michael Chen approved this step
+                    </div>
+<div class="h-px bg-outline-variant flex-grow"></div>
+</div>
+<div class="flex gap-md">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex-shrink-0 flex items-center justify-center border border-outline-variant">
+<span class="font-label-md text-label-md text-secondary">SA</span>
+</div>
+<div class="bg-surface-container-highest rounded-lg p-md flex-grow border-l-4 border-l-surface-tint border-y border-r border-outline-variant">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex flex-col gap-xs">
+<div class="flex items-center gap-sm">
+<span class="font-label-md text-label-md text-on-surface">Sarah Ahmed</span>
+<span class="font-label-sm text-label-sm bg-surface-variant text-on-surface-variant px-sm py-xs rounded-sm">Finance Approver</span>
+</div>
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-xs">
+<span class="material-symbols-outlined text-[14px]">visibility_off</span>
+                                    Internal note — not visible to requester
+                                </span>
+</div>
+<span class="font-body-sm text-body-sm text-secondary">Oct 25, 11:30 AM</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface mt-sm">Sarah, please check the budget allocation for this batch before final approval.</p>
+</div>
+</div>
+</div>
+<div class="pt-md border-t border-outline-variant mt-lg">
+<div class="flex gap-md items-start">
+<div class="w-10 h-10 rounded-full bg-surface-variant flex-shrink-0 flex items-center justify-center border border-outline-variant">
+<span class="material-symbols-outlined text-secondary">person</span>
+</div>
+<div class="flex-grow space-y-sm">
+<textarea class="w-full rounded border border-outline-variant bg-surface text-on-surface font-body-md text-body-md p-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-y" placeholder="Add a comment..." rows="3"></textarea>
+<div class="flex justify-end">
+<button class="font-label-md text-label-md bg-secondary text-on-secondary hover:bg-secondary-fixed hover:text-on-secondary-fixed px-md py-sm rounded transition-colors shadow-sm">
+                                Post Comment
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest full-width py-lg border-t border-outline-variant mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-xl max-w-[1440px] mx-auto gap-md">
+<span class="font-label-md text-label-md font-bold text-secondary dark:text-secondary-fixed-dim">
+                © 2024 PharmaFlow Enterprise Solutions. All rights reserved.
+            </span>
+<div class="flex flex-wrap gap-md items-center justify-center">
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:underline Transition-all duration-150" href="#">IT Support</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:underline Transition-all duration-150" href="#">System Status</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:underline Transition-all duration-150" href="#">Security Policy</a>
+<a class="font-label-md text-label-md text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed hover:underline Transition-all duration-150" href="#">Contact Procurement</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { PageHeader, StatusBadge } from "@/components/ui";
@@ -28,7 +28,6 @@ interface ReqDetail {
 export default function RequestDetailPage() {
   const { token, user } = useAuth();
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
   const [req, setReq] = useState<ReqDetail | null>(null);
   const [comment, setComment] = useState("");
@@ -43,7 +42,7 @@ export default function RequestDetailPage() {
     if (token) load();
   }, [token, id]);
 
-  async function act(action: string, extra: any = {}) {
+  async function act(action: string, extra: Record<string, unknown> = {}) {
     setBusy(true);
     const r = await fetch(`/api/requests/${id}`, {
       method: "PATCH",

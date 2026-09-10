@@ -5,9 +5,15 @@ import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { PageHeader, StatCard } from "@/components/ui";
 
+interface Dash {
+  total: number;
+  byStatus: Record<string, number>;
+  myPendingApprovals: number;
+}
+
 export default function ReportsPage() {
   const { token } = useAuth();
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<Dash | null>(null);
 
   useEffect(() => {
     if (!token) return;

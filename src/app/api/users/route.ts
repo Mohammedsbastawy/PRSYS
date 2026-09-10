@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getUserFromRequest, verifyToken } from '@/lib/auth'
-import { json, error, unauthorized, forbidden, notFound, parseBody } from '@/lib/http'
+import { getUserFromRequest } from '@/lib/auth'
+import { json, error, unauthorized, forbidden, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { z } from 'zod'
 

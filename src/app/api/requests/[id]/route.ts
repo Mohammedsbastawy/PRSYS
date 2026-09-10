@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, notFound, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
+import { notifyUsers, usersWithPermission } from '@/lib/notifications'
 import { z } from 'zod'
 
 interface Params { params: { id: string } }
@@ -59,12 +60,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const request = await prisma.requests.findUnique({
     where: { RequestID: params.id },
-    include: { FormTemplate: { include: { Workflow: { include: { Steps: { orderBy: { StepOrder: 'asc' } } } } } } },
+    include: {
+      FormTemplate: { include: { Workflow: { include: { Steps: { orderBy: { StepOrder: 'asc' } } } } } },
+      Requester: { select: { UserID: true, Name: true } },
+    },
   })
   if (!request) return notFound('Request not found')
 
   const action = data!.action
   const now = new Date()
+  const actor = await prisma.users.findUnique({
+    where: { UserID: payload.userId },
+    select: { Name: true },
+  })
+  const actorName = actor?.Name ?? 'A user'
+  const notActor = (id: string | null | undefined) => !!id && id !== payload.userId
 
   // ---- SUBMIT ----
   if (action === 'SUBMIT') {
@@ -78,6 +88,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const updated = await prisma.requests.update({ where: { RequestID: params.id }, data: update })
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'SUBMIT', ChangedByUserID: payload.userId },
+    })
+    const approvers = (await usersWithPermission('REQUEST_APPROVE')).filter((id) => id !== payload.userId)
+    await notifyUsers(approvers, {
+      title: 'New request needs approval',
+      message: `${request.Requester.Name} submitted ${request.TrackingNumber} (${request.FormTemplate.Name})`,
+      type: 'REQUEST_SUBMITTED',
+      requestId: params.id,
     })
     return json(updated)
   }
@@ -102,6 +119,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const wf = request.FormTemplate.Workflow
     const steps = wf?.Steps ?? []
     const currentIdx = steps.findIndex((s) => s.WFStepID === request.CurrentWFStepID)
+    const stepName = steps[currentIdx]?.StepName ?? 'Approval step'
     const nextStep = steps[currentIdx + 1]
 
     let newStatus = request.Status
@@ -125,6 +143,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: newStatus, Action: decision, ChangedByUserID: payload.userId, Note: data!.comment ?? null },
     })
+    if (notActor(request.RequesterID)) {
+      await notifyUsers(
+        [request.RequesterID],
+        decision === 'APPROVED'
+          ? {
+              title: `Request ${request.TrackingNumber} approved`,
+              message: nextStep
+                ? `${actorName} approved "${stepName}" — moved to ${nextStep.StepName}`
+                : `${actorName} approved "${stepName}" — request fully approved`,
+              type: 'REQUEST_APPROVED',
+              requestId: params.id,
+            }
+          : {
+              title: `Request ${request.TrackingNumber} rejected`,
+              message: `${actorName} rejected "${stepName}"${data!.comment ? ` — ${data!.comment}` : ''}`,
+              type: 'REQUEST_REJECTED',
+              requestId: params.id,
+            }
+      )
+    }
     return json(updated)
   }
 
@@ -139,6 +177,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'ASSIGN', ChangedByUserID: payload.userId, Note: `Assigned to ${data!.assigneeId}` },
     })
+    if (notActor(data!.assigneeId)) {
+      await notifyUsers([data!.assigneeId!], {
+        title: `Request ${request.TrackingNumber} assigned to you`,
+        message: `${actorName} assigned this request to you`,
+        type: 'REQUEST_ASSIGNED',
+        requestId: params.id,
+      })
+    }
     return json(updated)
   }
 
@@ -159,6 +205,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'PO_REGISTERED', ChangedByUserID: payload.userId, Note: `PO: ${data!.oraclePoNumber}` },
     })
+    if (notActor(request.RequesterID)) {
+      await notifyUsers([request.RequesterID], {
+        title: `PO registered for ${request.TrackingNumber}`,
+        message: `${actorName} registered Oracle PO ${data!.oraclePoNumber}`,
+        type: 'PO_REGISTERED',
+        requestId: params.id,
+      })
+    }
     return json(updated)
   }
 
@@ -172,6 +226,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'FULFILL', ChangedByUserID: payload.userId },
     })
+    if (notActor(request.RequesterID)) {
+      await notifyUsers([request.RequesterID], {
+        title: `Request ${request.TrackingNumber} fulfilled`,
+        message: `${actorName} marked this request as fulfilled`,
+        type: 'REQUEST_FULFILLED',
+        requestId: params.id,
+      })
+    }
     return json(updated)
   }
 
@@ -184,6 +246,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'COMPLETE', ChangedByUserID: payload.userId },
     })
+    if (notActor(request.RequesterID)) {
+      await notifyUsers([request.RequesterID], {
+        title: `Request ${request.TrackingNumber} completed`,
+        message: `${actorName} closed this request as completed`,
+        type: 'REQUEST_COMPLETED',
+        requestId: params.id,
+      })
+    }
     return json(updated)
   }
 
@@ -196,6 +266,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'CANCEL', ChangedByUserID: payload.userId },
     })
+    if (notActor(request.RequesterID)) {
+      await notifyUsers([request.RequesterID], {
+        title: `Request ${request.TrackingNumber} cancelled`,
+        message: `${actorName} cancelled this request`,
+        type: 'REQUEST_CANCELLED',
+        requestId: params.id,
+      })
+    }
     return json(updated)
   }
 

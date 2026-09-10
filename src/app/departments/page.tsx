@@ -5,9 +5,15 @@ import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { PageHeader } from "@/components/ui";
 
+interface Dep {
+  DEPID: string;
+  Name: string;
+  Code: string;
+}
+
 export default function DepartmentsPage() {
   const { token } = useAuth();
-  const [deps, setDeps] = useState<any[]>([]);
+  const [deps, setDeps] = useState<Dep[]>([]);
 
   useEffect(() => {
     if (!token) return;
