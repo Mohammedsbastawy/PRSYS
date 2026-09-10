@@ -1,0 +1,336 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>New Request Catalog - PharmaFlow PDR</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-primary-container": "#eeefff",
+                        "inverse-primary": "#b4c5ff",
+                        "on-primary-fixed": "#00174b",
+                        "outline-variant": "#c3c6d7",
+                        "secondary-container": "#d0e1fb",
+                        "inverse-on-surface": "#f0f1f3",
+                        "tertiary": "#515659",
+                        "secondary": "#505f76",
+                        "surface-container-highest": "#e1e2e4",
+                        "secondary-fixed": "#d3e4fe",
+                        "on-surface": "#191c1e",
+                        "on-secondary-fixed-variant": "#38485d",
+                        "primary-fixed-dim": "#b4c5ff",
+                        "surface-tint": "#0053db",
+                        "background": "#f8f9fb",
+                        "on-error": "#ffffff",
+                        "on-secondary-container": "#54647a",
+                        "surface-variant": "#e1e2e4",
+                        "primary": "#004ac6",
+                        "tertiary-container": "#696e71",
+                        "surface-container-high": "#e7e8ea",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2e3132",
+                        "surface": "#f8f9fb",
+                        "primary-container": "#2563eb",
+                        "surface-container": "#edeef0",
+                        "tertiary-fixed": "#dfe3e7",
+                        "on-background": "#191c1e",
+                        "on-surface-variant": "#434655",
+                        "primary-fixed": "#dbe1ff",
+                        "surface-bright": "#f8f9fb",
+                        "error-container": "#ffdad6",
+                        "surface-dim": "#d9dadc",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-container": "#edf1f5",
+                        "secondary-fixed-dim": "#b7c8e1",
+                        "tertiary-fixed-dim": "#c3c7cb",
+                        "on-primary": "#ffffff",
+                        "outline": "#737686",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#0b1c30",
+                        "on-tertiary": "#ffffff",
+                        "surface-container-lowest": "#ffffff",
+                        "on-tertiary-fixed-variant": "#43474b",
+                        "on-primary-fixed-variant": "#003ea8",
+                        "on-tertiary-fixed": "#171c1f",
+                        "surface-container-low": "#f3f4f6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "md": "16px",
+                        "unit": "4px",
+                        "gutter": "16px",
+                        "sm": "8px",
+                        "xl": "32px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "32px",
+                        "lg": "24px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "display": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "body-sm": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display": ["36px", { "lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "500" }],
+                        "body-sm": ["13px", { "lineHeight": "18px", "fontWeight": "400" }],
+                        "headline-lg": ["28px", { "lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<nav class="bg-surface dark:bg-surface-dim font-body-md text-body-md docked full-width top-0 border-b border-outline-variant border-b border-outline-variant dark:border-outline flat no shadows active: opacity-80">
+<div class="flex justify-between items-center w-full px-xl h-16 max-w-[1440px] mx-auto">
+<!-- Brand -->
+<div class="flex items-center space-x-gutter">
+<span class="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">PharmaFlow PDR</span>
+</div>
+<!-- Navigation Links -->
+<div class="hidden md:flex items-center h-full space-x-xl">
+<a class="h-full flex items-center text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Dashboard</a>
+<a class="h-full flex items-center text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">My Requests</a>
+<a class="h-full flex items-center text-primary dark:text-primary-fixed border-b-2 border-primary dark:border-primary-fixed font-semibold" href="#">New Request</a>
+</div>
+<!-- Actions -->
+<div class="flex items-center space-x-md">
+<!-- Search (on_right) -->
+<div class="relative hidden lg:block text-secondary dark:text-secondary-fixed-dim hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200 cursor-pointer">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 0;">search</span>
+</div>
+<!-- Trailing Secondary Action -->
+<a class="text-secondary dark:text-secondary-fixed-dim font-medium hover:text-primary dark:hover:text-primary-fixed transition-colors duration-200" href="#">Support</a>
+<!-- Profile Image -->
+<div class="w-8 h-8 rounded-full bg-surface-variant overflow-hidden border border-outline-variant">
+<img alt="User Profile Avatar" class="w-full h-full object-cover" data-alt="A professional headshot of a corporate employee in a brightly lit modern office setting, representing a generic user profile avatar for a pharmaceutical enterprise dashboard. The lighting is soft and flattering." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB_wqBcGH52h3i-RFiVQg2gsdD1d8ycGaVPeUwI4sV7W__GYtBifXsejFZ85IvdGOXwuL7vTrF-19UFzdgTMxRDOx3L5Hj7rIvuRSN2ttPPpnvYtt1VIQkiHKgEWgAf5kMS5YfHGmvUiaHpwSiCjd4r0bx7IaQBOF3CDpXbiQ6my7cZRQU52dwDN0W5bAIyKX5Zi2IX5nrt4ZT9g0uh9ily708-l7JcmR28ZHfKD_zAtLfWe_frBT4H">
+</div>
+</div>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-grow w-full max-w-[1440px] mx-auto px-margin-mobile md:px-margin-desktop py-xl">
+<!-- Page Header & Search -->
+<div class="mb-xl">
+<h1 class="font-display text-display mb-sm text-on-surface">New Request</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant mb-lg">Choose a request type to get started.</p>
+<div class="relative max-w-2xl">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 0;">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-3 border border-outline-variant rounded-DEFAULT leading-5 bg-surface-container-lowest placeholder-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary sm:font-body-md text-on-surface transition-shadow duration-150 ease-in-out" placeholder="Search forms (e.g. Hardware, Reagent)..." type="text">
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-xl">
+<!-- Main Content Area -->
+<div class="lg:col-span-9 space-y-xl">
+<!-- Category 1 -->
+<section>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-md border-b border-surface-variant pb-xs">Procurement &amp; Operations</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<!-- Card 1 -->
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">inventory_2</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">General Supply Request</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Order basic office and facility supplies.</p>
+</div>
+</div>
+</a>
+<!-- Card 2 -->
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">build</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Lab Equipment Repair</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Request maintenance or fix for laboratory devices.</p>
+</div>
+</div>
+</a>
+<!-- Card 3 -->
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">science</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Chemical Reagent Order</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Procure approved chemical reagents for lab use.</p>
+</div>
+</div>
+</a>
+<!-- Card 4 -->
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">local_shipping</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Logistics Service</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Schedule domestic or international shipping.</p>
+</div>
+</div>
+</a>
+</div>
+</section>
+<!-- Category 2 -->
+<section>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-md border-b border-surface-variant pb-xs">IT &amp; Digital Services</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">vpn_key</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">New Software License</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Request access or licenses for specific software tools.</p>
+</div>
+</div>
+</a>
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">computer</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Hardware Replacement</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Report broken IT hardware and request replacements.</p>
+</div>
+</div>
+</a>
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">router</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Network Access Setup</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Request VPN or secure zone network permissions.</p>
+</div>
+</div>
+</a>
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">draw</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Digital Signature Access</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Setup authority for digital document signing.</p>
+</div>
+</div>
+</a>
+</div>
+</section>
+<!-- Category 3 -->
+<section>
+<h2 class="font-headline-md text-headline-md text-on-surface mb-md border-b border-surface-variant pb-xs">HR &amp; Employee Support</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">school</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Tuition Reimbursement</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Apply for educational and training cost coverage.</p>
+</div>
+</div>
+</a>
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">flight_takeoff</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Travel Authorization</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Request approval for business-related travel.</p>
+</div>
+</div>
+</a>
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">home_work</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Remote Work Setup</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Request equipment for home office deployment.</p>
+</div>
+</div>
+</a>
+<a class="group block bg-surface-container-lowest border border-outline-variant rounded-DEFAULT p-md hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all duration-200" href="#">
+<div class="flex items-start">
+<div class="flex-shrink-0 mt-xs">
+<span class="material-symbols-outlined text-secondary group-hover:text-primary transition-colors" style="font-variation-settings: 'FILL' 0;">event_seat</span>
+</div>
+<div class="ml-md">
+<h3 class="font-body-lg text-body-lg font-medium text-on-surface group-hover:text-primary transition-colors">Conference Attendance Request</h3>
+<p class="mt-xs font-body-sm text-body-sm text-on-surface-variant">Seek approval to attend professional conferences.</p>
+</div>
+</div>
+</a>
+</div>
+</section>
+</div>
+<!-- Sidebar Info Panel -->
+<div class="lg:col-span-3">
+<div class="bg-surface-container-low border border-outline-variant rounded-DEFAULT p-md sticky top-24">
+<div class="flex items-start mb-sm">
+<span class="material-symbols-outlined text-primary mr-sm" style="font-variation-settings: 'FILL' 1;">info</span>
+<h4 class="font-body-md text-body-md font-semibold text-on-surface">Design Note</h4>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                        The Dashboard's "Start a New Request" section will now display only a curated set of frequently-used shortcuts. Use this catalog to find all available request forms organized by category.
+                    </p>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="bg-surface-container-low dark:bg-surface-container-lowest font-label-md text-label-md full-width py-lg border-t border-outline-variant border-t border-outline-variant dark:border-outline flat no shadows Transition-all duration-150 mt-auto">
+<div class="flex flex-col md:flex-row justify-between items-center w-full px-xl max-w-[1440px] mx-auto">
+<div class="mb-md md:mb-0 text-secondary dark:text-secondary-fixed-dim font-bold">
+                © 2024 PharmaFlow Enterprise Solutions. All rights reserved.
+            </div>
+<div class="flex space-x-lg">
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed underline transition-colors" href="#">IT Support</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed underline transition-colors" href="#">System Status</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed underline transition-colors" href="#">Security Policy</a>
+<a class="text-on-surface-variant dark:text-on-surface-variant hover:text-primary dark:hover:text-primary-fixed underline transition-colors" href="#">Contact Procurement</a>
+</div>
+</div>
+</footer>
+</body></html>

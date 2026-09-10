@@ -1,0 +1,382 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Dashboard - ProcureFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-container-highest": "#e1e2e4",
+                      "primary-fixed-dim": "#b4c5ff",
+                      "on-secondary": "#ffffff",
+                      "inverse-surface": "#2e3132",
+                      "surface-container-high": "#e7e8ea",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed": "#dbe1ff",
+                      "outline-variant": "#c3c6d7",
+                      "primary": "#004ac6",
+                      "on-primary": "#ffffff",
+                      "on-error-container": "#93000a",
+                      "surface-container": "#edeef0",
+                      "surface-variant": "#e1e2e4",
+                      "surface-bright": "#f8f9fb",
+                      "outline": "#737686",
+                      "tertiary-container": "#696e71",
+                      "on-tertiary-container": "#edf1f5",
+                      "primary-container": "#2563eb",
+                      "tertiary-fixed-dim": "#c3c7cb",
+                      "secondary-fixed-dim": "#b7c8e1",
+                      "secondary-container": "#d0e1fb",
+                      "secondary": "#505f76",
+                      "inverse-on-surface": "#f0f1f3",
+                      "on-surface-variant": "#434655",
+                      "on-surface": "#191c1e",
+                      "on-primary-fixed": "#00174b",
+                      "surface-dim": "#d9dadc",
+                      "secondary-fixed": "#d3e4fe",
+                      "on-tertiary-fixed": "#171c1f",
+                      "surface-tint": "#0053db",
+                      "on-tertiary-fixed-variant": "#43474b",
+                      "surface": "#f8f9fb",
+                      "on-background": "#191c1e",
+                      "on-primary-fixed-variant": "#003ea8",
+                      "tertiary-fixed": "#dfe3e7",
+                      "background": "#f8f9fb",
+                      "surface-container-lowest": "#ffffff",
+                      "error": "#ba1a1a",
+                      "on-secondary-fixed-variant": "#38485d",
+                      "on-error": "#ffffff",
+                      "on-primary-container": "#eeefff",
+                      "inverse-primary": "#b4c5ff",
+                      "error-container": "#ffdad6",
+                      "surface-container-low": "#f3f4f6",
+                      "on-secondary-fixed": "#0b1c30",
+                      "on-secondary-container": "#54647a",
+                      "tertiary": "#515659"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "xl": "32px",
+                      "md": "16px",
+                      "margin-desktop": "32px",
+                      "lg": "24px",
+                      "gutter": "16px",
+                      "sm": "8px",
+                      "xs": "4px",
+                      "margin-mobile": "16px",
+                      "unit": "4px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Inter"],
+                      "label-sm": ["Inter"],
+                      "display": ["Inter"],
+                      "body-md": ["Inter"],
+                      "body-lg": ["Inter"],
+                      "label-md": ["Inter"],
+                      "headline-md": ["Inter"],
+                      "body-sm": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["28px", {"lineHeight": "36px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "500"}],
+                      "display": ["36px", {"lineHeight": "44px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                      "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                      "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                      "body-sm": ["13px", {"lineHeight": "18px", "fontWeight": "400"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #F8F9FB; color: #191c1e; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1; }
+        
+        /* Grid baseline utilities */
+        .baseline-grid { background-size: 100% 4px; background-image: linear-gradient(to bottom, transparent 3px, rgba(0,0,0,0.02) 4px); }
+        
+        /* Step tracker specific styles */
+        .step-line { transition: background-color 0.3s ease; }
+        .step-dot { transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-background antialiased min-h-screen flex flex-col">
+<!-- TopNavBar -->
+<header class="bg-surface-container-lowest border-b border-outline-variant docked full-width top-0 z-50">
+<div class="flex justify-between items-center h-16 px-margin-desktop w-full sticky top-0 z-50">
+<!-- Brand & Navigation -->
+<div class="flex items-center gap-xl h-full">
+<a class="font-headline-md text-headline-md font-bold text-primary flex items-center gap-sm" href="#">
+<span class="material-symbols-outlined filled text-[24px]">account_balance</span>
+                    ProcureFlow
+                </a>
+<nav class="hidden md:flex h-full items-center gap-md">
+<!-- Dashboard (Active) -->
+<a class="h-full flex items-center px-sm font-body-md text-body-md text-primary border-b-2 border-primary pb-1 font-semibold cursor-pointer active:opacity-80 hover:bg-surface-container-low transition-colors duration-150 relative top-[1px]" href="#">
+                        Dashboard
+                    </a>
+<!-- My Requests (Inactive) -->
+<a class="h-full flex items-center px-sm font-body-md text-body-md text-secondary hover:text-primary cursor-pointer active:opacity-80 hover:bg-surface-container-low transition-colors duration-150" href="#">
+                        My Requests
+                    </a>
+</nav>
+</div>
+<!-- Actions & Profile -->
+<div class="flex items-center gap-md">
+<button class="p-sm text-secondary hover:bg-surface-container-low rounded-full transition-colors cursor-pointer active:opacity-80 flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+<button class="p-sm text-secondary hover:bg-surface-container-low rounded-full transition-colors cursor-pointer active:opacity-80 flex items-center justify-center mr-md">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+</button>
+<div class="flex items-center gap-sm pl-md border-l border-outline-variant cursor-pointer active:opacity-80">
+<div class="text-right hidden sm:block">
+<div class="font-label-md text-label-md text-on-surface">John Doe</div>
+<div class="font-label-sm text-label-sm text-secondary">Employee</div>
+</div>
+<img alt="Employee Profile Avatar" class="w-8 h-8 rounded-full object-cover border border-outline-variant bg-surface-container" data-alt="A professional headshot of a corporate employee on a clean, light background. Modern corporate photography style, soft lighting, reliable and friendly expression. The aesthetic matches a clean, utilitarian web dashboard design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNI8XulFOGJvqC_jgYuE-LJUIFzpNNuNY0ZgJtWeL84bd4ZLoRDinUbaLqJZ3aW8TdEeMjb_CF1RBKYSo-KUyO-4Q4eXo1L7XYgvlfZSJ-szhr5BSEpWYvDf1a1arg1NnvTxd-aE7KhvsmeFlG2lTYnbGpsEXrGeDTXyQ4h8n39pKjxgxeauP-sdjdaOu1CpO4rarmNWsybr-XYkPGD0jbbAzu8Ar8KcrQJY99JiIIgA1wAIOznErQ">
+</div>
+</div>
+</div>
+</header>
+<!-- Main Canvas -->
+<main class="flex-1 w-full max-w-[1440px] mx-auto px-margin-desktop py-xl">
+<!-- Page Header -->
+<div class="mb-xl">
+<h1 class="font-display text-display text-on-surface mb-xs">Welcome back, John</h1>
+<p class="font-body-lg text-body-lg text-secondary">Manage your requests and track approvals here.</p>
+</div>
+<!-- Section 1: Start a New Request (Bento-style Grid) -->
+<section class="mb-xl pb-xl border-b border-surface-container-highest">
+<h2 class="font-headline-md text-headline-md text-on-surface mb-md">Start a New Request</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Card 1: General Expense -->
+<a class="group bg-surface-container-lowest rounded-lg border border-surface-container-highest p-md hover:border-primary-container hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all flex flex-col gap-sm h-full" href="#">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">receipt_long</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">General Expense</h3>
+<p class="font-body-sm text-body-sm text-secondary line-clamp-2">Reimbursements for meals, minor supplies, and ad-hoc costs.</p>
+</div>
+</a>
+<!-- Card 2: IT Equipment -->
+<a class="group bg-surface-container-lowest rounded-lg border border-surface-container-highest p-md hover:border-primary-container hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all flex flex-col gap-sm h-full" href="#">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">devices</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">IT Equipment</h3>
+<p class="font-body-sm text-body-sm text-secondary line-clamp-2">Request laptops, monitors, software licenses, or accessories.</p>
+</div>
+</a>
+<!-- Card 3: Travel Request -->
+<a class="group bg-surface-container-lowest rounded-lg border border-surface-container-highest p-md hover:border-primary-container hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all flex flex-col gap-sm h-full" href="#">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">flight</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Travel Request</h3>
+<p class="font-body-sm text-body-sm text-secondary line-clamp-2">Book flights, hotels, and ground transportation for business trips.</p>
+</div>
+</a>
+<!-- Card 4: Vendor Disbursement -->
+<a class="group bg-surface-container-lowest rounded-lg border border-surface-container-highest p-md hover:border-primary-container hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)] transition-all flex flex-col gap-sm h-full" href="#">
+<div class="w-10 h-10 rounded-full bg-surface-container-low flex items-center justify-center text-primary group-hover:bg-primary-container group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined">payments</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-xs">Vendor Payment</h3>
+<p class="font-body-sm text-body-sm text-secondary line-clamp-2">Process invoices or direct payments to approved external vendors.</p>
+</div>
+</a>
+</div>
+</section>
+<!-- Section 2: My Recent Requests -->
+<section>
+<div class="flex justify-between items-end mb-md">
+<h2 class="font-headline-md text-headline-md text-on-surface">My Recent Requests</h2>
+<a class="font-label-md text-label-md text-primary hover:underline flex items-center gap-xs" href="#">
+                    View all
+                    <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+<!-- Table Container -->
+<div class="bg-surface-container-lowest rounded-xl border border-surface-container-highest overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse min-w-[800px]">
+<thead>
+<tr class="bg-surface-bright border-b border-surface-container-highest">
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant w-[25%]">Request ID &amp; Title</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant w-[15%]">Type</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant w-[15%]">Date Submitted</th>
+<th class="py-sm px-md font-label-md text-label-md text-on-surface-variant w-[45%]">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high">
+<!-- Row 1: Manager Review (Step 2 active) -->
+<tr class="hover:bg-surface-bright transition-colors cursor-pointer group">
+<td class="py-md px-md">
+<div class="font-label-md text-label-md text-on-surface">PDR-2024-001</div>
+<div class="font-body-sm text-body-sm text-secondary truncate">Office Supplies</div>
+</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">General Expense</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">Oct 24, 2024</td>
+<td class="py-md px-md">
+<!-- Step Tracker Component -->
+<div class="flex items-center w-full max-w-[300px]">
+<!-- Step 1: Submitted (Complete) -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-primary z-10 step-dot"></div>
+<span class="absolute top-4 font-label-sm text-[10px] text-primary whitespace-nowrap">Submitted</span>
+</div>
+<div class="flex-auto border-t-2 border-primary -ml-1 -mr-1 step-line"></div>
+<!-- Step 2: Manager Review (Active) -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-3 h-3 rounded-full bg-surface-container-lowest border-2 border-primary z-10 step-dot"></div>
+<span class="absolute top-4 font-label-sm text-[10px] text-primary whitespace-nowrap font-bold">Manager Review</span>
+</div>
+<div class="flex-auto border-t-2 border-surface-container-high -ml-1 -mr-1 step-line"></div>
+<!-- Step 3: Finance Review (Pending) -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-surface-container-high z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-surface-container-high -ml-1 -mr-1 step-line"></div>
+<!-- Step 4: Complete (Pending) -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-surface-container-high z-10 step-dot"></div>
+</div>
+</div>
+<div class="h-5"></div> <!-- Spacer for absolute text -->
+</td>
+</tr>
+<!-- Row 2: Finance Review (Step 3 active) -->
+<tr class="hover:bg-surface-bright transition-colors cursor-pointer group">
+<td class="py-md px-md">
+<div class="font-label-md text-label-md text-on-surface">TRV-2024-042</div>
+<div class="font-body-sm text-body-sm text-secondary truncate">Q4 Sales Conference Flight</div>
+</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">Travel Request</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">Oct 20, 2024</td>
+<td class="py-md px-md">
+<div class="flex items-center w-full max-w-[300px]">
+<!-- Step 1 -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-primary z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-primary -ml-1 -mr-1 step-line"></div>
+<!-- Step 2 -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-primary z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-primary -ml-1 -mr-1 step-line"></div>
+<!-- Step 3 (Active) -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-3 h-3 rounded-full bg-surface-container-lowest border-2 border-primary z-10 step-dot"></div>
+<span class="absolute top-4 font-label-sm text-[10px] text-primary whitespace-nowrap font-bold">Finance Review</span>
+</div>
+<div class="flex-auto border-t-2 border-surface-container-high -ml-1 -mr-1 step-line"></div>
+<!-- Step 4 -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-surface-container-high z-10 step-dot"></div>
+</div>
+</div>
+<div class="h-5"></div>
+</td>
+</tr>
+<!-- Row 3: Approved (All steps green - using primary blue in this palette) -->
+<tr class="hover:bg-surface-bright transition-colors cursor-pointer group">
+<td class="py-md px-md">
+<div class="font-label-md text-label-md text-on-surface">IT-2024-118</div>
+<div class="font-body-sm text-body-sm text-secondary truncate">Replacement Monitor</div>
+</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">IT Equipment</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">Oct 15, 2024</td>
+<td class="py-md px-md">
+<div class="flex items-center w-full max-w-[300px]">
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-primary z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-primary -ml-1 -mr-1 step-line"></div>
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-primary z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-primary -ml-1 -mr-1 step-line"></div>
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-primary z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-primary -ml-1 -mr-1 step-line"></div>
+<!-- Step 4 (Complete) -->
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-3 h-3 rounded-full bg-primary z-10 step-dot flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-on-primary">check</span>
+</div>
+<span class="absolute top-4 font-label-sm text-[10px] text-primary whitespace-nowrap font-bold">Approved</span>
+</div>
+</div>
+<div class="h-5"></div>
+</td>
+</tr>
+<!-- Row 4: Rejected (Final step red, previous steps gray/success) -->
+<tr class="hover:bg-surface-bright transition-colors cursor-pointer group">
+<td class="py-md px-md">
+<div class="font-label-md text-label-md text-on-surface">VEN-2024-009</div>
+<div class="font-body-sm text-body-sm text-secondary truncate">Consulting Fees - Acme Corp</div>
+</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">Vendor Payment</td>
+<td class="py-md px-md font-body-sm text-body-sm text-on-surface">Oct 10, 2024</td>
+<td class="py-md px-md">
+<div class="flex items-center w-full max-w-[300px]">
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-tertiary-fixed-dim -ml-1 -mr-1 step-line"></div>
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-tertiary-fixed-dim z-10 step-dot"></div>
+</div>
+<div class="flex-auto border-t-2 border-tertiary-fixed-dim -ml-1 -mr-1 step-line"></div>
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-3 h-3 rounded-full bg-error z-10 step-dot flex items-center justify-center">
+<span class="material-symbols-outlined text-[10px] text-on-error">close</span>
+</div>
+<span class="absolute top-4 font-label-sm text-[10px] text-error whitespace-nowrap font-bold">Rejected</span>
+</div>
+<div class="flex-auto border-t-2 border-surface-container-high -ml-1 -mr-1 step-line"></div>
+<div class="flex flex-col items-center relative flex-1">
+<div class="w-2 h-2 rounded-full bg-surface-container-high z-10 step-dot"></div>
+</div>
+</div>
+<div class="h-5"></div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Empty State (Hidden by default, shown here as HTML comment for reference) -->
+<!--
+                <div class="py-xl flex flex-col items-center justify-center text-center px-md">
+                    <div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center text-outline mb-md">
+                        <span class="material-symbols-outlined text-[32px]">draft</span>
+                    </div>
+                    <h3 class="font-headline-md text-headline-md text-on-surface mb-xs">No requests yet</h3>
+                    <p class="font-body-md text-body-md text-secondary max-w-[300px]">When you submit an expense, travel, or IT request, it will appear here for you to track.</p>
+                </div>
+                -->
+</div>
+</section>
+</main>
+</body></html>
