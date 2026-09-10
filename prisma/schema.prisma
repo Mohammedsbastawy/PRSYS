@@ -193,6 +193,7 @@ model FormTemplates {
   OwnerDEPID       String?
   OwnerGroupID     String?
   SLAPolicyID      String?
+  RequestFormConfig String? @db.Text
   IdPrefix         String?  @unique
   IdSeparator      String?
   IdPadding        Int      @default(0)

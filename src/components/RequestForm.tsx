@@ -4,9 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { parseRequestFormConfig } from "@/lib/form-builtins";
 import AppShell from "@/components/AppShell";
 import { EmptyState, Icon } from "@/components/ui";
-import { currencyByCode, formatMoney, isValueEmpty, parseAcceptList, parseFieldConfig, parseMultiValue } from "@/lib/field-config";
+import {
+  currencyByCode,
+  evalShowWhen,
+  formatMoney,
+  isValueEmpty,
+  parseAcceptList,
+  parseFieldConfig,
+  parseMultiValue,
+} from "@/lib/field-config";
 
 interface TField {
   FormFieldID: string;
@@ -24,6 +33,7 @@ interface Template {
   Status: string;
   Category: { Name: string } | null;
   Fields: TField[];
+  RequestFormConfig?: string | null;
 }
 interface CatItem {
   ItemCatalogCacheID: string;
@@ -134,6 +144,7 @@ export default function RequestForm({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState<"draft" | "submit" | null>(null);
   const [invalidTitle, setInvalidTitle] = useState(false);
+  const [invalidNeeded, setInvalidNeeded] = useState(false);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [invalidRows, setInvalidRows] = useState<number[]>([]);
   const [userOpts, setUserOpts] = useState<{ id: string; name: string }[]>([]);
@@ -356,11 +367,21 @@ export default function RequestForm({
     }
   }
 
+  // Built-in inputs config (title/priority/needed-by/attachments/items) + conditional field visibility
+  const bc = parseRequestFormConfig(template?.RequestFormConfig ?? null);
+  const valueByKey = (k: string): string => {
+    const f = template?.Fields.find((x) => x.FieldKey === k);
+    return f ? values[f.FormFieldID] || "" : "";
+  };
+  const isFieldVisible = (f: TField): boolean =>
+    evalShowWhen(parseFieldConfig(f.Config).showWhen, valueByKey);
+
   function validate(submit: boolean): boolean {
     if (!submit) return true;
     const badFields =
       template?.Fields.filter((f) => {
         if (f.FieldType === "section" || !f.IsRequired) return false;
+        if (!isFieldVisible(f)) return false;
         if (f.FieldType === "file") {
           const have =
             (fieldFiles[f.FormFieldID] || []).length +
@@ -372,18 +393,23 @@ export default function RequestForm({
     const badRows = rows
       .filter((r) => !r.name.trim() || !(r.qty > 0) || (r.price.trim() !== "" && isNaN(Number(r.price))))
       .map((r) => r.key);
-    const badTitle = title.trim() === "";
+    const badTitle = bc.title.show && bc.title.required && title.trim() === "";
+    const badNeeded = bc.neededBy.show && bc.neededBy.required && !neededBy;
     setInvalidFields(badFields);
     setInvalidRows(badRows);
     setInvalidTitle(badTitle);
+    setInvalidNeeded(badNeeded);
     const msgs: string[] = [];
     if (badTitle) msgs.push("Request title is required");
+    if (badNeeded) msgs.push("Needed-by date is required");
     if (badFields.length > 0 && template) {
       const labels = template.Fields.filter((f) => badFields.includes(f.FormFieldID)).map((f) => f.Label);
       msgs.push(`Missing required fields: ${labels.join(", ")}`);
     }
-    if (rows.length === 0) msgs.push("Add at least one item");
-    else if (badRows.length > 0) msgs.push("Some items are missing a name, quantity or valid price");
+    if (bc.items.show) {
+      if (rows.length === 0) msgs.push("Add at least one item");
+      else if (badRows.length > 0) msgs.push("Some items are missing a name, quantity or valid price");
+    }
     if (msgs.length > 0) {
       setError(msgs.join(" · "));
       return false;
@@ -448,6 +474,7 @@ export default function RequestForm({
     setInvalidFields([]);
     setInvalidRows([]);
     setInvalidTitle(false);
+    setInvalidNeeded(false);
     if (!validate(submit)) return;
     setBusy(submit ? "submit" : "draft");
     try {
@@ -462,6 +489,10 @@ export default function RequestForm({
             priority,
             neededByDate: neededBy || null,
             fieldValues: Object.entries(values)
+              .filter(([fieldId]) => {
+                const f = template.Fields.find((x) => x.FormFieldID === fieldId);
+                return !f || isFieldVisible(f);
+              })
               .filter(([fieldId, v]) => typeOf(fieldId) !== "file" && !isValueEmpty(typeOf(fieldId), v))
               .map(([fieldId, value]) => ({ fieldId, value: value.trim() })),
             items: rows
@@ -496,6 +527,10 @@ export default function RequestForm({
             priority,
             neededByDate: neededBy || undefined,
             fieldValues: Object.entries(values)
+              .filter(([fieldId]) => {
+                const f = template.Fields.find((x) => x.FormFieldID === fieldId);
+                return !f || isFieldVisible(f);
+              })
               .filter(([fieldId, v]) => typeOf(fieldId) !== "file" && !isValueEmpty(typeOf(fieldId), v))
               .map(([fieldId, value]) => ({ fieldId, value: value.trim() })),
             items: rows
@@ -651,48 +686,57 @@ export default function RequestForm({
                   Request Details
                 </h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div className="md:col-span-2">
-                    <label className="label" htmlFor="req-title">
-                      Request Title <span className="text-danger">*</span>
-                    </label>
-                    <input
-                      id="req-title"
-                      className={`input ${invalidTitle ? "!border-danger" : ""}`}
-                      placeholder="e.g. Q4 Buffer Solution Batch A"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="req-priority">
-                      Priority
-                    </label>
-                    <select
-                      id="req-priority"
-                      className="input"
-                      value={priority}
-                      onChange={(e) => setPriority(e.target.value)}
-                    >
-                      {PRIORITIES.map(([v, l]) => (
-                        <option key={v} value={v}>
-                          {l}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="label" htmlFor="req-needed">
-                      Needed By Date
-                    </label>
-                    <input
-                      id="req-needed"
-                      type="date"
-                      className="input"
-                      value={neededBy}
-                      onChange={(e) => setNeededBy(e.target.value)}
-                    />
-                  </div>
+                  {bc.title.show && (
+                    <div className="md:col-span-2">
+                      <label className="label" htmlFor="req-title">
+                        Request Title{" "}
+                        {bc.title.required && <span className="text-danger">*</span>}
+                      </label>
+                      <input
+                        id="req-title"
+                        className={`input ${invalidTitle ? "!border-danger" : ""}`}
+                        placeholder="e.g. Q4 Buffer Solution Batch A"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                      />
+                    </div>
+                  )}
+                  {bc.priority.show && (
+                    <div>
+                      <label className="label" htmlFor="req-priority">
+                        Priority
+                      </label>
+                      <select
+                        id="req-priority"
+                        className="input"
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                      >
+                        {PRIORITIES.map(([v, l]) => (
+                          <option key={v} value={v}>
+                            {l}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  {bc.neededBy.show && (
+                    <div>
+                      <label className="label" htmlFor="req-needed">
+                        Needed By Date{" "}
+                        {bc.neededBy.required && <span className="text-danger">*</span>}
+                      </label>
+                      <input
+                        id="req-needed"
+                        type="date"
+                        className={`input ${invalidNeeded ? "!border-danger" : ""}`}
+                        value={neededBy}
+                        onChange={(e) => setNeededBy(e.target.value)}
+                      />
+                    </div>
+                  )}
                   {[...template.Fields].sort((a, b) => a.SortOrder - b.SortOrder).map((f) => {
+                    if (!isFieldVisible(f)) return null;
                     const invalid = invalidFields.includes(f.FormFieldID);
                     const cls = `input ${invalid ? "!border-danger" : ""}`;
                     const cfg = parseFieldConfig(f.Config);
@@ -965,6 +1009,7 @@ export default function RequestForm({
               </div>
 
               {/* Items */}
+              {bc.items.show && (
               <div className="border-b border-surface-border p-6 md:p-8">
                 <div className="mb-5 flex items-center justify-between">
                   <h2 className="border-l-2 border-primary pl-3 text-lg font-semibold text-ink">Items</h2>
@@ -1123,8 +1168,10 @@ export default function RequestForm({
                   </div>
                 )}
               </div>
+              )}
 
               {/* Attachments */}
+              {bc.attachments.show && (
               <div className="p-6 md:p-8">
                 <h2 className="mb-1 border-l-2 border-primary pl-3 text-lg font-semibold text-ink">
                   Attachments
@@ -1188,6 +1235,7 @@ export default function RequestForm({
                   </div>
                 )}
               </div>
+              )}
             </div>
 
             <div className="mt-5 flex items-center justify-end gap-3">

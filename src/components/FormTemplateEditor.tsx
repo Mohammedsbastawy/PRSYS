@@ -4,6 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import {
+  BUILTIN_INPUTS,
+  defaultRequestFormConfig,
+  parseRequestFormConfig,
+  type RequestFormConfig,
+} from "@/lib/form-builtins";
 import AppShell from "@/components/AppShell";
 import { Icon, StatusBadge } from "@/components/ui";
 import {
@@ -18,6 +24,8 @@ import {
   formatMoney,
   parseFieldConfig,
   parseMultiValue,
+  SHOW_WHEN_OPS,
+  showWhenOpNeedsValue,
 } from "@/lib/field-config";
 import { formatRequestId, validateIdFormat } from "@/lib/request-ids";
 
@@ -40,6 +48,9 @@ interface FieldDraft {
   maxSizeMB: string;
   accept: string;
   currency: string;
+  condFieldKey: string;
+  condOp: string;
+  condValue: string;
 }
 
 interface LoadedField {
@@ -160,6 +171,9 @@ function blankField(type: string): FieldDraft {
     maxSizeMB: "",
     accept: "",
     currency: "",
+    condFieldKey: "",
+    condOp: "equals",
+    condValue: "",
   };
 }
 
@@ -566,6 +580,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
   const [categoryId, setCategoryId] = useState("");
   const [workflowId, setWorkflowId] = useState("");
   const [slaPolicyId, setSlaPolicyId] = useState("");
+  const [builtins, setBuiltins] = useState<RequestFormConfig>(() => defaultRequestFormConfig());
   const [slaPolicies, setSlaPolicies] = useState<(Option & { isDefault?: boolean })[]>([]);
   const [status, setStatus] = useState("DRAFT");
   const [fields, setFields] = useState<FieldDraft[]>([]);
@@ -641,6 +656,11 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
           setCategoryId(t.FormCategoryID ?? "");
           setWorkflowId(t.WFDefinitionID ?? "");
           setSlaPolicyId((t as { SLAPolicyID?: string | null }).SLAPolicyID ?? "");
+          setBuiltins(
+            parseRequestFormConfig(
+              (t as { RequestFormConfig?: string | null }).RequestFormConfig ?? null
+            )
+          );
           setStatus(t.Status);
           setOwnerType(t.OwnerGroupID ? "group" : t.OwnerDEPID ? "dep" : "none");
           setOwnerDepId(t.OwnerDEPID ?? "");
@@ -689,6 +709,9 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 maxSizeMB: cfg.maxSizeMB,
                 accept: cfg.accept,
                 currency: cfg.currency,
+                condFieldKey: cfg.showWhen?.fieldKey ?? "",
+                condOp: cfg.showWhen?.op ?? "equals",
+                condValue: cfg.showWhen?.value ?? "",
               };
             })
           );
@@ -879,6 +902,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         ownerDepId: ownerType === "dep" ? ownerDepId || null : null,
         ownerGroupId: ownerType === "group" ? ownerGroupId || null : null,
         slaPolicyId: slaPolicyId || null,
+        requestFormConfig: builtins,
         idPrefix: idPrefixNorm,
         idSeparator: idSeparator || null,
         idPadding: idPadNum,
@@ -906,6 +930,9 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
             maxSizeMB: f.fieldType === "file" ? f.maxSizeMB : "",
             accept: f.fieldType === "file" ? f.accept : "",
             currency: f.fieldType === "currency" ? f.currency : "",
+            showWhen: f.condFieldKey.trim()
+              ? { fieldKey: f.condFieldKey.trim(), op: f.condOp, value: f.condValue }
+              : null,
           }),
         })),
       };
@@ -1284,6 +1311,64 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                             }`}
                           />
                         </button>
+                      </div>
+                    )}
+                    {selected.fieldType !== "section" && (
+                      <div className="rounded border border-surface-border p-2.5">
+                        <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                          Show this field when...{" "}
+                          <span className="font-normal normal-case text-ink-faint">(optional)</span>
+                        </div>
+                        <div className="space-y-2">
+                          <select
+                            className="input !py-1.5 text-xs"
+                            value={selected.condFieldKey}
+                            disabled={ro}
+                            onChange={(e) => patchField(selected.key, { condFieldKey: e.target.value, condValue: "" })}
+                          >
+                            <option value="">Always visible (no condition)</option>
+                            {fields
+                              .filter(
+                                (of) =>
+                                  of.key !== selected.key &&
+                                  of.fieldType !== "section" &&
+                                  of.fieldKey.trim()
+                              )
+                              .map((of) => (
+                                <option key={of.key} value={of.fieldKey}>
+                                  When “{of.label.trim() || of.fieldKey}”
+                                </option>
+                              ))}
+                          </select>
+                          {selected.condFieldKey.trim() && (
+                            <>
+                              <select
+                                className="input !py-1.5 text-xs"
+                                value={selected.condOp}
+                                disabled={ro}
+                                onChange={(e) => patchField(selected.key, { condOp: e.target.value, condValue: "" })}
+                              >
+                                {SHOW_WHEN_OPS.map((o) => (
+                                  <option key={o.value} value={o.value}>
+                                    {o.label}
+                                  </option>
+                                ))}
+                              </select>
+                              {showWhenOpNeedsValue(selected.condOp) && (
+                                <input
+                                  className="input !py-1.5 text-xs"
+                                  value={selected.condValue}
+                                  disabled={ro}
+                                  onChange={(e) => patchField(selected.key, { condValue: e.target.value })}
+                                  placeholder="Value to compare, e.g. Yes"
+                                />
+                              )}
+                              <p className="text-[11px] text-ink-faint">
+                                While the condition is unmet the field hides and its required rule pauses.
+                              </p>
+                            </>
+                          )}
+                        </div>
                       </div>
                     )}
                     <div>
@@ -1675,10 +1760,75 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     </div>
                   </div>
 
+                  {/* ---- Request Inputs (built-in) ---- */}
+                  <div className="rounded border border-surface-border p-3">
+                    <div className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                      Request Inputs
+                    </div>
+                    <p className="mb-2 text-[11px] text-ink-faint">
+                      Standard inputs of every request. Unticked inputs simply do not appear when
+                      filling this form — add fields above for anything custom.
+                    </p>
+                    <div className="space-y-2">
+                      {BUILTIN_INPUTS.map((b) => {
+                        const st = builtins[b.key];
+                        return (
+                          <div key={b.key} className="flex items-center justify-between gap-2">
+                            <span className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-ink" title={b.description}>
+                              <Icon name={b.icon} className="text-[16px] text-ink-faint" />
+                              <span className="truncate">{b.label}</span>
+                            </span>
+                            <span className="flex items-center gap-3">
+                              {b.hasRequired && (
+                                <label
+                                  className={`flex items-center gap-1 text-[11px] ${st.show ? "text-ink" : "text-ink-faint"}`}
+                                  title="Must be filled before submission"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    className="h-3.5 w-3.5"
+                                    disabled={ro || !st.show}
+                                    checked={st.required}
+                                    onChange={(e) =>
+                                      setBuiltins({
+                                        ...builtins,
+                                        [b.key]: { ...st, required: e.target.checked },
+                                      })
+                                    }
+                                  />
+                                  required
+                                </label>
+                              )}
+                              <button
+                                type="button"
+                                role="switch"
+                                aria-checked={st.show}
+                                disabled={ro}
+                                onClick={() =>
+                                  setBuiltins({ ...builtins, [b.key]: { ...st, show: !st.show } })
+                                }
+                                className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                                  st.show ? "bg-primary" : "bg-gray-300"
+                                } disabled:opacity-50`}
+                                title={st.show ? "Shown on the form" : "Hidden from the form"}
+                              >
+                                <span
+                                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
+                                    st.show ? "left-[18px]" : "left-0.5"
+                                  }`}
+                                />
+                              </button>
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   {/* ---- Visibility ---- */}
                   <div className="rounded border border-surface-border p-3">
                     <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
-                      Visibility
+                      Visibility — who can see & request this form
                     </div>
                     <div className="mb-2 flex gap-2">
                       {(["public", "restricted"] as const).map((m) => (

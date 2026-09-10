@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
           Status: true,
           OwnerDEP: { select: { Name: true } },
           OwnerGroup: { select: { Name: true } },
+          OwnerDEPID: true,
+          OwnerGroupID: true,
           FormPerms: {
             where: { PermissionType: 'VIEW' },
             select: { DEPID: true, GroupID: true, UserID: true },
@@ -62,6 +64,9 @@ export async function GET(req: NextRequest) {
       Templates: c.Templates.filter(
         (t) =>
           isManager ||
+          // form owner always sees their own form
+          (depId !== null && t.OwnerDEPID === depId) ||
+          (t.OwnerGroupID !== null && groupIds.has(t.OwnerGroupID)) ||
           t.FormPerms.length === 0 ||
           t.FormPerms.some(
             (p) =>

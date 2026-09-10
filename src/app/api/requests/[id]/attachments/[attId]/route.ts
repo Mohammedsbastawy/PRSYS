@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, notFound } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
-import { syncFieldAttachmentsValue, uploadDir } from '../../attachments/route'
+import { syncFieldAttachmentsValue, uploadDir } from '@/lib/request-attachments'
 
 interface Params { params: { id: string; attId: string } }
 

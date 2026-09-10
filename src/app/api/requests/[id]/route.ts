@@ -7,9 +7,11 @@ import { notifyUsers, usersWithPermission } from '@/lib/notifications'
 import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
 import type { StepTargetInput } from '@/lib/workflow-targets'
 import { stepLookups } from '@/lib/workflow-targets-prisma'
+import { canUserUseTemplate, filterVisibleUserIds, visibilityBypass } from '@/lib/form-visibility'
 import { computeDueDates, type SLATargetRow } from '@/lib/sla'
 import { runWorkflowRules, type RuleRunResult } from '@/lib/workflow-rules-run'
-import { parseFieldConfig, isValueEmpty, validateFieldValue, parseMultiValue, formatMoney } from '@/lib/field-config'
+import { parseFieldConfig, isValueEmpty, validateFieldValue, parseMultiValue, formatMoney, evalShowWhen } from '@/lib/field-config'
+import { parseRequestFormConfig } from '@/lib/form-builtins'
 import { parseStepCondition, evaluateStepCondition } from '@/lib/workflow-conditions'
 import type { ConditionContext } from '@/lib/workflow-conditions'
 import { z } from 'zod'
@@ -137,6 +139,12 @@ export async function GET(req: NextRequest, { params }: Params) {
       ? await prisma.dEP.count({ where: { DEPID: depId, ManagerID: payload.userId } })
       : 0
     if (!managed) return forbidden()
+  }
+  // form-visibility ACL: even an approver/agent cannot read a request of a form
+  // they were not granted — the requester always keeps their own requests.
+  if (!isOwner && !visibilityBypass(ctx)) {
+    const canSeeForm = await canUserUseTemplate(payload.userId, request.FormTemplateID)
+    if (!canSeeForm) return forbidden()
   }
 
   let department: string | null = null
@@ -345,10 +353,16 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       for (const v of vals) {
         if (v.FormFieldID) byField.set(v.FormFieldID, v.Value)
       }
+      // conditional visibility: a hidden field pauses its required rule
+      const byKeyForCond = (k: string): string => {
+        const cf = tmplFields.find((x) => x.FieldKey === k)
+        return cf ? byField.get(cf.FormFieldID) ?? '' : ''
+      }
       const missing: string[] = []
       for (const f of tmplFields) {
         if (f.FieldType === 'section') continue
         const raw = byField.get(f.FormFieldID) ?? ''
+        if (!evalShowWhen(parseFieldConfig(f.Config).showWhen, byKeyForCond)) continue
         if (f.IsRequired && isValueEmpty(f.FieldType, raw)) {
           missing.push(f.Label)
           continue
@@ -363,7 +377,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
     }
     const itemCount = await prisma.requestItems.count({ where: { RequestID: params.id } })
-    if (itemCount === 0) return json({ error: 'Add at least one item before submitting' }, 400)
+    const builtCfg = parseRequestFormConfig((request.FormTemplate as { RequestFormConfig?: string | null } | null)?.RequestFormConfig ?? null)
+    if (builtCfg.items.show && itemCount === 0) return json({ error: 'Add at least one item before submitting' }, 400)
 
     const wf = request.FormTemplate.Workflow
     const steps = wf?.Steps ?? []
@@ -699,8 +714,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       const nextTargets = (
         await stepTargetUserIds(nextStep, request.RequesterID, stepLookups())
       ).filter((id: string) => id !== payload.userId)
-      if (nextTargets.length > 0) {
-        await notifyUsers(nextTargets, {
+      const visibleNext = await filterVisibleUserIds(nextTargets, request.FormTemplateID)
+      if (visibleNext.length > 0) {
+        await notifyUsers(visibleNext, {
           title: 'Request needs your approval',
           message: `${request.TrackingNumber} is now at "${nextStep.StepName}"${dueSuffix(newDueAt)}`,
           type: 'REQUEST_SUBMITTED',

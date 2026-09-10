@@ -5,6 +5,7 @@ import { json, unauthorized, forbidden } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
 import { stepLookups } from '@/lib/workflow-targets-prisma'
+import { requestVisibilityWhere, viewerScope, visibilityBypass } from '@/lib/form-visibility'
 
 const PENDING_STATUSES = ['PENDING_APPROVAL', 'CLARIFICATION_REQUESTED']
 
@@ -27,8 +28,11 @@ export async function GET(req: NextRequest) {
 
   // ---- History: my past approve/reject decisions ----
   if (mode === 'history') {
+    const histWhere: Record<string, unknown> = { ApproverUserID: payload.userId, Decision: { in: ['APPROVED', 'REJECTED'] } }
+    // form-visibility ACL — history re-appears if the user is granted later
+    if (!visibilityBypass(ctx)) histWhere.Request = { is: requestVisibilityWhere(await viewerScope(payload.userId)) }
     const rows = await prisma.requestApprovals.findMany({
-      where: { ApproverUserID: payload.userId, Decision: { in: ['APPROVED', 'REJECTED'] } },
+      where: histWhere,
       include: {
         Request: {
           select: {
@@ -72,6 +76,10 @@ export async function GET(req: NextRequest) {
 
   const where: Record<string, unknown> = { Status: { in: PENDING_STATUSES } }
   if (type) where.FormTemplate = { FormCategoryID: type }
+  // form-visibility ACL — restricted forms drop out of the queue for ungranted users
+  if (!visibilityBypass(ctx)) {
+    where.AND = [...(Array.isArray(where.AND) ? (where.AND as unknown[]) : []), requestVisibilityWhere(await viewerScope(payload.userId))]
+  }
   if (dept) where.Requester = { DEPID: dept }
   // pure managers (no agent permission) see only their managed departments' queue
   if (!canApprove) {

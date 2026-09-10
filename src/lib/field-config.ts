@@ -12,7 +12,8 @@
 //
 // Config protocol (FormFields.Config: JSON string or null):
 //   { options[], help, placeholder, min, max, minLength, maxLength,
-//     maxFiles, maxSizeMB, accept, currency }
+//     maxFiles, maxSizeMB, accept, currency,
+//     showWhen?: { fieldKey, op, value } — conditional visibility }
 // Legacy shapes are still parsed on read (bare options array).
 
 export interface FieldTypeDef {
@@ -135,6 +136,52 @@ export function formatMoney(raw: string, code: string | null | undefined): strin
 
 /* ---------------- Config read/write ---------------- */
 
+/* Conditional visibility: show this field only when another field's value matches. */
+export const SHOW_WHEN_OPS = [
+  { value: "equals", label: "is exactly", needsValue: true },
+  { value: "not_equals", label: "is not", needsValue: true },
+  { value: "is_set", label: "has any value", needsValue: false },
+  { value: "is_not_set", label: "has no value", needsValue: false },
+] as const;
+
+export interface ShowWhenRule {
+  fieldKey: string;
+  op: string;
+  value: string;
+}
+
+export function showWhenOpNeedsValue(op: string): boolean {
+  return SHOW_WHEN_OPS.find((o) => o.value === op)?.needsValue ?? true;
+}
+
+/** Evaluate a showWhen rule. getValue(fieldKey) returns the CURRENT form value ("" if empty). */
+export function evalShowWhen(rule: ShowWhenRule | null, getValue: (fieldKey: string) => string): boolean {
+  if (!rule || !rule.fieldKey) return true;
+  const v = (getValue(rule.fieldKey) ?? "").trim();
+  const ref = (rule.value ?? "").trim();
+  switch (rule.op) {
+    case "equals":
+      return v.toLowerCase() === ref.toLowerCase();
+    case "not_equals":
+      return v !== "" && v.toLowerCase() !== ref.toLowerCase();
+    case "is_set":
+      return v !== "";
+    case "is_not_set":
+      return v === "";
+    default:
+      return true;
+  }
+}
+
+/** Lightweight validity check used by the builder/API. */
+export function validateShowWhen(rule: ShowWhenRule | null): string | null {
+  if (!rule) return null;
+  if (!rule.fieldKey.trim()) return "choose the controlling field";
+  if (!SHOW_WHEN_OPS.some((o) => o.value === rule.op)) return "choose the comparison";
+  if (showWhenOpNeedsValue(rule.op) && !rule.value.trim()) return "the value to compare against is required";
+  return null;
+}
+
 export interface ParsedFieldConfig {
   options: string[];
   help: string;
@@ -147,6 +194,7 @@ export interface ParsedFieldConfig {
   maxSizeMB: string;
   accept: string;
   currency: string;
+  showWhen: ShowWhenRule | null;
 }
 
 function cfgToString(v: unknown): string {
@@ -174,6 +222,7 @@ export function parseFieldConfig(cfg: string | null | undefined): ParsedFieldCon
     maxSizeMB: "",
     accept: "",
     currency: "",
+    showWhen: null,
   };
   if (!cfg) return empty;
   try {
@@ -204,6 +253,14 @@ export function parseFieldConfig(cfg: string | null | undefined): ParsedFieldCon
         maxSizeMB: cfgToString(rec.maxSizeMB),
         accept: acceptToString(rec.accept),
         currency: typeof rec.currency === "string" ? rec.currency : "",
+        showWhen:
+          typeof rec.showWhen === "object" && rec.showWhen !== null
+            ? {
+                fieldKey: cfgToString((rec.showWhen as Record<string, unknown>).fieldKey),
+                op: cfgToString((rec.showWhen as Record<string, unknown>).op) || "equals",
+                value: cfgToString((rec.showWhen as Record<string, unknown>).value),
+              }
+            : null,
       };
     }
   } catch {
@@ -224,6 +281,7 @@ export function buildFieldConfig(o: {
   maxSizeMB?: string | number;
   accept?: string;
   currency?: string;
+  showWhen?: ShowWhenRule | null;
 }): string | null {
   const out: Record<string, unknown> = {};
   if (o.options && o.options.length > 0) out.options = o.options;
@@ -250,6 +308,13 @@ export function buildFieldConfig(o: {
   if (maxMB !== null) out.maxSizeMB = maxMB;
   if (o.accept && o.accept.trim()) out.accept = o.accept.trim();
   if (o.currency && o.currency.trim()) out.currency = o.currency.trim().toUpperCase();
+  if (o.showWhen && o.showWhen.fieldKey.trim()) {
+    out.showWhen = {
+      fieldKey: o.showWhen.fieldKey.trim(),
+      op: o.showWhen.op || "equals",
+      value: (o.showWhen.value ?? "").trim(),
+    };
+  }
   return Object.keys(out).length > 0 ? JSON.stringify(out) : null;
 }
 

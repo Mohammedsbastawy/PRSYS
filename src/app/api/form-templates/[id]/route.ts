@@ -35,18 +35,16 @@ export async function GET(req: NextRequest, { params }: Params) {
   })
   if (!tmpl) return notFound('Template not found')
 
-  // Fill context: only usable (ACTIVE + visible) forms for requesters.
-  // Admins / form managers bypass the check (they need DRAFT previews too).
+  // Access: admins / form managers bypass; everyone else must be granted the form.
   const url = new URL(req.url)
-  if (url.searchParams.get('context') === 'fill') {
-    const ctx = await getUserContext(payload.userId)
-    const bypass =
-      ctx && (ctx.roleCode === 'SUPER_ADMIN' || hasPermission(ctx, 'FORM_TEMPLATE_MANAGE'))
-    if (!bypass) {
-      if (tmpl.Status !== 'ACTIVE') return notFound('Form not available')
-      const canUse = await canUserUseTemplate(payload.userId, params.id)
-      if (!canUse) return json({ error: 'You do not have access to this form' }, 403)
-    }
+  const fillCtx = url.searchParams.get('context') === 'fill'
+  const ctx = await getUserContext(payload.userId)
+  const bypass =
+    ctx && (ctx.roleCode === 'SUPER_ADMIN' || hasPermission(ctx, 'FORM_TEMPLATE_MANAGE'))
+  if (!bypass) {
+    if (fillCtx && tmpl.Status !== 'ACTIVE') return notFound('Form not available')
+    const canUse = await canUserUseTemplate(payload.userId, params.id)
+    if (!canUse) return json({ error: 'You do not have access to this form' }, 403)
   }
 
   return json(tmpl)
@@ -128,6 +126,7 @@ const tmplSchema = z.object({
   ownerDepId: z.string().optional().nullable(),
   ownerGroupId: z.string().optional().nullable(),
   slaPolicyId: z.string().optional().nullable(),
+  requestFormConfig: z.record(z.string(), z.unknown()).optional().nullable(),
   visibility: z.array(visibilitySchema).default([]),
   idPrefix: z.string().max(10).optional().nullable(),
   idSeparator: z.string().max(3).optional().nullable(),
@@ -349,6 +348,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
           OwnerDEPID: data!.ownerDepId ?? null,
           OwnerGroupID: data!.ownerGroupId ?? null,
           SLAPolicyID: data!.slaPolicyId ?? null,
+          RequestFormConfig: data!.requestFormConfig ? JSON.stringify(data!.requestFormConfig) : null,
           IdPrefix: prefix,
           IdSeparator: separator === '' ? null : separator,
           IdPadding: padding,

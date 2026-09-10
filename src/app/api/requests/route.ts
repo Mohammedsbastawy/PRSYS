@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
-import { canUserUseTemplate } from '@/lib/form-visibility'
+import { canUserUseTemplate, requestVisibilityWhere, viewerScope, visibilityBypass } from '@/lib/form-visibility'
 import { formatRequestId } from '@/lib/request-ids'
 import { z } from 'zod'
 
@@ -57,6 +57,11 @@ export async function GET(req: NextRequest) {
     const or: Record<string, unknown>[] = [{ RequesterID: payload.userId }]
     for (const d of managed) or.push({ Requester: { DEPID: d.DEPID } })
     where.OR = or
+  }
+  // form-visibility ACL: restricted forms are invisible except to granted
+  // targets / the form owner — a requester always keeps their own requests.
+  if (!visibilityBypass(ctx)) {
+    where.AND = [...(Array.isArray(where.AND) ? (where.AND as unknown[]) : []), requestVisibilityWhere(await viewerScope(payload.userId))]
   }
   if (status) where.Status = status
 

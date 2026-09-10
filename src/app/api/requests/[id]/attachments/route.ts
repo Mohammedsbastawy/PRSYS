@@ -7,6 +7,7 @@ import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, notFound } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { parseAcceptList, parseFieldConfig } from '@/lib/field-config'
+import { syncFieldAttachmentsValue, uploadDir } from '@/lib/request-attachments'
 
 interface Params { params: { id: string } }
 
@@ -15,42 +16,9 @@ const BLOCKED_EXT = new Set(
   ['exe', 'bat', 'cmd', 'com', 'sh', 'bash', 'ps1', 'vbs', 'vba', 'jar', 'msi', 'js', 'jse', 'wsf', 'html', 'htm', 'svg', 'swf']
 )
 
-export function uploadDir(): string {
-  return process.env.UPLOAD_DIR || path.join(process.cwd(), 'uploads')
-}
-
 function safeName(original: string): string {
   const base = path.basename(original).replace(/[^a-zA-Z0-9._-]+/g, '_').slice(0, 120)
   return base.length > 0 ? base : 'file'
-}
-
-/**
- * Recompute a file-field's answer (JSON array of attachment IDs) from the
- * current attachment rows. Throws on failure — callers decide how to handle.
- */
-export async function syncFieldAttachmentsValue(requestId: string, formFieldId: string): Promise<void> {
-  const rows = await prisma.requestAttachments.findMany({
-    where: { RequestID: requestId, FormFieldID: formFieldId },
-    select: { RequestAttachmentID: true },
-    orderBy: { CreatedAt: 'asc' },
-  })
-  const value = JSON.stringify(
-    rows.map((r: { RequestAttachmentID: string }) => r.RequestAttachmentID)
-  )
-  const existing = await prisma.requestFieldValues.findFirst({
-    where: { RequestID: requestId, FormFieldID: formFieldId },
-    select: { RequestFieldValueID: true },
-  })
-  if (existing) {
-    await prisma.requestFieldValues.update({
-      where: { RequestFieldValueID: existing.RequestFieldValueID },
-      data: { Value: value },
-    })
-  } else {
-    await prisma.requestFieldValues.create({
-      data: { RequestID: requestId, FormFieldID: formFieldId, Value: value },
-    })
-  }
 }
 
 // GET /api/requests/[id]/attachments — list files

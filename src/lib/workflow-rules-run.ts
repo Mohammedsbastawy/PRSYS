@@ -3,6 +3,7 @@
 
 import { prisma } from './prisma'
 import { notifyUsers } from './notifications'
+import { filterVisibleUserIds } from './form-visibility'
 import { evaluateStepCondition, parseStepCondition, type ConditionContext } from './workflow-conditions'
 import { parseRuleActionValue, type RuleTrigger } from './workflow-rules'
 
@@ -34,7 +35,7 @@ export async function runWorkflowRules(opts: {
 
   const request = await prisma.requests.findUnique({
     where: { RequestID: opts.requestId },
-    select: { RequestID: true, TrackingNumber: true, Priority: true, AssigneeID: true, RequesterID: true, Status: true },
+    select: { RequestID: true, TrackingNumber: true, Priority: true, AssigneeID: true, RequesterID: true, Status: true, FormTemplateID: true },
   })
   if (!request) return result
 
@@ -64,12 +65,15 @@ export async function runWorkflowRules(opts: {
         patch.AssigneeID = target.UserID
         request.AssigneeID = target.UserID
         result.newAssigneeId = target.UserID
-        await notifyUsers([target.UserID], {
-          title: `Request ${request.TrackingNumber} assigned to you`,
-          message: `Auto-assigned by workflow rule "${rule.Name}"`,
-          type: 'REQUEST_ASSIGNED',
-          requestId: request.RequestID,
-        })
+        const assignVisible = await filterVisibleUserIds([target.UserID], request.FormTemplateID)
+        if (assignVisible.length > 0) {
+          await notifyUsers(assignVisible, {
+            title: `Request ${request.TrackingNumber} assigned to you`,
+            message: `Auto-assigned by workflow rule "${rule.Name}"`,
+            type: 'REQUEST_ASSIGNED',
+            requestId: request.RequestID,
+          })
+        }
         result.applied.push(`Rule "${rule.Name}": assigned → ${target.Name}`)
         break
       }
@@ -93,6 +97,9 @@ export async function runWorkflowRules(opts: {
           ids = [request.RequesterID]
         }
         ids = Array.from(new Set(ids)).filter((id) => !(opts.excludeUserIds ?? []).includes(id))
+        const requesterIds = ids.filter((id) => id === request.RequesterID)
+        const filtered = await filterVisibleUserIds(ids, request.FormTemplateID)
+        ids = Array.from(new Set([...filtered, ...requesterIds]))
         if (ids.length === 0) break
         await notifyUsers(ids, {
           title: v.notifyTitle || `Update on ${request.TrackingNumber}`,

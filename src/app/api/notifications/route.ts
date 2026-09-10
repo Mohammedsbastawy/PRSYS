@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, parseBody } from '@/lib/http'
 import { getUserContext } from '@/lib/rbac'
+import { requestVisibilityWhere, viewerScope, visibilityBypass } from '@/lib/form-visibility'
 import { z } from 'zod'
 
 // GET /api/notifications — own notifications + unread count
@@ -12,14 +13,27 @@ export async function GET(req: NextRequest) {
   const ctx = await getUserContext(payload.userId)
   if (!ctx) return forbidden()
 
+  // form-visibility ACL: notifications about requests of a restricted form are
+  // hidden from ungranted users (and re-appear if they are granted later)
+  const notifWhere: Record<string, unknown> = { UserID: payload.userId }
+  if (!visibilityBypass(ctx)) {
+    notifWhere.AND = [
+      {
+        OR: [
+          { RelatedRequestID: null },
+          { Request: { is: requestVisibilityWhere(await viewerScope(payload.userId)) } },
+        ],
+      },
+    ]
+  }
   const [items, unreadCount] = await Promise.all([
     prisma.notifications.findMany({
-      where: { UserID: payload.userId },
+      where: notifWhere,
       include: { Request: { select: { RequestID: true, TrackingNumber: true } } },
       orderBy: { CreatedAt: 'desc' },
       take: 20,
     }),
-    prisma.notifications.count({ where: { UserID: payload.userId, IsRead: false } }),
+    prisma.notifications.count({ where: { ...notifWhere, IsRead: false } }),
   ])
   return json({ items, unreadCount })
 }

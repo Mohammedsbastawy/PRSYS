@@ -3,15 +3,22 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
+import { templateVisibilityWhere, viewerScope, visibilityBypass } from '@/lib/form-visibility'
 import { FIELD_TYPE_VALUES } from '@/lib/field-config'
 import { buildIdHead, validateIdFormat } from '@/lib/request-ids'
 import { z } from 'zod'
 
-// GET /api/form-templates
+// GET /api/form-templates — managers/admin see everything; everyone else
+// only the forms they were granted (public forms, explicit VIEW rows or ownership)
 export async function GET(req: NextRequest) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
+  const ctx = await getUserContext(payload.userId)
+  if (!ctx) return forbidden()
+  const bypass = visibilityBypass(ctx) || hasPermission(ctx, 'FORM_TEMPLATE_MANAGE')
+  const where = bypass ? {} : templateVisibilityWhere(await viewerScope(payload.userId))
   const templates = await prisma.formTemplates.findMany({
+    where,
     include: {
       Category: { select: { FormCategoryID: true, Name: true } },
       Workflow: { select: { WFDefinitionID: true, Name: true } },
@@ -49,6 +56,8 @@ const tmplSchema = z.object({
   status: z.enum(['DRAFT', 'ACTIVE']).default('DRAFT'),
   ownerDepId: z.string().optional().nullable(),
   ownerGroupId: z.string().optional().nullable(),
+  slaPolicyId: z.string().optional().nullable(),
+  requestFormConfig: z.record(z.string(), z.unknown()).optional().nullable(),
   visibility: z.array(visibilitySchema).default([]),
   idPrefix: z.string().max(10).optional().nullable(),
   idSeparator: z.string().max(3).optional().nullable(),
@@ -223,6 +232,8 @@ export async function POST(req: NextRequest) {
         WFDefinitionID: data!.wfDefinitionId ?? null,
         Status: data!.status,
         OwnerDEPID: data!.ownerDepId ?? null,
+        SLAPolicyID: data!.slaPolicyId ?? null,
+        RequestFormConfig: data!.requestFormConfig ? JSON.stringify(data!.requestFormConfig) : null,
         OwnerGroupID: data!.ownerGroupId ?? null,
         IdPrefix: prefix,
         IdSeparator: separator === '' ? null : separator,
