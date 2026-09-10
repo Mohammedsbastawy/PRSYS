@@ -209,6 +209,8 @@ model WFSteps {
   RejectAction     String   @default("REJECT_COMPLETELY")
   Condition        String?
   DueDays          Int?
+  ApproveAction      String   @default("CONTINUE")
+  ApproveTargetStepID String?
   CreatedAt        DateTime @default(now())
   UpdatedAt        DateTime @updatedAt
 
@@ -216,6 +218,8 @@ model WFSteps {
   TargetUser  Users?       @relation("WFUser", fields: [TargetUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
   TargetGroup Groups?      @relation("WFGroup", fields: [TargetGroupID], references: [GroupID], onDelete: NoAction, onUpdate: NoAction)
   TargetRole  Roles?       @relation("WFRole", fields: [TargetRoleID], references: [RoleID], onDelete: NoAction, onUpdate: NoAction)
+  ApproveTarget WFSteps? @relation("StepJump", fields: [ApproveTargetStepID], references: [WFStepID], onDelete: SetNull, onUpdate: NoAction)
+  JumpSources   WFSteps[] @relation("StepJump")
   Requests    Requests[]
   Approvals   RequestApprovals[]
 }

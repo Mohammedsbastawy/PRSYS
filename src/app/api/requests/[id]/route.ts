@@ -483,6 +483,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const currentIdx = steps.findIndex((s: { WFStepID: string }) => s.WFStepID === request.CurrentWFStepID)
     const stepName = steps[currentIdx]?.StepName ?? 'Approval step'
     const approvalMode: string = step.ApprovalMode ?? 'ANY_ONE'
+    const approveAction: string = step.ApproveAction ?? 'CONTINUE'
     const rejectAction: string = step.RejectAction ?? 'REJECT_COMPLETELY'
     const targets = await stepTargetUserIds(step, request.RequesterID, stepLookups())
     const approvedIds = new Set(
@@ -498,6 +499,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     let nextStep: (StepTargetInput & { WFStepID: string; StepName: string; DueDays: number | null }) | null = null
     const skipped: { StepName: string }[] = []
     let stepCompleted = false
+    let jumpNote: string | null = null
 
     if (action === 'REJECT') {
       if (rejectAction === 'RETURN_TO_REQUESTER') {
@@ -535,25 +537,52 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       // waiting on the remaining approvers — the step stays open
       stepCompleted = false
     } else {
-      // step completed — advance to the next applicable step, skipping non-matching ones
+      // step completed — route by the step's approve action
       stepCompleted = true
-      const fwdCtx = await conditionContext(params.id, request.Priority)
-      for (let i = currentIdx + 1; i < steps.length; i++) {
-        if (stepApplies(steps[i], fwdCtx)) {
-          nextStep = steps[i]
-          break
-        }
-        skipped.push(steps[i])
-      }
-      if (nextStep) {
-        currentStepId = nextStep.WFStepID
-        newStatus = 'PENDING_APPROVAL'
-        newDueAt = dueAtFrom(nextStep.DueDays, now)
-      } else {
-        // all steps approved
+      const jumpTarget =
+        approveAction === 'JUMP_TO_STEP'
+          ? steps.find(
+              (s: { WFStepID: string }) =>
+                s.WFStepID === step.ApproveTargetStepID && s.WFStepID !== request.CurrentWFStepID
+            ) ?? null
+          : null
+      if (approveAction === 'APPROVE_COMPLETELY') {
+        // fast-track: skip everything left and approve the request
         newStatus = 'APPROVED'
         currentStepId = null
         newDueAt = null
+      } else if (jumpTarget) {
+        // land exactly on the chosen step
+        const targetIdx = steps.findIndex(
+          (s: { WFStepID: string }) => s.WFStepID === jumpTarget.WFStepID
+        )
+        nextStep = jumpTarget
+        currentStepId = jumpTarget.WFStepID
+        newStatus = 'PENDING_APPROVAL'
+        newDueAt = dueAtFrom(jumpTarget.DueDays, now)
+        if (targetIdx >= 0 && targetIdx <= currentIdx) newRound = round + 1 // jumping back re-opens review
+        jumpNote = `"${stepName}" \u2192 "${jumpTarget.StepName}"`
+      } else {
+        // CONTINUE (also the fallback when a jump target is gone) — advance to
+        // the next applicable step, skipping non-matching ones
+        const fwdCtx = await conditionContext(params.id, request.Priority)
+        for (let i = currentIdx + 1; i < steps.length; i++) {
+          if (stepApplies(steps[i], fwdCtx)) {
+            nextStep = steps[i]
+            break
+          }
+          skipped.push(steps[i])
+        }
+        if (nextStep) {
+          currentStepId = nextStep.WFStepID
+          newStatus = 'PENDING_APPROVAL'
+          newDueAt = dueAtFrom(nextStep.DueDays, now)
+        } else {
+          // all steps approved
+          newStatus = 'APPROVED'
+          currentStepId = null
+          newDueAt = null
+        }
       }
     }
 
@@ -577,6 +606,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: newStatus, Action: auditAction, ChangedByUserID: payload.userId, Note: data!.comment ?? null },
     })
+    if (jumpNote) {
+      await prisma.requestAuditLog.create({
+        data: { RequestID: params.id, FromStatus: newStatus, ToStatus: newStatus, Action: 'JUMPED_TO_STEP', ChangedByUserID: payload.userId, Note: jumpNote },
+      })
+    }
     if (notActor(request.RequesterID)) {
       if (decision === 'APPROVED') {
         await notifyUsers([request.RequesterID], {

@@ -24,6 +24,8 @@ const stepSchema = z.object({
   rejectAction: z.enum(['REJECT_COMPLETELY', 'RETURN_TO_REQUESTER', 'RETURN_TO_PREVIOUS_STEP']).default('REJECT_COMPLETELY'),
   condition: conditionSchema,
   dueDays: z.number().int().min(1).max(365).optional().nullable(),
+  approveAction: z.enum(['CONTINUE', 'APPROVE_COMPLETELY', 'JUMP_TO_STEP']).default('CONTINUE'),
+  approveTargetIndex: z.number().int().min(1).max(100).optional().nullable(),
 })
 
 const wfSchema = z.object({
@@ -43,14 +45,24 @@ type StepInput = {
   rejectAction?: 'REJECT_COMPLETELY' | 'RETURN_TO_REQUESTER' | 'RETURN_TO_PREVIOUS_STEP'
   condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
   dueDays?: number | null
+  approveAction?: 'CONTINUE' | 'APPROVE_COMPLETELY' | 'JUMP_TO_STEP'
+  approveTargetIndex?: number | null
 }
 
 async function validateSteps(steps: StepInput[]): Promise<string | null> {
-  for (const s of steps) {
+  for (let idx = 0; idx < steps.length; idx++) {
+    const s = steps[idx]
     if (!s.stepName.trim()) return 'Every step needs a name'
     if (s.condition) {
       const cErr = validateConditionInput(s.condition.field, s.condition.op, s.condition.value)
       if (cErr) return `Step "${s.stepName}": ${cErr}`
+    }
+    if (s.approveAction === 'JUMP_TO_STEP') {
+      if (!s.approveTargetIndex) return `Step "${s.stepName}": choose a step to jump to`
+      if (s.approveTargetIndex < 1 || s.approveTargetIndex > steps.length) {
+        return `Step "${s.stepName}": jump target is out of range`
+      }
+      if (s.approveTargetIndex === idx + 1) return `Step "${s.stepName}": cannot jump to itself`
     }
     if (s.approverType === 'ROLE') {
       if (!s.targetRoleId) return `Step "${s.stepName}": choose a role`
@@ -81,6 +93,7 @@ function stepRow(s: StepInput, order: number) {
     TargetRoleID: s.approverType === 'ROLE' ? s.targetRoleId! : null,
     ApprovalMode: s.approvalMode ?? 'ANY_ONE',
     RejectAction: s.rejectAction ?? 'REJECT_COMPLETELY',
+    ApproveAction: s.approveAction ?? 'CONTINUE',
     Condition: s.condition ? buildStepCondition(s.condition.field, s.condition.op, s.condition.value) : null,
     DueDays: s.dueDays ?? null,
   }
@@ -132,5 +145,22 @@ export async function POST(req: NextRequest) {
     },
     include: { Steps: true },
   })
+  // resolve jump targets now that every step has an ID
+  const incoming = data!.steps ?? []
+  if (incoming.some((s) => s.approveAction === 'JUMP_TO_STEP')) {
+    const created = await prisma.wFSteps.findMany({
+      where: { WFDefinitionID: wf.WFDefinitionID },
+      orderBy: { StepOrder: 'asc' },
+    })
+    for (let i = 0; i < incoming.length; i++) {
+      const s = incoming[i]
+      if (s.approveAction === 'JUMP_TO_STEP' && s.approveTargetIndex) {
+        await prisma.wFSteps.update({
+          where: { WFStepID: created[i].WFStepID },
+          data: { ApproveTargetStepID: created[s.approveTargetIndex - 1].WFStepID },
+        })
+      }
+    }
+  }
   return json(wf, 201)
 }

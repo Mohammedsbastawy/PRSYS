@@ -25,6 +25,8 @@ interface StepDraft {
   targetRoleId: string;
   approvalMode: string;
   rejectAction: string;
+  approveAction: string;
+  approveTargetIndex: string;
   condField: string;
   condOp: string;
   condValue: string;
@@ -41,6 +43,8 @@ interface LoadedStep {
   TargetRoleID: string | null;
   ApprovalMode: string | null;
   RejectAction: string | null;
+  ApproveAction: string | null;
+  ApproveTargetStepID: string | null;
   Condition: string | null;
   DueDays: number | null;
 }
@@ -98,6 +102,12 @@ const REJECT_ACTIONS = [
   { value: "RETURN_TO_PREVIOUS_STEP", label: "Send back to the previous step" },
 ];
 
+const APPROVE_ACTIONS = [
+  { value: "CONTINUE", label: "Continue to the next step" },
+  { value: "APPROVE_COMPLETELY", label: "Approve the request completely (skip remaining steps)" },
+  { value: "JUMP_TO_STEP", label: "Jump to a specific step" },
+];
+
 let stepSeq = 0;
 function nextKey(): string {
   stepSeq += 1;
@@ -114,6 +124,8 @@ function blankStep(): StepDraft {
     targetRoleId: "",
     approvalMode: "ANY_ONE",
     rejectAction: "REJECT_COMPLETELY",
+    approveAction: "CONTINUE",
+    approveTargetIndex: "",
     condField: "none",
     condOp: ">=",
     condValue: "",
@@ -184,8 +196,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           setStatus(w.Status);
           setUsage(w.usage ?? null);
           setSteps(
-            (w.Steps || []).map((s) => {
+            (w.Steps || []).map((s, si, raws) => {
               const cond = parseStepCondition(s.Condition);
+              const jumpIdx = raws.findIndex((x) => x.WFStepID === s.ApproveTargetStepID);
               return {
                 key: nextKey(),
                 id: s.WFStepID,
@@ -200,6 +213,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                 condOp: cond?.op ?? ">=",
                 condValue: cond?.value ?? "",
                 dueDays: s.DueDays != null ? String(s.DueDays) : "",
+                approveAction: s.ApproveAction ?? "CONTINUE",
+                approveTargetIndex: jumpIdx >= 0 ? String(jumpIdx + 1) : "",
               };
             })
           );
@@ -244,10 +259,22 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       setError("Workflow name is required");
       return;
     }
-    for (const s of steps) {
+    for (let si = 0; si < steps.length; si++) {
+      const s = steps[si];
       if (!s.stepName.trim()) {
         setError("Every step needs a name");
         return;
+      }
+      if (s.approveAction === "JUMP_TO_STEP") {
+        const t = Number(s.approveTargetIndex);
+        if (!s.approveTargetIndex || !Number.isInteger(t) || t < 1 || t > steps.length) {
+          setError(`Step "${s.stepName}": choose a step to jump to`);
+          return;
+        }
+        if (t === si + 1) {
+          setError(`Step "${s.stepName}": cannot jump to itself`);
+          return;
+        }
       }
       if (s.approverType === "ROLE" && !s.targetRoleId) {
         setError(`Step "${s.stepName}": choose a role`);
@@ -294,6 +321,11 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           targetRoleId: s.approverType === "ROLE" ? s.targetRoleId || null : null,
           approvalMode: s.approvalMode,
           rejectAction: s.rejectAction,
+          approveAction: s.approveAction,
+          approveTargetIndex:
+            s.approveAction === "JUMP_TO_STEP" && s.approveTargetIndex !== ""
+              ? Number(s.approveTargetIndex)
+              : null,
           condition:
             s.condField === "none"
               ? null
@@ -584,7 +616,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                       </div>
                       <div className="md:col-span-2">{targetControl(s)}</div>
                       <div>
-                        <label className="label">If approved</label>
+                        <label className="label">Approval requires</label>
                         <select
                           className="input"
                           value={s.approvalMode}
@@ -618,6 +650,52 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                             </option>
                           ))}
                         </select>
+                      </div>
+                      <div className="grid gap-3 md:col-span-2 md:grid-cols-2">
+                        <div>
+                          <label className="label">If approved</label>
+                          <select
+                            className="input"
+                            value={s.approveAction}
+                            disabled={ro}
+                            onChange={(e) =>
+                              patchStep(s.key, { approveAction: e.target.value, approveTargetIndex: "" })
+                            }
+                          >
+                            {APPROVE_ACTIONS.map((m) => (
+                              <option key={m.value} value={m.value}>
+                                {m.label}
+                              </option>
+                            ))}
+                          </select>
+                          {s.approveAction === "JUMP_TO_STEP" && s.approveTargetIndex !== "" && (
+                            <p className="mt-1 text-[11px] text-ink-faint">
+                              {Number(s.approveTargetIndex) - 1 < i
+                                ? "Jumps back — the target step re-opens for a fresh round of decisions."
+                                : "Skips the steps in between."}
+                            </p>
+                          )}
+                        </div>
+                        {s.approveAction === "JUMP_TO_STEP" && (
+                          <div>
+                            <label className="label">Jump to</label>
+                            <select
+                              className="input"
+                              value={s.approveTargetIndex}
+                              disabled={ro}
+                              onChange={(e) => patchStep(s.key, { approveTargetIndex: e.target.value })}
+                            >
+                              <option value="">Select step...</option>
+                              {steps.map((t, ti) =>
+                                ti === i ? null : (
+                                  <option key={t.key} value={ti + 1}>
+                                    Step {ti + 1} — {t.stepName.trim() || "(unnamed step)"}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </div>
+                        )}
                       </div>
                       <div>
                         <label className="label">This step applies when</label>
@@ -756,6 +834,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                 <li>
                   Each step defines what an approval needs (anyone / everyone), what a rejection
                   does, when it applies, and its due days.
+                </li>
+                <li>
+                  On approval a step can continue normally, approve the request outright, or jump
+                  to another step.
                 </li>
                 <li>
                   Requests returned for correction go back to draft — resubmitting starts a fresh

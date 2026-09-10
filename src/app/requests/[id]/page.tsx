@@ -25,6 +25,8 @@ interface Step {
   ApproverType: string;
   ApprovalMode?: string | null;
   RejectAction?: string | null;
+  ApproveAction?: string | null;
+  ApproveTargetStepID?: string | null;
   DueDays?: number | null;
 }
 interface Approval {
@@ -236,6 +238,7 @@ const AUDIT_LABELS: Record<string, string> = {
   REJECTED: "Rejected",
   RETURNED_TO_REQUESTER: "Returned to requester",
   RETURNED_TO_PREVIOUS: "Sent back to previous step",
+  JUMPED_TO_STEP: "Jumped to step",
   STEP_SKIPPED: "Step skipped",
   DRAFT_UPDATED: "Draft updated",
   CLARIFICATION_REQUESTED: "Clarification requested",
@@ -916,6 +919,9 @@ export default function RequestDetailPage() {
   ].sort((x, y) => new Date(x.at).getTime() - new Date(y.at).getTime());
 
   const stepName = req.CurrentStep?.StepName || "Approval";
+  const jumpTargetName =
+    wfSteps.find((s) => s.WFStepID === req.CurrentStep?.ApproveTargetStepID)?.StepName ||
+    "the target step";
 
   return (
     <AppShell>
@@ -1404,9 +1410,13 @@ export default function RequestDetailPage() {
                 : req.CurrentStep?.RejectAction === "RETURN_TO_PREVIOUS_STEP"
                   ? "This will send the request back to the previous approval step."
                   : "This will reject the request completely."
-              : decision === "APPROVE" && req.StepProgress?.mode === "ALL"
-                ? `Your approval will be recorded (${req.StepProgress.approved + 1} of ${req.StepProgress.total}) — the step completes when everyone assigned has approved.`
-                : null
+              : decision === "APPROVE" && req.CurrentStep?.ApproveAction === "APPROVE_COMPLETELY"
+                ? "This will approve the request completely, skipping all remaining steps."
+                : decision === "APPROVE" && req.CurrentStep?.ApproveAction === "JUMP_TO_STEP"
+                  ? `This will move the request directly to "${jumpTargetName}".`
+                  : decision === "APPROVE" && req.StepProgress?.mode === "ALL"
+                    ? `Your approval will be recorded (${req.StepProgress.approved + 1} of ${req.StepProgress.total}) — the step completes when everyone assigned has approved.`
+                    : null
           }
           busy={busy !== null}
           onClose={() => setDecision(null)}
