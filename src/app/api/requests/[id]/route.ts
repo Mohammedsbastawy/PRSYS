@@ -78,6 +78,29 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   // ---- SUBMIT ----
   if (action === 'SUBMIT') {
+    // only the requester (or super admin) can submit, and only from DRAFT
+    if (request.RequesterID !== payload.userId && ctx.roleCode !== 'SUPER_ADMIN') return forbidden()
+    if (request.Status !== 'DRAFT') return json({ error: 'Only draft requests can be submitted' }, 400)
+
+    // validate required template fields
+    const requiredFields = await prisma.formFields.findMany({
+      where: { FormTemplateID: request.FormTemplateID, IsRequired: true },
+    })
+    if (requiredFields.length > 0) {
+      const vals = await prisma.requestFieldValues.findMany({
+        where: { RequestID: params.id },
+        select: { FormFieldID: true, Value: true },
+      })
+      const missing = requiredFields.filter(
+        (f) => !vals.some((v) => v.FormFieldID === f.FormFieldID && v.Value.trim() !== '')
+      )
+      if (missing.length > 0) {
+        return json({ error: `Missing required fields: ${missing.map((m) => m.Label).join(', ')}` }, 400)
+      }
+    }
+    const itemCount = await prisma.requestItems.count({ where: { RequestID: params.id } })
+    if (itemCount === 0) return json({ error: 'Add at least one item before submitting' }, 400)
+
     const wf = request.FormTemplate.Workflow
     const firstStep = wf?.Steps[0]
     const update: Record<string, unknown> = {
@@ -259,6 +282,10 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   // ---- CANCEL ----
   if (action === 'CANCEL') {
+    if (request.RequesterID !== payload.userId && ctx.roleCode !== 'SUPER_ADMIN') return forbidden()
+    if (!['DRAFT', 'PENDING_APPROVAL', 'CLARIFICATION_REQUESTED'].includes(request.Status)) {
+      return json({ error: 'This request can no longer be cancelled' }, 400)
+    }
     const updated = await prisma.requests.update({
       where: { RequestID: params.id },
       data: { Status: 'CANCELLED' },

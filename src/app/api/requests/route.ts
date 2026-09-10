@@ -28,6 +28,7 @@ const createSchema = z.object({
   formTemplateId: z.string().min(1),
   title: z.string().max(200).optional().nullable(),
   priority: z.string().default('MEDIUM'),
+  neededByDate: z.string().optional().nullable(),
   fieldValues: z.array(fieldValueSchema).default([]),
   items: z.array(itemSchema).default([]),
 })
@@ -74,6 +75,12 @@ export async function POST(req: NextRequest) {
   const { data, error: err } = await parseBody(req, createSchema)
   if (err) return json({ error: err }, 400)
 
+  let neededBy: Date | null = null
+  if (data!.neededByDate) {
+    neededBy = new Date(data!.neededByDate)
+    if (isNaN(neededBy.getTime())) return json({ error: 'Invalid neededByDate' }, 400)
+  }
+
   // generate tracking number
   const count = await prisma.requests.count()
   const year = new Date().getFullYear()
@@ -116,6 +123,7 @@ export async function POST(req: NextRequest) {
       RequesterID: payload.userId,
       Status: 'DRAFT',
       Priority: data!.priority,
+      NeededByDate: neededBy,
       FormSnapshot: JSON.stringify(tmpl),
       ...(fieldValues.length ? { FieldValues: { create: fieldValues } } : {}),
       Items: { create: items },

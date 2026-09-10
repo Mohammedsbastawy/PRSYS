@@ -17,6 +17,30 @@ export function Icon({
   );
 }
 
+/* ---------- Template icon resolver (catalog cards) ---------- */
+export function templateIcon(name: string): string {
+  const n = name.toLowerCase();
+  if (/chemical|reagent|science/.test(n)) return "science";
+  if (/repair|maintenance/.test(n)) return "build";
+  if (/logistic|ship/.test(n)) return "local_shipping";
+  if (/software|license/.test(n)) return "vpn_key";
+  if (/hardware|computer|laptop/.test(n)) return "computer";
+  if (/network|vpn/.test(n)) return "router";
+  if (/signature/.test(n)) return "draw";
+  if (/tuition|school|train/.test(n)) return "school";
+  if (/travel/.test(n)) return "flight_takeoff";
+  if (/remote|home office/.test(n)) return "home_work";
+  if (/conference/.test(n)) return "event_seat";
+  if (/supply|supplies/.test(n)) return "package_2";
+  if (/raw|material|inventory|stock|warehouse/.test(n)) return "inventory_2";
+  if (/\bit\b|laptop|computer|software|equipment|device/.test(n)) return "devices";
+  if (/vendor|payment|invoice|financ/.test(n)) return "payments";
+  if (/expense|reimburse/.test(n)) return "receipt_long";
+  if (/hr|leave|employee|staff/.test(n)) return "badge";
+  if (/purchase|procure|general/.test(n)) return "shopping_cart";
+  return "description";
+}
+
 /* ---------- Initials avatar ---------- */
 const AVATAR_COLORS = [
   "bg-blue-600",
