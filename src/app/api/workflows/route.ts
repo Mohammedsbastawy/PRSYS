@@ -16,7 +16,7 @@ const stepSchema = z.object({
   id: z.string().optional(), // present on update, ignored on create
   stepName: z.string().min(1).max(120),
   stepOrder: z.number().int().default(0),
-  approverType: z.enum(['ANY_APPROVER', 'ROLE', 'GROUP', 'USER', 'REQUESTER_MANAGER']),
+  approverType: z.enum(['ANY_APPROVER', 'ROLE', 'GROUP', 'USER', 'REQUESTER_MANAGER', 'DEPARTMENT_MANAGER']),
   targetUserId: z.string().optional().nullable(),
   targetGroupId: z.string().optional().nullable(),
   targetRoleId: z.string().optional().nullable(),
@@ -37,7 +37,7 @@ const wfSchema = z.object({
 
 type StepInput = {
   stepName: string
-  approverType: 'ANY_APPROVER' | 'ROLE' | 'GROUP' | 'USER' | 'REQUESTER_MANAGER'
+  approverType: 'ANY_APPROVER' | 'ROLE' | 'GROUP' | 'USER' | 'REQUESTER_MANAGER' | 'DEPARTMENT_MANAGER'
   targetUserId?: string | null
   targetGroupId?: string | null
   targetRoleId?: string | null

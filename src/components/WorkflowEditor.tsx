@@ -84,11 +84,12 @@ interface UserRow {
 }
 
 const APPROVER_TYPES = [
-  { value: "ANY_APPROVER", label: "Anyone with approval permission" },
-  { value: "ROLE", label: "Specific role" },
-  { value: "GROUP", label: "Specific group" },
-  { value: "USER", label: "Specific user" },
+  { value: "DEPARTMENT_MANAGER", label: "Requester's department manager" },
   { value: "REQUESTER_MANAGER", label: "Requester's direct manager" },
+  { value: "GROUP", label: "Specific group" },
+  { value: "ROLE", label: "Specific role" },
+  { value: "USER", label: "Specific user" },
+  { value: "ANY_APPROVER", label: "Anyone with approval permission" },
 ];
 
 const APPROVAL_MODES = [
@@ -432,7 +433,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       <p className="rounded bg-surface-muted px-3 py-2 text-xs text-ink-soft">
         {s.approverType === "REQUESTER_MANAGER"
           ? "Resolved per request from the requester's direct manager."
-          : "Any user with approval permission can decide this step."}
+          : s.approverType === "DEPARTMENT_MANAGER"
+            ? "Resolved per request from the manager assigned to the requester's department."
+            : "Any user with approval permission can decide this step."}
       </p>
     );
   }
@@ -630,7 +633,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                           ))}
                         </select>
                         {s.approvalMode === "ALL" &&
-                          (s.approverType === "USER" || s.approverType === "REQUESTER_MANAGER") && (
+                          (s.approverType === "USER" ||
+                            s.approverType === "REQUESTER_MANAGER" ||
+                            s.approverType === "DEPARTMENT_MANAGER") && (
                             <p className="mt-1 text-[11px] text-ink-faint">
                               Only one person is assigned, so this behaves like a single approval.
                             </p>

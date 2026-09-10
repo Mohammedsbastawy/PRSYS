@@ -3,44 +3,24 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
-import { usersWithPermission } from '@/lib/notifications'
-import { canUserDecideStep, describeStepTarget, stepTargetUserIds, type StepLookups } from '@/lib/workflow-targets'
+import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
+import { stepLookups } from '@/lib/workflow-targets-prisma'
 
 const PENDING_STATUSES = ['PENDING_APPROVAL', 'CLARIFICATION_REQUESTED']
-
-function stepLookups(): StepLookups {
-  return {
-    usersWithRole: async (roleId) => {
-      const rows = await prisma.users.findMany({
-        where: { RoleID: roleId, IsActive: true },
-        select: { UserID: true },
-      })
-      return rows.map((r: { UserID: string }) => r.UserID)
-    },
-    groupMembers: async (groupId) => {
-      const rows = await prisma.groupMembers.findMany({
-        where: { GroupID: groupId },
-        select: { UserID: true },
-      })
-      return rows.map((r: { UserID: string }) => r.UserID)
-    },
-    requesterManager: async (requesterId) => {
-      const u = await prisma.users.findUnique({
-        where: { UserID: requesterId },
-        select: { DirectManagerID: true },
-      })
-      return u?.DirectManagerID ?? null
-    },
-    allApprovers: () => usersWithPermission('REQUEST_APPROVE'),
-  }
-}
 
 // GET /api/approvals?mode=pending|history&type=<categoryId>&dept=<depId>&q=<text>&sort=oldest|newest|value&countOnly=1
 export async function GET(req: NextRequest) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
   const ctx = await getUserContext(payload.userId)
-  if (!ctx || !hasPermission(ctx, 'REQUEST_APPROVE')) return forbidden()
+  if (!ctx) return forbidden()
+  const canApprove = hasPermission(ctx, 'REQUEST_APPROVE')
+  // Department manager is an assignment, not a role — managers get a scoped approvals queue
+  const managedDeps = await prisma.dEP.findMany({
+    where: { ManagerID: payload.userId },
+    select: { DEPID: true },
+  })
+  if (!canApprove && managedDeps.length === 0) return forbidden()
 
   const url = new URL(req.url)
   const mode = url.searchParams.get('mode') || 'pending'
@@ -93,6 +73,13 @@ export async function GET(req: NextRequest) {
   const where: Record<string, unknown> = { Status: { in: PENDING_STATUSES } }
   if (type) where.FormTemplate = { FormCategoryID: type }
   if (dept) where.Requester = { DEPID: dept }
+  // pure managers (no agent permission) see only their managed departments' queue
+  if (!canApprove) {
+    if (dept && !managedDeps.some((d) => d.DEPID === dept)) {
+      return json(url.searchParams.get('countOnly') === '1' ? { count: 0 } : [])
+    }
+    where.Requester = where.Requester ?? { DEPID: { in: managedDeps.map((d) => d.DEPID) } }
+  }
   if (q) {
     where.OR = [
       { TrackingNumber: { contains: q } },
@@ -191,7 +178,7 @@ export async function GET(req: NextRequest) {
       userId: payload.userId,
       requesterId: r.RequesterID,
       isSuperAdmin,
-      hasApprovePerm: true,
+      hasApprovePerm: canApprove,
       lookups,
       decidedUserIds: myDecidedKeys.has(roundKey) ? [payload.userId] : [],
     })

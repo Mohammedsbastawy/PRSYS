@@ -5,7 +5,8 @@ import { json, unauthorized, forbidden, notFound, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { notifyUsers, usersWithPermission } from '@/lib/notifications'
 import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
-import type { StepLookups, StepTargetInput } from '@/lib/workflow-targets'
+import type { StepTargetInput } from '@/lib/workflow-targets'
+import { stepLookups } from '@/lib/workflow-targets-prisma'
 import { parseFieldConfig, isValueEmpty, validateFieldValue, parseMultiValue, formatMoney } from '@/lib/field-config'
 import { parseStepCondition, evaluateStepCondition } from '@/lib/workflow-conditions'
 import type { ConditionContext } from '@/lib/workflow-conditions'
@@ -13,33 +14,9 @@ import { z } from 'zod'
 
 interface Params { params: { id: string } }
 
-// Resolves step targets (role members, group members, specific user, manager, all approvers)
-function stepLookups(): StepLookups {
-  return {
-    usersWithRole: async (roleId) => {
-      const rows = await prisma.users.findMany({
-        where: { RoleID: roleId, IsActive: true },
-        select: { UserID: true },
-      })
-      return rows.map((r: { UserID: string }) => r.UserID)
-    },
-    groupMembers: async (groupId) => {
-      const rows = await prisma.groupMembers.findMany({
-        where: { GroupID: groupId },
-        select: { UserID: true },
-      })
-      return rows.map((r: { UserID: string }) => r.UserID)
-    },
-    requesterManager: async (requesterId) => {
-      const u = await prisma.users.findUnique({
-        where: { UserID: requesterId },
-        select: { DirectManagerID: true },
-      })
-      return u?.DirectManagerID ?? null
-    },
-    allApprovers: () => usersWithPermission('REQUEST_APPROVE'),
-  }
-}
+// Resolves step targets (role members, group members, specific user, managers, all approvers)
+// — shared prisma-backed lookups (includes DEPARTMENT_MANAGER resolution),
+//   see src/lib/workflow-targets-prisma.ts —
 
 // Condition context for step skip-rules: value + size + priority of the request
 async function conditionContext(requestId: string, priority: string): Promise<ConditionContext> {
@@ -121,10 +98,14 @@ export async function GET(req: NextRequest, { params }: Params) {
   })
   if (!request) return notFound('Request not found')
 
-  // visibility check
+  // visibility check: owner, VIEW_ALL agents, or the manager of the requester's department
   const isOwner = request.RequesterID === payload.userId
   if (!isOwner && !hasPermission(ctx, 'REQUEST_VIEW_ALL')) {
-    return forbidden()
+    const depId = request.Requester.DEPID
+    const managed = depId
+      ? await prisma.dEP.count({ where: { DEPID: depId, ManagerID: payload.userId } })
+      : 0
+    if (!managed) return forbidden()
   }
 
   let department: string | null = null
@@ -427,7 +408,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   // ---- APPROVE / REJECT ----
   if (action === 'APPROVE' || action === 'REJECT') {
-    if (!hasPermission(ctx, 'REQUEST_APPROVE')) return forbidden()
+    // No blanket REQUEST_APPROVE clearance here — canUserDecideStep governs:
+    // directly-targeted approvers (e.g. department managers) decide without the
+    // agent permission; anything else still requires it.
     if (!['PENDING_APPROVAL', 'CLARIFICATION_REQUESTED'].includes(request.Status)) {
       return json({ error: 'Request is not awaiting approval' }, 400)
     }
@@ -664,7 +647,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   // ---- REQUEST_CLARIFICATION ----
   if (action === 'REQUEST_CLARIFICATION') {
-    if (!hasPermission(ctx, 'REQUEST_APPROVE')) return forbidden()
+    // Targeted approvers (incl. department managers) may ask for clarification too
     if (request.Status !== 'PENDING_APPROVAL') {
       return json({ error: 'Only pending requests can be sent back for clarification' }, 400)
     }

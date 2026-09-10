@@ -48,7 +48,15 @@ export async function GET(req: NextRequest) {
 
   const where: Record<string, unknown> = {}
   if (!viewAll) {
-    where.RequesterID = payload.userId
+    // self-service scope: own requests + requests of departments the user manages —
+    // a department manager keeps the normal UI yet sees their team's tickets.
+    const managed = await prisma.dEP.findMany({
+      where: { ManagerID: payload.userId },
+      select: { DEPID: true },
+    })
+    const or: Record<string, unknown>[] = [{ RequesterID: payload.userId }]
+    for (const d of managed) or.push({ Requester: { DEPID: d.DEPID } })
+    where.OR = or
   }
   if (status) where.Status = status
 
