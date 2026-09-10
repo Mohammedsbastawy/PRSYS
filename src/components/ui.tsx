@@ -75,6 +75,7 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md"
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
     DRAFT: "bg-gray-100 text-gray-700",
+    ACTIVE: "bg-green-100 text-green-800",
     PENDING_APPROVAL: "bg-amber-100 text-amber-800",
     CLARIFICATION_REQUESTED: "bg-orange-100 text-orange-800",
     APPROVED: "bg-blue-100 text-blue-800",
