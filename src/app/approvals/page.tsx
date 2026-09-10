@@ -22,6 +22,9 @@ interface QueueItem {
   stepCount: number;
   itemCount: number;
   totalValue: number;
+  canDecide: boolean;
+  decideReason: string | null;
+  awaiting: string | null;
 }
 
 interface HistoryItem {
@@ -405,26 +408,31 @@ export default function ApprovalsPage() {
                           total={item.stepCount}
                           current={item.stepIndex}
                           muted={awaiting}
-                          title={item.stepName ?? undefined}
+                          title={item.awaiting ? `${item.stepName ?? "Step"} — ${item.awaiting}` : (item.stepName ?? undefined)}
                         />
                         {item.stepName && (
                           <span className="block text-[11px] text-ink-faint">{item.stepName}</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {awaiting ? (
-                          <Link
-                            href={`/requests/${item.id}`}
-                            className="text-xs font-semibold text-primary hover:underline"
-                          >
-                            View
-                          </Link>
-                        ) : (
+                        {item.canDecide && !awaiting ? (
                           <Link
                             href={`/requests/${item.id}`}
                             className="inline-block rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-blue-50"
                           >
                             Review
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/requests/${item.id}`}
+                            title={
+                              !item.canDecide && !awaiting
+                                ? (item.decideReason ?? "You cannot decide this step")
+                                : undefined
+                            }
+                            className="text-xs font-semibold text-primary hover:underline"
+                          >
+                            View
                           </Link>
                         )}
                       </td>

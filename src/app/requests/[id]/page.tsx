@@ -94,6 +94,9 @@ interface ReqDetail {
   PoCreatedAt: string | null;
   PoNotes: string | null;
   CurrentWFStepID: string | null;
+  CanDecide: boolean;
+  DecideReason: string | null;
+  AwaitingTarget: string | null;
   Requester: { UserID: string; Name: string; Email: string };
   Assignee: { UserID: string; Name: string } | null;
   PoCreator: { Name: string } | null;
@@ -109,7 +112,7 @@ interface ReqDetail {
     TargetGroup: { Name: string } | null;
     TargetRole: { Name: string } | null;
   }) | null;
-  FieldValues: { Value: string; FormField: { Label: string } | null }[];
+  FieldValues: { Value: string; FormField: { Label: string; FieldType: string } | null }[];
   Items: Item[];
   Approvals: Approval[];
   Comments: CommentT[];
@@ -721,7 +724,13 @@ export default function RequestDetailPage() {
   const canApprove =
     p("REQUEST_APPROVE") &&
     ["PENDING_APPROVAL", "CLARIFICATION_REQUESTED"].includes(req.Status) &&
-    !!req.CurrentWFStepID;
+    !!req.CurrentWFStepID &&
+    req.CanDecide;
+  const decideBlocked =
+    p("REQUEST_APPROVE") &&
+    ["PENDING_APPROVAL", "CLARIFICATION_REQUESTED"].includes(req.Status) &&
+    !!req.CurrentWFStepID &&
+    !req.CanDecide;
   const canVerify = p("REQUEST_VERIFY_ITEMS");
   const canCatalog = p("CATALOG_VIEW");
   const canSeeInternal = p("REQUEST_VIEW_ALL");
@@ -740,12 +749,14 @@ export default function RequestDetailPage() {
       : req.Status === "PO_REGISTERED"
         ? "PO Registered"
         : "Approved";
-  const awaitingTarget = req.CurrentStep
-    ? req.CurrentStep.TargetUser?.Name ||
-      req.CurrentStep.TargetGroup?.Name ||
-      req.CurrentStep.TargetRole?.Name ||
-      "Approver"
-    : null;
+  const awaitingTarget =
+    req.AwaitingTarget ||
+    (req.CurrentStep
+      ? req.CurrentStep.TargetUser?.Name ||
+        req.CurrentStep.TargetGroup?.Name ||
+        req.CurrentStep.TargetRole?.Name ||
+        "Approver"
+      : null);
   const nodes: TimelineNode[] = [{ name: "Submitted", state: "done", sub: fmtDate(req.SubmittedAt || req.CreatedAt) }];
   wfSteps.forEach((s) => {
     const ap = approvedByStep.get(s.WFStepID);
@@ -789,6 +800,11 @@ export default function RequestDetailPage() {
             <button className="btn-primary" disabled={busy !== null} onClick={() => act("SUBMIT")}>
               <Icon name="send" className="text-[18px]" /> {busy === "SUBMIT" ? "Submitting..." : "Submit Request"}
             </button>
+          )}
+          {decideBlocked && req.DecideReason && (
+            <span className="rounded border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
+              {req.DecideReason}
+            </span>
           )}
           {canApprove && (
             <>
@@ -936,7 +952,7 @@ export default function RequestDetailPage() {
             </SummaryRow>
             {req.FieldValues.map((fv, i) => (
               <SummaryRow key={i} icon="info" label={fv.FormField?.Label || "Field"}>
-                {fv.Value}
+                {fv.FormField?.FieldType === "checkbox" ? (fv.Value === "true" ? "Yes" : "No") : fv.Value}
               </SummaryRow>
             ))}
           </div>

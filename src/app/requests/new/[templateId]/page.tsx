@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { EmptyState, Icon } from "@/components/ui";
+import { parseFieldConfig } from "@/lib/field-config";
 
 interface TField {
   FormFieldID: string;
@@ -53,22 +54,6 @@ const PRIORITIES = [
   ["URGENT", "Urgent"],
 ];
 
-function selectOptions(cfg: string | null): string[] {
-  if (!cfg) return [];
-  try {
-    const o: unknown = JSON.parse(cfg);
-    const arr: unknown =
-      Array.isArray(o) ? o : typeof o === "object" && o !== null && "options" in o ? (o as { options: unknown }).options : [];
-    if (!Array.isArray(arr)) return [];
-    return arr.map((x: unknown) =>
-      typeof x === "object" && x !== null && "label" in x
-        ? String((x as { label: unknown }).label)
-        : String(x)
-    );
-  } catch {
-    return [];
-  }
-}
 
 function fmtSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -388,15 +373,33 @@ export default function DynamicRequestFormPage() {
                     const invalid = invalidFields.includes(f.FormFieldID);
                     const cls = `input ${invalid ? "!border-danger" : ""}`;
                     const wide = f.FieldType === "textarea";
+                    const cfg = parseFieldConfig(f.Config);
                     return (
                       <div key={f.FormFieldID} className={wide ? "md:col-span-2" : ""}>
-                        <label className="label" htmlFor={f.FormFieldID}>
-                          {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
-                        </label>
-                        {f.FieldType === "textarea" ? (
+                        {f.FieldType !== "checkbox" && (
+                          <label className="label" htmlFor={f.FormFieldID}>
+                            {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
+                          </label>
+                        )}
+                        {f.FieldType === "checkbox" ? (
+                          <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-ink">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4"
+                              checked={(values[f.FormFieldID] || "") === "true"}
+                              onChange={(e) =>
+                                setValues({ ...values, [f.FormFieldID]: e.target.checked ? "true" : "" })
+                              }
+                            />
+                            <span className="font-medium">
+                              {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
+                            </span>
+                          </label>
+                        ) : f.FieldType === "textarea" ? (
                           <textarea
                             id={f.FormFieldID}
                             rows={3}
+                            placeholder={cfg.placeholder || undefined}
                             className={cls}
                             value={values[f.FormFieldID] || ""}
                             onChange={(e) => setValues({ ...values, [f.FormFieldID]: e.target.value })}
@@ -409,7 +412,7 @@ export default function DynamicRequestFormPage() {
                             onChange={(e) => setValues({ ...values, [f.FormFieldID]: e.target.value })}
                           >
                             <option value="">Select...</option>
-                            {selectOptions(f.Config).map((o) => (
+                            {parseFieldConfig(f.Config).options.map((o) => (
                               <option key={o} value={o}>
                                 {o}
                               </option>
@@ -419,10 +422,14 @@ export default function DynamicRequestFormPage() {
                           <input
                             id={f.FormFieldID}
                             type={f.FieldType === "number" ? "number" : f.FieldType === "date" ? "date" : "text"}
+                            placeholder={cfg.placeholder || undefined}
                             className={cls}
                             value={values[f.FormFieldID] || ""}
                             onChange={(e) => setValues({ ...values, [f.FormFieldID]: e.target.value })}
                           />
+                        )}
+                        {cfg.help && (
+                          <p className="mt-1 text-xs text-ink-faint">{cfg.help}</p>
                         )}
                       </div>
                     );
