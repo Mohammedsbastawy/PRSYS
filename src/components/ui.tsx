@@ -17,6 +17,30 @@ export function Icon({
   );
 }
 
+/* ---------- Template icon resolver (catalog cards) ---------- */
+export function templateIcon(name: string): string {
+  const n = name.toLowerCase();
+  if (/chemical|reagent|science/.test(n)) return "science";
+  if (/repair|maintenance/.test(n)) return "build";
+  if (/logistic|ship/.test(n)) return "local_shipping";
+  if (/software|license/.test(n)) return "vpn_key";
+  if (/hardware|computer|laptop/.test(n)) return "computer";
+  if (/network|vpn/.test(n)) return "router";
+  if (/signature/.test(n)) return "draw";
+  if (/tuition|school|train/.test(n)) return "school";
+  if (/travel/.test(n)) return "flight_takeoff";
+  if (/remote|home office/.test(n)) return "home_work";
+  if (/conference/.test(n)) return "event_seat";
+  if (/supply|supplies/.test(n)) return "package_2";
+  if (/raw|material|inventory|stock|warehouse/.test(n)) return "inventory_2";
+  if (/\bit\b|laptop|computer|software|equipment|device/.test(n)) return "devices";
+  if (/vendor|payment|invoice|financ/.test(n)) return "payments";
+  if (/expense|reimburse/.test(n)) return "receipt_long";
+  if (/hr|leave|employee|staff/.test(n)) return "badge";
+  if (/purchase|procure|general/.test(n)) return "shopping_cart";
+  return "description";
+}
+
 /* ---------- Initials avatar ---------- */
 const AVATAR_COLORS = [
   "bg-blue-600",
@@ -314,4 +338,68 @@ export function timeAgo(iso: string): string {
   const d = Math.floor(h / 24);
   if (d < 30) return `${d}d ago`;
   return new Date(iso).toLocaleDateString();
+}
+
+/* ---------- File size ---------- */
+export function fmtSize(bytes: number): string {
+  if (!bytes || bytes < 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/* ---------- Full workflow timeline (labeled nodes, detail pages) ---------- */
+export interface TimelineNode {
+  name: string;
+  state: "done" | "current" | "todo" | "rejected";
+  sub?: string;
+}
+
+export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
+  return (
+    <div className="slim-scroll flex items-start overflow-x-auto py-2">
+      {nodes.map((n, i) => (
+        <Fragment key={i}>
+          {i > 0 && (
+            <div
+              className={`mx-1 mt-[13px] h-0.5 min-w-[24px] flex-1 ${
+                nodes[i - 1].state === "done" ? "bg-primary" : "bg-gray-200"
+              }`}
+            />
+          )}
+          <div className="flex w-28 shrink-0 flex-col items-center gap-1.5 text-center">
+            {n.state === "done" ? (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
+                <Icon name="check" className="text-[16px] font-bold text-white" />
+              </span>
+            ) : n.state === "current" ? (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border-[2.5px] border-primary bg-white">
+                <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+              </span>
+            ) : n.state === "rejected" ? (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600">
+                <Icon name="close" className="text-[16px] font-bold text-white" />
+              </span>
+            ) : (
+              <span className="h-7 w-7 rounded-full border-2 border-gray-200 bg-white" />
+            )}
+            <span
+              className={`text-xs leading-tight ${
+                n.state === "todo"
+                  ? "text-ink-faint"
+                  : n.state === "rejected"
+                    ? "font-semibold text-red-600"
+                    : n.state === "current"
+                      ? "font-semibold text-primary-dark"
+                      : "font-medium text-ink"
+              }`}
+            >
+              {n.name}
+            </span>
+            {n.sub && <span className="text-[11px] leading-tight text-ink-faint">{n.sub}</span>}
+          </div>
+        </Fragment>
+      ))}
+    </div>
+  );
 }

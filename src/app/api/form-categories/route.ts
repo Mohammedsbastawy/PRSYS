@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
   const cats = await prisma.formCategories.findMany({
-    include: { Templates: { select: { FormTemplateID: true, Name: true, Status: true } } },
+    include: { Templates: { select: { FormTemplateID: true, Name: true, Description: true, Status: true } } },
     orderBy: { SortOrder: 'asc' },
   })
   return json(cats)

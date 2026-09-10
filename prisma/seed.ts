@@ -123,6 +123,201 @@ async function main() {
     create: { GroupID: '00000000-0000-0000-0000-000000000001', Name: 'Procurement Team', Description: 'Core procurement staff' },
   })
 
+  // 6. Demo users (dev/test)
+  console.log('→ Demo Users')
+  const reqRole = await prisma.roles.findUnique({ where: { Code: 'REQUESTER' } })
+  const mgrRole = await prisma.roles.findUnique({ where: { Code: 'DEPT_MANAGER' } })
+  const procRole = await prisma.roles.findUnique({ where: { Code: 'PROCUREMENT_OFFICER' } })
+  const demoUsers = [
+    { email: 'requester@prsys.local', name: 'Ahmed Hassan', pass: 'Requester@123', role: reqRole },
+    { email: 'manager@prsys.local', name: 'Mona Adel', pass: 'Manager@123', role: mgrRole },
+    { email: 'procurement@prsys.local', name: 'Karim Samy', pass: 'Procurement@123', role: procRole },
+  ]
+  for (const u of demoUsers) {
+    const found = await prisma.users.findUnique({ where: { Email: u.email } })
+    if (!found) {
+      const hash = await bcrypt.hash(u.pass, 10)
+      await prisma.users.create({
+        data: {
+          Name: u.name,
+          Email: u.email,
+          PasswordHash: hash,
+          AccountType: 'LOCAL',
+          RoleID: u.role!.RoleID,
+          DEPID: dep.DEPID,
+          IsActive: true,
+        },
+      })
+      console.log(`   Created ${u.email} / ${u.pass}`)
+    }
+  }
+  const managerUser = await prisma.users.findUnique({ where: { Email: 'manager@prsys.local' } })
+  const requesterUser = await prisma.users.findUnique({ where: { Email: 'requester@prsys.local' } })
+  if (managerUser && requesterUser) {
+    await prisma.users.update({
+      where: { UserID: requesterUser.UserID },
+      data: { DirectManagerID: managerUser.UserID },
+    })
+    await prisma.dEP.update({
+      where: { DEPID: dep.DEPID },
+      data: { ManagerID: managerUser.UserID },
+    }).catch(() => {})
+  }
+
+  // 7. Form categories
+  console.log('→ Form Categories')
+  const catDefs: Array<[string, number]> = [
+    ['Procurement & Operations', 1],
+    ['IT & Digital Services', 2],
+    ['HR & Employee Support', 3],
+  ]
+  const catMap = new Map<string, string>()
+  for (const [name, order] of catDefs) {
+    let c = await prisma.formCategories.findFirst({ where: { Name: name } })
+    if (!c) c = await prisma.formCategories.create({ data: { Name: name, SortOrder: order } })
+    catMap.set(name, c.FormCategoryID)
+  }
+
+  // 8. Standard approval workflow
+  console.log('→ Standard Workflow')
+  let wf = await prisma.wFDefinitions.findFirst({ where: { Name: 'Standard Procurement Approval' } })
+  if (!wf) {
+    wf = await prisma.wFDefinitions.create({
+      data: {
+        Name: 'Standard Procurement Approval',
+        Description: 'Department manager approval followed by procurement review',
+        Status: 'ACTIVE',
+        Steps: {
+          create: [
+            { StepName: 'Department Manager Approval', StepOrder: 1, ApproverType: 'ROLE', TargetRoleID: mgrRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY' },
+            { StepName: 'Procurement Review', StepOrder: 2, ApproverType: 'ROLE', TargetRoleID: procRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY' },
+          ],
+        },
+      },
+    })
+  }
+
+  // 9. Request form templates
+  console.log('→ Form Templates')
+  interface SeedField { label: string; key: string; type: string; req: boolean; options?: string[] }
+  interface SeedTemplate { name: string; desc: string; cat: string; fields: SeedField[] }
+  const templates: SeedTemplate[] = [
+    {
+      name: 'Raw Material Request', desc: 'Specify raw material requirements and quantity for production.', cat: 'Procurement & Operations',
+      fields: [
+        { label: 'Department / Cost Center', key: 'department', type: 'text', req: true },
+        { label: 'Required By Date', key: 'requiredByDate', type: 'date', req: false },
+        { label: 'Justification', key: 'justification', type: 'textarea', req: false },
+      ],
+    },
+    {
+      name: 'General Items Request', desc: 'Request items not found in the standard material catalog.', cat: 'Procurement & Operations',
+      fields: [
+        { label: 'Department', key: 'department', type: 'text', req: true },
+        { label: 'Needed By Date', key: 'neededByDate', type: 'date', req: false },
+        { label: 'Justification / Details', key: 'justification', type: 'textarea', req: true },
+      ],
+    },
+    {
+      name: 'General Supply Request', desc: 'Order basic office and facility supplies.', cat: 'Procurement & Operations',
+      fields: [
+        { label: 'Department', key: 'department', type: 'text', req: false },
+        { label: 'Delivery Location', key: 'deliveryLocation', type: 'text', req: false },
+        { label: 'Justification', key: 'justification', type: 'textarea', req: true },
+      ],
+    },
+    {
+      name: 'Lab Equipment Repair', desc: 'Request maintenance or fix for laboratory devices.', cat: 'Procurement & Operations',
+      fields: [
+        { label: 'Equipment ID', key: 'equipmentId', type: 'text', req: true },
+        { label: 'Issue Description', key: 'issueDescription', type: 'textarea', req: true },
+        { label: 'Urgency', key: 'urgency', type: 'select', req: false, options: ['Low', 'Medium', 'High', 'Critical'] },
+      ],
+    },
+    {
+      name: 'Chemical Reagent Order', desc: 'Procure approved chemical reagents for lab use.', cat: 'Procurement & Operations',
+      fields: [
+        { label: 'Lab Location', key: 'labLocation', type: 'text', req: false },
+        { label: 'Safety Approval Ref', key: 'safetyRef', type: 'text', req: false },
+        { label: 'Justification', key: 'justification', type: 'textarea', req: true },
+      ],
+    },
+    {
+      name: 'New Software License', desc: 'Request access or licenses for specific software tools.', cat: 'IT & Digital Services',
+      fields: [
+        { label: 'Software Name', key: 'softwareName', type: 'text', req: true },
+        { label: 'License Type', key: 'licenseType', type: 'select', req: false, options: ['Perpetual', 'Subscription', 'Trial'] },
+        { label: 'Number of Seats', key: 'seats', type: 'number', req: false },
+      ],
+    },
+    {
+      name: 'Hardware Replacement', desc: 'Report broken IT hardware and request replacements.', cat: 'IT & Digital Services',
+      fields: [
+        { label: 'Asset Tag', key: 'assetTag', type: 'text', req: true },
+        { label: 'Issue Description', key: 'issueDescription', type: 'textarea', req: true },
+        { label: 'Replacement Type', key: 'replacementType', type: 'select', req: false, options: ['Same Model', 'Upgrade', 'Any Available'] },
+      ],
+    },
+    {
+      name: 'Travel Authorization', desc: 'Request approval for business-related travel.', cat: 'HR & Employee Support',
+      fields: [
+        { label: 'Destination', key: 'destination', type: 'text', req: true },
+        { label: 'Travel Dates', key: 'travelDates', type: 'text', req: true },
+        { label: 'Purpose', key: 'purpose', type: 'textarea', req: true },
+        { label: 'Estimated Cost', key: 'estimatedCost', type: 'number', req: false },
+      ],
+    },
+  ]
+  for (const t of templates) {
+    const exists = await prisma.formTemplates.findFirst({ where: { Name: t.name } })
+    if (exists) {
+      console.log(`   skip (exists): ${t.name}`)
+      continue
+    }
+    await prisma.formTemplates.create({
+      data: {
+        Name: t.name,
+        Description: t.desc,
+        FormCategoryID: catMap.get(t.cat)!,
+        WFDefinitionID: wf.WFDefinitionID,
+        Status: 'ACTIVE',
+        Fields: {
+          create: t.fields.map((f, i) => ({
+            Label: f.label,
+            FieldKey: f.key,
+            FieldType: f.type,
+            IsRequired: f.req,
+            SortOrder: i + 1,
+            Config: f.options ? JSON.stringify({ options: f.options }) : null,
+          })),
+        },
+      },
+    })
+    console.log(`   Created: ${t.name}`)
+  }
+
+  // 10. Oracle catalog cache (demo items)
+  console.log('→ Catalog Items')
+  const catalogItems = [
+    { oracle: 'ORC-100001', code: 'RM-9002', name: 'Sodium Chloride, USP Grade', uom: 'KG', org: 'MFG-CAIRO', price: 12.5 },
+    { oracle: 'ORC-100002', code: 'RM-9003', name: 'Sodium Hydroxide, 1N', uom: 'L', org: 'MFG-CAIRO', price: 8.75 },
+    { oracle: 'ORC-100003', code: 'RM-9004', name: 'Sodium Carbonate', uom: 'KG', org: 'MFG-CAIRO', price: 6.2 },
+    { oracle: 'ORC-100004', code: 'RM-9005', name: 'Buffer Solution pH 7', uom: 'L', org: 'LAB-GIZA', price: 15.0 },
+    { oracle: 'ORC-200001', code: 'IT-1101', name: 'Laptop 14in i7 16GB', uom: 'Piece', org: 'IT-CAIRO', price: 18500 },
+    { oracle: 'ORC-200002', code: 'IT-1102', name: 'Monitor 27in', uom: 'Piece', org: 'IT-CAIRO', price: 7200 },
+    { oracle: 'ORC-200003', code: 'IT-1103', name: 'Docking Station USB-C', uom: 'Piece', org: 'IT-CAIRO', price: 3400 },
+    { oracle: 'ORC-300001', code: 'OF-2201', name: 'A4 Paper Box (5 reams)', uom: 'Box', org: 'ADM-CAIRO', price: 650 },
+    { oracle: 'ORC-300002', code: 'OF-2202', name: 'Toner Cartridge', uom: 'Piece', org: 'ADM-CAIRO', price: 2100 },
+    { oracle: 'ORC-400001', code: 'SRV-3301', name: 'Equipment Calibration Service', uom: 'Service', org: 'QA-CAIRO', price: 5000 },
+  ]
+  for (const it of catalogItems) {
+    await prisma.itemCatalogCache.upsert({
+      where: { ItemCode: it.code },
+      update: { ItemName: it.name, Uom: it.uom, OrganizationCode: it.org, LastPurchasedPrice: it.price },
+      create: { OracleItemID: it.oracle, ItemCode: it.code, ItemName: it.name, Uom: it.uom, OrganizationCode: it.org, LastPurchasedPrice: it.price },
+    })
+  }
+
   console.log('✅ Seed complete!')
 }
 

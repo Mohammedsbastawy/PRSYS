@@ -1,146 +1,186 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
-import { PageHeader } from "@/components/ui";
+import { EmptyState, Icon, templateIcon } from "@/components/ui";
 
-interface Template {
+interface CatTemplate {
   FormTemplateID: string;
   Name: string;
-  Fields: { FormFieldID: string; Label: string; FieldType: string; IsRequired: boolean }[];
+  Description: string | null;
+  Status: string;
+}
+interface Category {
+  FormCategoryID: string;
+  Name: string;
+  Templates: CatTemplate[];
 }
 
-export default function NewRequestPage() {
-  const { token } = useAuth();
+function CatalogInner() {
+  const { token, user } = useAuth();
   const router = useRouter();
-  const [templates, setTemplates] = useState<Template[]>([]);
-  const [templateId, setTemplateId] = useState("");
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [items, setItems] = useState([{ name: "", qty: 1 }]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const sp = useSearchParams();
+  const [cats, setCats] = useState<Category[] | null>(null);
+  const [q, setQ] = useState("");
+
+  const deep = sp.get("template");
+  useEffect(() => {
+    if (deep) router.replace(`/requests/new/${deep}`);
+  }, [deep, router]);
 
   useEffect(() => {
     if (!token) return;
-    fetch("/api/form-templates", { headers: { Authorization: `Bearer ${token}` } })
-      .then((r) => r.json())
-      .then(setTemplates);
+    fetch("/api/form-categories", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setCats)
+      .catch(() => setCats([]));
   }, [token]);
 
-  const selected = templates.find((t) => t.FormTemplateID === templateId);
+  const canCreate = user?.permissions?.includes("REQUEST_CREATE") ?? false;
+  const canManageForms = user?.permissions?.includes("FORM_TEMPLATE_MANAGE") ?? false;
 
-  function addItem() {
-    setItems([...items, { name: "", qty: 1 }]);
-  }
-  function updateItem(i: number, k: "name" | "qty", v: string | number) {
-    setItems(items.map((it, j) => (j === i ? { ...it, [k]: v } : it)));
-  }
-  function removeItem(i: number) {
-    setItems(items.filter((_, j) => j !== i));
+  const filtered = useMemo(() => {
+    if (!cats) return null;
+    const needle = q.trim().toLowerCase();
+    return cats
+      .map((c) => ({
+        ...c,
+        Templates: c.Templates.filter(
+          (t) =>
+            t.Status === "ACTIVE" &&
+            (!needle ||
+              t.Name.toLowerCase().includes(needle) ||
+              (t.Description || "").toLowerCase().includes(needle))
+        ),
+      }))
+      .filter((c) => c.Templates.length > 0);
+  }, [cats, q]);
+
+  if (deep) {
+    return (
+      <AppShell>
+        <div className="py-10 text-center text-sm text-ink-soft">Opening form...</div>
+      </AppShell>
+    );
   }
 
-  async function submit() {
-    setError("");
-    if (!templateId) return setError("Select a form template");
-    setBusy(true);
-    const res = await fetch("/api/requests", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        formTemplateId: templateId,
-        priority: "MEDIUM",
-        fieldValues: Object.entries(values).map(([fieldId, value]) => ({ fieldId, value })),
-        items: items
-          .filter((it) => it.name.trim())
-          .map((it) => ({ requestedItemName: it.name, requestedQuantity: Number(it.qty) })),
-      }),
-    });
-    setBusy(false);
-    if (res.ok) {
-      const r = await res.json();
-      router.push(`/requests/${r.RequestID}`);
-    } else {
-      const e = await res.json().catch(() => ({}));
-      setError(e.error || "Failed to create");
-    }
+  if (!canCreate) {
+    return (
+      <AppShell>
+        <div className="card">
+          <EmptyState
+            icon="block"
+            title="No permission"
+            hint="Your account is not allowed to create requests. Contact your administrator for access."
+          />
+        </div>
+      </AppShell>
+    );
   }
 
   return (
     <AppShell>
-      <PageHeader title="New Request" subtitle="Create a purchase request" />
-      <div className="card max-w-2xl space-y-5 p-6">
-        {error && <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-danger">{error}</div>}
-        <div>
-          <label className="label">Form Template</label>
-          <select className="input" value={templateId} onChange={(e) => setTemplateId(e.target.value)}>
-            <option value="">— Select —</option>
-            {templates.map((t) => (
-              <option key={t.FormTemplateID} value={t.FormTemplateID}>
-                {t.Name}
-              </option>
-            ))}
-          </select>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-9">
+          <h1 className="text-4xl font-bold tracking-tight text-ink">New Request</h1>
+          <p className="mb-6 mt-1 text-base text-ink-soft">Choose a request type to get started.</p>
+          <div className="relative mb-8 max-w-2xl">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">
+              <Icon name="search" />
+            </span>
+            <input
+              className="input !py-3 !pl-10"
+              placeholder="Search forms (e.g. Hardware, Reagent)..."
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
+          </div>
+
+          {!filtered ? (
+            <div className="py-6 text-sm text-ink-soft">Loading forms...</div>
+          ) : filtered.length === 0 ? (
+            <div className="card">
+              <EmptyState
+                icon="search_off"
+                title={q ? "No forms match your search" : "No request forms published yet"}
+                hint={
+                  q
+                    ? "Try a different keyword or browse the categories."
+                    : "Your administrator hasn't published any request forms yet."
+                }
+                action={
+                  !q && canManageForms ? (
+                    <Link href="/forms" className="btn-primary">
+                      Manage Forms
+                    </Link>
+                  ) : undefined
+                }
+              />
+            </div>
+          ) : (
+            filtered.map((c) => (
+              <section key={c.FormCategoryID} className="mb-8">
+                <h2 className="mb-4 border-b border-surface-border pb-2 text-xl font-semibold text-ink">
+                  {c.Name}
+                </h2>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  {c.Templates.map((t) => (
+                    <Link
+                      key={t.FormTemplateID}
+                      href={`/requests/new/${t.FormTemplateID}`}
+                      className="card group flex items-start gap-4 p-4 transition-all hover:border-primary hover:shadow-[0_1px_3px_rgba(0,0,0,0.05)]"
+                    >
+                      <Icon
+                        name={templateIcon(t.Name)}
+                        className="mt-0.5 text-[26px] text-ink-soft transition-colors group-hover:text-primary-dark"
+                      />
+                      <span>
+                        <span className="block text-base font-medium text-ink transition-colors group-hover:text-primary-dark">
+                          {t.Name}
+                        </span>
+                        <span className="mt-1 block text-[13px] text-ink-soft">
+                          {t.Description || "Start a new request"}
+                        </span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            ))
+          )}
         </div>
 
-        {selected && (
-          <>
-            <div className="space-y-3 border-t border-surface-border pt-4">
-              <h3 className="font-semibold text-ink">Form Fields</h3>
-              {selected.Fields.map((f) => (
-                <div key={f.FormFieldID}>
-                  <label className="label">
-                    {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
-                  </label>
-                  <input
-                    className="input"
-                    type={f.FieldType === "number" ? "number" : "text"}
-                    value={values[f.FormFieldID] || ""}
-                    onChange={(e) => setValues({ ...values, [f.FormFieldID]: e.target.value })}
-                  />
-                </div>
-              ))}
+        <div className="lg:col-span-3">
+          <div className="card sticky top-24 bg-surface p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <Icon name="info" filled className="text-[20px] text-primary-dark" />
+              <h4 className="text-sm font-semibold text-ink">Finding the right form</h4>
             </div>
-
-            <div className="space-y-3 border-t border-surface-border pt-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-ink">Items</h3>
-                <button type="button" className="btn-ghost text-primary" onClick={addItem}>
-                  + Add item
-                </button>
-              </div>
-              {items.map((it, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    className="input flex-1"
-                    placeholder="Item name"
-                    value={it.name}
-                    onChange={(e) => updateItem(i, "name", e.target.value)}
-                  />
-                  <input
-                    className="input w-24"
-                    type="number"
-                    value={it.qty}
-                    onChange={(e) => updateItem(i, "qty", e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    className="btn-ghost text-danger"
-                    onClick={() => removeItem(i)}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        <button className="btn-primary w-full" disabled={busy} onClick={submit}>
-          {busy ? "Creating..." : "Create Request"}
-        </button>
+            <p className="text-[13px] leading-relaxed text-ink-soft">
+              Browse forms by category or use search to find what you need. Your most-used forms
+              also appear as shortcuts on the dashboard. If a form is missing, contact the
+              procurement team.
+            </p>
+          </div>
+        </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function NewRequestCatalogPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <div className="py-10 text-center text-sm text-ink-soft">Loading...</div>
+        </AppShell>
+      }
+    >
+      <CatalogInner />
+    </Suspense>
   );
 }

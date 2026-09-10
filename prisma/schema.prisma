@@ -232,6 +232,7 @@ model Requests {
   CurrentWFStepID    String? 
   FormSnapshot       String @db.Text
   Priority           String   @default("MEDIUM")
+  NeededByDate       DateTime?
   AssigneeID         String? 
   FulfillmentType    String?
   StockIssueNumber   String?

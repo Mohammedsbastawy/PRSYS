@@ -16,6 +16,8 @@ interface NavItem {
 const NAV: NavItem[] = [
   { href: "/", label: "Dashboard" },
   { href: "/requests", label: "Requests", anyOf: ["REQUEST_VIEW_ALL", "REQUEST_VIEW_OWN", "REQUEST_CREATE"] },
+  { href: "/requests/new", label: "New Request", anyOf: ["REQUEST_CREATE"] },
+  { href: "/approvals", label: "Approvals", anyOf: ["REQUEST_APPROVE"] },
   { href: "/users", label: "Users", anyOf: ["USER_VIEW", "USER_CREATE", "USER_EDIT", "USER_DELETE"] },
   { href: "/departments", label: "Departments", anyOf: ["DEP_VIEW", "DEP_MANAGE"] },
   { href: "/groups", label: "Groups", anyOf: ["GROUP_MANAGE"] },
@@ -54,6 +56,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
+  const [pendingCount, setPendingCount] = useState(0);
   const [bellOpen, setBellOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -84,10 +87,26 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function loadPending() {
+    if (!token) return;
+    try {
+      const r = await fetch("/api/approvals?mode=pending&countOnly=1", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPendingCount(r.ok ? (await r.json()).count || 0 : 0);
+    } catch {
+      setPendingCount(0);
+    }
+  }
+
   useEffect(() => {
     if (!token) return;
     loadNotifs();
-    const t = setInterval(loadNotifs, 60000);
+    loadPending();
+    const t = setInterval(() => {
+      loadNotifs();
+      loadPending();
+    }, 60000);
     return () => clearInterval(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -166,10 +185,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Tabs */}
           <nav className="no-scrollbar flex h-full flex-1 items-stretch gap-1 overflow-x-auto">
             {visibleNav.map((n) => {
-              const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
+              const active =
+                n.href === "/"
+                  ? pathname === "/"
+                  : n.href === "/requests/new"
+                    ? pathname.startsWith("/requests/new")
+                    : n.href === "/requests"
+                      ? pathname === "/requests" ||
+                        (pathname.startsWith("/requests/") && !pathname.startsWith("/requests/new"))
+                      : pathname.startsWith(n.href);
               return (
                 <Link key={n.href} href={n.href} className={`nav-tab ${active ? "nav-tab-active" : ""}`}>
                   {n.label}
+                  {n.href === "/approvals" && pendingCount > 0 && (
+                    <span className="ml-1.5 rounded-full bg-red-600 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                      {pendingCount > 99 ? "99+" : pendingCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
