@@ -3,8 +3,37 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
+import { usersWithPermission } from '@/lib/notifications'
+import { canUserDecideStep, describeStepTarget, type StepLookups } from '@/lib/workflow-targets'
 
 const PENDING_STATUSES = ['PENDING_APPROVAL', 'CLARIFICATION_REQUESTED']
+
+function stepLookups(): StepLookups {
+  return {
+    usersWithRole: async (roleId) => {
+      const rows = await prisma.users.findMany({
+        where: { RoleID: roleId, IsActive: true },
+        select: { UserID: true },
+      })
+      return rows.map((r: { UserID: string }) => r.UserID)
+    },
+    groupMembers: async (groupId) => {
+      const rows = await prisma.groupMembers.findMany({
+        where: { GroupID: groupId },
+        select: { UserID: true },
+      })
+      return rows.map((r: { UserID: string }) => r.UserID)
+    },
+    requesterManager: async (requesterId) => {
+      const u = await prisma.users.findUnique({
+        where: { UserID: requesterId },
+        select: { DirectManagerID: true },
+      })
+      return u?.DirectManagerID ?? null
+    },
+    allApprovers: () => usersWithPermission('REQUEST_APPROVE'),
+  }
+}
 
 // GET /api/approvals?mode=pending|history&type=<categoryId>&dept=<depId>&q=<text>&sort=oldest|newest|value&countOnly=1
 export async function GET(req: NextRequest) {
@@ -87,7 +116,19 @@ export async function GET(req: NextRequest) {
           Workflow: { select: { Steps: { select: { WFStepID: true }, orderBy: { StepOrder: 'asc' } } } },
         },
       },
-      CurrentStep: { select: { WFStepID: true, StepName: true } },
+      CurrentStep: {
+        select: {
+          WFStepID: true,
+          StepName: true,
+          ApproverType: true,
+          TargetUserID: true,
+          TargetGroupID: true,
+          TargetRoleID: true,
+          TargetUser: { select: { Name: true } },
+          TargetGroup: { select: { Name: true } },
+          TargetRole: { select: { Name: true } },
+        },
+      },
       Items: { select: { RequestedQuantity: true, EstimatedPrice: true } },
     },
     take: 200,
@@ -102,12 +143,23 @@ export async function GET(req: NextRequest) {
     : []
   const depName = new Map(deps.map((d) => [d.DEPID, d.Name]))
 
+  const lookups = stepLookups()
+  const isSuperAdmin = ctx.roleCode === 'SUPER_ADMIN'
   const now = Date.now()
-  const items = rows.map((r) => {
+  const items = []
+  for (const r of rows) {
     const steps = r.FormTemplate?.Workflow?.Steps ?? []
     const idx = r.CurrentWFStepID ? steps.findIndex((s) => s.WFStepID === r.CurrentWFStepID) : -1
     const submitted = r.SubmittedAt ?? r.CreatedAt
-    return {
+    const verdict = await canUserDecideStep({
+      step: r.CurrentStep,
+      userId: payload.userId,
+      requesterId: r.RequesterID,
+      isSuperAdmin,
+      hasApprovePerm: true,
+      lookups,
+    })
+    items.push({
       id: r.RequestID,
       tracking: r.TrackingNumber,
       title: r.Title,
@@ -128,8 +180,11 @@ export async function GET(req: NextRequest) {
         (sum, it) => sum + Number(it.RequestedQuantity ?? 0) * Number(it.EstimatedPrice ?? 0),
         0
       ),
-    }
-  })
+      canDecide: verdict.canDecide,
+      decideReason: verdict.reason,
+      awaiting: r.CurrentStep ? describeStepTarget(r.CurrentStep) : null,
+    })
+  }
 
   items.sort((a, b) => {
     if (sort === 'newest') return +new Date(b.submittedAt) - +new Date(a.submittedAt)

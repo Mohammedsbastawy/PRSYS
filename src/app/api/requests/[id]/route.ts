@@ -4,9 +4,39 @@ import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, notFound, parseBody } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
 import { notifyUsers, usersWithPermission } from '@/lib/notifications'
+import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
+import type { StepLookups } from '@/lib/workflow-targets'
 import { z } from 'zod'
 
 interface Params { params: { id: string } }
+
+// Resolves step targets (role members, group members, specific user, manager, all approvers)
+function stepLookups(): StepLookups {
+  return {
+    usersWithRole: async (roleId) => {
+      const rows = await prisma.users.findMany({
+        where: { RoleID: roleId, IsActive: true },
+        select: { UserID: true },
+      })
+      return rows.map((r: { UserID: string }) => r.UserID)
+    },
+    groupMembers: async (groupId) => {
+      const rows = await prisma.groupMembers.findMany({
+        where: { GroupID: groupId },
+        select: { UserID: true },
+      })
+      return rows.map((r: { UserID: string }) => r.UserID)
+    },
+    requesterManager: async (requesterId) => {
+      const u = await prisma.users.findUnique({
+        where: { UserID: requesterId },
+        select: { DirectManagerID: true },
+      })
+      return u?.DirectManagerID ?? null
+    },
+    allApprovers: () => usersWithPermission('REQUEST_APPROVE'),
+  }
+}
 
 // GET /api/requests/[id]
 export async function GET(req: NextRequest, { params }: Params) {
@@ -80,7 +110,25 @@ export async function GET(req: NextRequest, { params }: Params) {
   // BigInt is not JSON-serializable — stringify file sizes
   const attachments = request.Attachments.map((a) => ({ ...a, FileSize: a.FileSize.toString() }))
 
-  return json({ ...request, RequesterDepartment: department, Comments: comments, Attachments: attachments })
+  // can the viewer decide the current step?
+  let canDecide = false
+  let decideReason: string | null = null
+  let awaitingTarget: string | null = null
+  if (['PENDING_APPROVAL', 'CLARIFICATION_REQUESTED'].includes(request.Status) && request.CurrentStep) {
+    awaitingTarget = describeStepTarget(request.CurrentStep)
+    const verdict = await canUserDecideStep({
+      step: request.CurrentStep,
+      userId: payload.userId,
+      requesterId: request.RequesterID,
+      isSuperAdmin: ctx.roleCode === 'SUPER_ADMIN',
+      hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
+      lookups: stepLookups(),
+    })
+    canDecide = verdict.canDecide
+    decideReason = verdict.reason
+  }
+
+  return json({ ...request, RequesterDepartment: department, Comments: comments, Attachments: attachments, CanDecide: canDecide, DecideReason: decideReason, AwaitingTarget: awaitingTarget })
 }
 
 // PATCH /api/requests/[id] — status transitions
@@ -166,7 +214,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'SUBMIT', ChangedByUserID: payload.userId },
     })
-    const approvers = (await usersWithPermission('REQUEST_APPROVE')).filter((id) => id !== payload.userId)
+    const firstTargets = firstStep
+      ? await stepTargetUserIds(firstStep, request.RequesterID, stepLookups())
+      : []
+    const approvers = (
+      firstTargets.length > 0 ? firstTargets : await usersWithPermission('REQUEST_APPROVE')
+    ).filter((id) => id !== payload.userId)
     await notifyUsers(approvers, {
       title: 'New request needs approval',
       message: `${request.Requester.Name} submitted ${request.TrackingNumber} (${request.FormTemplate.Name})`,
@@ -183,6 +236,25 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return json({ error: 'Request is not awaiting approval' }, 400)
     }
     if (!request.CurrentWFStepID) return json({ error: 'No active step' }, 400)
+    {
+      const step = await prisma.wFSteps.findUnique({
+        where: { WFStepID: request.CurrentWFStepID },
+        include: {
+          TargetUser: { select: { Name: true } },
+          TargetGroup: { select: { Name: true } },
+          TargetRole: { select: { Name: true } },
+        },
+      })
+      const verdict = await canUserDecideStep({
+        step,
+        userId: payload.userId,
+        requesterId: request.RequesterID,
+        isSuperAdmin: ctx.roleCode === 'SUPER_ADMIN',
+        hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
+        lookups: stepLookups(),
+      })
+      if (!verdict.canDecide) return json({ error: verdict.reason ?? 'You cannot decide this step' }, 403)
+    }
 
     const decision = action === 'APPROVE' ? 'APPROVED' : 'REJECTED'
     await prisma.requestApprovals.create({
@@ -243,6 +315,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
             }
       )
     }
+    if (decision === 'APPROVED' && nextStep) {
+      const nextTargets = (
+        await stepTargetUserIds(nextStep, request.RequesterID, stepLookups())
+      ).filter((id: string) => id !== payload.userId)
+      if (nextTargets.length > 0) {
+        await notifyUsers(nextTargets, {
+          title: 'Request needs your approval',
+          message: `${request.TrackingNumber} is now at "${nextStep.StepName}"`,
+          type: 'REQUEST_SUBMITTED',
+          requestId: params.id,
+        })
+      }
+    }
     return json(updated)
   }
 
@@ -251,6 +336,27 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!hasPermission(ctx, 'REQUEST_APPROVE')) return forbidden()
     if (request.Status !== 'PENDING_APPROVAL') {
       return json({ error: 'Only pending requests can be sent back for clarification' }, 400)
+    }
+    {
+      const step = request.CurrentWFStepID
+        ? await prisma.wFSteps.findUnique({
+            where: { WFStepID: request.CurrentWFStepID },
+            include: {
+              TargetUser: { select: { Name: true } },
+              TargetGroup: { select: { Name: true } },
+              TargetRole: { select: { Name: true } },
+            },
+          })
+        : null
+      const verdict = await canUserDecideStep({
+        step,
+        userId: payload.userId,
+        requesterId: request.RequesterID,
+        isSuperAdmin: ctx.roleCode === 'SUPER_ADMIN',
+        hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
+        lookups: stepLookups(),
+      })
+      if (!verdict.canDecide) return json({ error: verdict.reason ?? 'You cannot decide this step' }, 403)
     }
     const msg = data!.comment?.trim()
     if (!msg) return json({ error: 'Please write what you need clarified' }, 400)

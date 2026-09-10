@@ -24,16 +24,19 @@ export async function GET(req: NextRequest, { params }: Params) {
   return json(tmpl)
 }
 
-const publishSchema = z.object({ status: z.enum(['DRAFT', 'ACTIVE']) })
+const patchSchema = z.object({
+  status: z.enum(['DRAFT', 'ACTIVE']).optional(),
+  wfDefinitionId: z.string().nullable().optional(),
+})
 
-// PATCH /api/form-templates/[id] — publish / unpublish
+// PATCH /api/form-templates/[id] — publish/unpublish + workflow assignment
 export async function PATCH(req: NextRequest, { params }: Params) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
   const ctx = await getUserContext(payload.userId)
   if (!ctx || !hasPermission(ctx, 'FORM_TEMPLATE_MANAGE')) return forbidden()
 
-  const { data, error: err } = await parseBody(req, publishSchema)
+  const { data, error: err } = await parseBody(req, patchSchema)
   if (err) return json({ error: err }, 400)
 
   const existing = await prisma.formTemplates.findUnique({
@@ -41,11 +44,24 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     select: { FormTemplateID: true },
   })
   if (!existing) return notFound('Template not found')
+  if (data!.status === undefined && data!.wfDefinitionId === undefined) {
+    return json({ error: 'Nothing to update' }, 400)
+  }
+  if (data!.wfDefinitionId) {
+    const wf = await prisma.wFDefinitions.findUnique({
+      where: { WFDefinitionID: data!.wfDefinitionId },
+      select: { WFDefinitionID: true },
+    })
+    if (!wf) return json({ error: 'Workflow not found' }, 400)
+  }
 
   const tmpl = await prisma.formTemplates.update({
     where: { FormTemplateID: params.id },
-    data: { Status: data!.status },
-    select: { FormTemplateID: true, Status: true },
+    data: {
+      ...(data!.status !== undefined ? { Status: data!.status } : {}),
+      ...(data!.wfDefinitionId !== undefined ? { WFDefinitionID: data!.wfDefinitionId } : {}),
+    },
+    select: { FormTemplateID: true, Status: true, WFDefinitionID: true },
   })
   return json(tmpl)
 }
