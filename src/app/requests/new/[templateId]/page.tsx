@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { EmptyState, Icon } from "@/components/ui";
-import { isValueEmpty, parseFieldConfig, parseMultiValue } from "@/lib/field-config";
+import { isValueEmpty, parseAcceptList, parseFieldConfig, parseMultiValue } from "@/lib/field-config";
 
 interface TField {
   FormFieldID: string;
@@ -91,6 +91,7 @@ export default function DynamicRequestFormPage() {
   const [priority, setPriority] = useState("MEDIUM");
   const [neededBy, setNeededBy] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
+  const [fieldFiles, setFieldFiles] = useState<Record<string, File[]>>({});
   const [rows, setRows] = useState<Row[]>([]);
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
@@ -231,12 +232,11 @@ export default function DynamicRequestFormPage() {
   function validate(submit: boolean): boolean {
     if (!submit) return true;
     const badFields =
-      template?.Fields.filter(
-        (f) =>
-          f.FieldType !== "section" &&
-          f.IsRequired &&
-          isValueEmpty(f.FieldType, values[f.FormFieldID] || "")
-      ).map((f) => f.FormFieldID) || [];
+      template?.Fields.filter((f) => {
+        if (f.FieldType === "section" || !f.IsRequired) return false;
+        if (f.FieldType === "file") return (fieldFiles[f.FormFieldID] || []).length === 0;
+        return isValueEmpty(f.FieldType, values[f.FormFieldID] || "");
+      }).map((f) => f.FormFieldID) || [];
     const badRows = rows
       .filter((r) => !r.name.trim() || !(r.qty > 0) || (r.price.trim() !== "" && isNaN(Number(r.price))))
       .map((r) => r.key);
@@ -320,6 +320,34 @@ export default function DynamicRequestFormPage() {
           })
         );
         if (fails.length > 0) throw new Error(`Saved as draft, but these files failed to upload: ${fails.join(", ")}`);
+      }
+
+      const fieldEntries = Object.entries(fieldFiles).filter(([, fs]) => fs.length > 0);
+      if (fieldEntries.length > 0) {
+        const fieldFails: string[] = [];
+        await Promise.all(
+          fieldEntries.flatMap(([fieldId, fs]) =>
+            fs.map(async (f) => {
+              const fd = new FormData();
+              fd.append("file", f);
+              fd.append("formFieldId", fieldId);
+              try {
+                const up = await fetch(`/api/requests/${created.RequestID}/attachments`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}` },
+                  body: fd,
+                });
+                if (!up.ok) {
+                  const e = await up.json().catch(() => ({} as { error?: string }));
+                  fieldFails.push(`${f.name}${e.error ? ` (${e.error})` : ""}`);
+                }
+              } catch {
+                fieldFails.push(f.name);
+              }
+            })
+          )
+        );
+        if (fieldFails.length > 0) throw new Error(`Saved as draft, but these field files failed: ${fieldFails.join("; ")}`);
       }
 
       if (submit) {
@@ -460,6 +488,10 @@ export default function DynamicRequestFormPage() {
                     const cfg = parseFieldConfig(f.Config);
                     const val = values[f.FormFieldID] || "";
                     const set = (v: string) => setValues({ ...values, [f.FormFieldID]: v });
+                    const fileMax = cfg.maxFiles.trim() === "" ? 5 : Math.max(1, parseInt(cfg.maxFiles, 10) || 5);
+                    const fileMB = cfg.maxSizeMB.trim() === "" ? 10 : Math.max(1, parseFloat(cfg.maxSizeMB) || 10);
+                    const fileAccept = parseAcceptList(cfg.accept);
+                    const filePicked = fieldFiles[f.FormFieldID] || [];
 
                     if (f.FieldType === "section") {
                       return (
@@ -472,7 +504,7 @@ export default function DynamicRequestFormPage() {
                       );
                     }
 
-                    const wide = f.FieldType === "textarea" || f.FieldType === "multiselect";
+                    const wide = f.FieldType === "textarea" || f.FieldType === "multiselect" || f.FieldType === "file";
                     const showLabel = f.FieldType !== "checkbox";
                     const numAttrs =
                       f.FieldType === "number" || f.FieldType === "currency"
@@ -496,7 +528,65 @@ export default function DynamicRequestFormPage() {
                             {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
                           </label>
                         )}
-                        {f.FieldType === "checkbox" ? (
+                        {f.FieldType === "file" ? (
+                          <div>
+                            <label
+                              className={`flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed px-4 py-4 text-sm font-medium transition-colors ${
+                                invalid
+                                  ? "border-danger bg-red-50 text-red-700"
+                                  : "border-surface-border bg-surface text-ink-soft hover:border-primary hover:text-primary-dark"
+                              }`}
+                            >
+                              <Icon name="attach_file" className="text-[20px]" />
+                              {filePicked.length === 0
+                                ? `Choose file${fileMax > 1 ? "s" : ""}... (up to ${fileMax})`
+                                : `${filePicked.length} of ${fileMax} selected — add more...`}
+                              <input
+                                type="file"
+                                className="hidden"
+                                multiple={fileMax > 1}
+                                accept={fileAccept.map((a) => `.${a}`).join(",") || undefined}
+                                onChange={(e) => {
+                                  const picked = Array.from(e.target.files || []);
+                                  if (picked.length === 0) return;
+                                  setFieldFiles((prev) => {
+                                    const cur = prev[f.FormFieldID] || [];
+                                    return { ...prev, [f.FormFieldID]: [...cur, ...picked].slice(0, fileMax) };
+                                  });
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                            {filePicked.length > 0 && (
+                              <div className="mt-2 divide-y divide-surface-border rounded border border-surface-border">
+                                {filePicked.map((fl, i) => (
+                                  <div key={`${fl.name}-${i}`} className="flex items-center gap-3 px-3 py-2">
+                                    <Icon name="description" className="text-[18px] text-ink-faint" />
+                                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{fl.name}</span>
+                                    <span className="text-xs text-ink-faint">{fmtSize(fl.size)}</span>
+                                    <button
+                                      type="button"
+                                      className="icon-btn !h-7 !w-7 text-danger"
+                                      aria-label="Remove file"
+                                      onClick={() =>
+                                        setFieldFiles((prev) => ({
+                                          ...prev,
+                                          [f.FormFieldID]: (prev[f.FormFieldID] || []).filter((_, j) => j !== i),
+                                        }))
+                                      }
+                                    >
+                                      <Icon name="close" className="text-[16px]" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <p className="mt-1 text-xs text-ink-faint">
+                              {fileAccept.length > 0 ? `Allowed: ${fileAccept.map((a) => `.${a}`).join(", ")} · ` : ""}
+                              Max {fileMB} MB per file
+                            </p>
+                          </div>
+                        ) : f.FieldType === "checkbox" ? (
                           <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-ink">
                             <input
                               type="checkbox"

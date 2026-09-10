@@ -199,7 +199,7 @@ async function main() {
 
   // 9. Request form templates
   console.log('→ Form Templates')
-  interface SeedField { label: string; key: string; type: string; req: boolean; options?: string[] }
+  interface SeedField { label: string; key: string; type: string; req: boolean; options?: string[]; config?: string | null }
   interface SeedTemplate { name: string; prefix: string; desc: string; cat: string; fields: SeedField[] }
   const templates: SeedTemplate[] = [
     {
@@ -216,6 +216,7 @@ async function main() {
         { label: 'Department', key: 'department', type: 'text', req: true },
         { label: 'Needed By Date', key: 'neededByDate', type: 'date', req: false },
         { label: 'Justification / Details', key: 'justification', type: 'textarea', req: true },
+        { label: 'Supporting Quotation', key: 'quotation', type: 'file', req: true, config: '{"maxFiles":3,"maxSizeMB":10,"accept":"pdf,jpg,jpeg,png"}' },
       ],
     },
     {
@@ -291,7 +292,7 @@ async function main() {
             FieldType: f.type,
             IsRequired: f.req,
             SortOrder: i + 1,
-            Config: f.options ? JSON.stringify({ options: f.options }) : null,
+            Config: f.options ? JSON.stringify({ options: f.options }) : (f.config ?? null),
           })),
         },
       },

@@ -144,6 +144,16 @@ export async function GET(req: NextRequest, { params }: Params) {
     else if (t === 'user') display = userName.get(fv.Value.trim()) ?? fv.Value
     else if (t === 'department') display = depName.get(fv.Value.trim()) ?? fv.Value
     else if (t === 'multiselect') display = parseMultiValue(fv.Value).join(', ')
+    else if (t === 'file') {
+      const names: string[] = []
+      for (const id of parseMultiValue(fv.Value)) {
+        const match = request.Attachments.find(
+          (a: { RequestAttachmentID: string; FileName: string }) => a.RequestAttachmentID === id
+        )
+        if (match) names.push(match.FileName)
+      }
+      display = names.length > 0 ? names.join(', ') : '\u2014'
+    }
     else if (t === 'datetime') display = fv.Value.replace('T', ' ')
     return { ...fv, DisplayValue: display ?? fv.Value }
   })

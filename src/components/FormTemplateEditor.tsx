@@ -33,6 +33,9 @@ interface FieldDraft {
   max: string;
   minLength: string;
   maxLength: string;
+  maxFiles: string;
+  maxSizeMB: string;
+  accept: string;
 }
 
 interface LoadedField {
@@ -149,6 +152,9 @@ function blankField(type: string): FieldDraft {
     max: "",
     minLength: "",
     maxLength: "",
+    maxFiles: "",
+    maxSizeMB: "",
+    accept: "",
   };
 }
 
@@ -177,6 +183,21 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
           {f.label || <span className="text-ink-faint">Untitled section</span>}
         </div>
         {f.help && <p className="mt-0.5 text-xs text-ink-soft">{f.help}</p>}
+      </div>
+    );
+  }
+  if (f.fieldType === "file") {
+    return (
+      <div className="pointer-events-none">
+        <div className="mb-1 block text-sm font-medium text-ink">
+          {f.label || <span className="text-ink-faint">Untitled field</span>}{" "}
+          {f.isRequired && <span className="text-danger">*</span>}
+        </div>
+        <div className="flex items-center justify-center gap-2 rounded border border-dashed border-surface-border bg-surface-muted px-4 py-4 text-sm text-ink-soft">
+          <Icon name="attach_file" className="text-[20px]" />
+          Choose files...
+        </div>
+        {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
       </div>
     );
   }
@@ -299,7 +320,7 @@ function LivePreview({
       )}
       <div className="grid gap-4 md:grid-cols-2">
         {fields.map((f) => {
-          const wide = f.fieldType === "textarea" || f.fieldType === "section" || f.fieldType === "multiselect";
+          const wide = f.fieldType === "textarea" || f.fieldType === "section" || f.fieldType === "multiselect" || f.fieldType === "file";
           const opts = OPTION_TYPES.includes(f.fieldType) ? optionsOf(f) : [];
           const numAttrs =
             MINMAX_TYPES.includes(f.fieldType)
@@ -322,6 +343,34 @@ function LivePreview({
                   <div className="text-base font-bold text-ink">{f.label || "Untitled section"}</div>
                   {f.help && <p className="mt-0.5 text-xs text-ink-soft">{f.help}</p>}
                 </div>
+              ) : f.fieldType === "file" ? (
+                <>
+                  <label className="label">
+                    {f.label || "Untitled field"}{" "}
+                    {f.isRequired && <span className="text-danger">*</span>}
+                  </label>
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-surface-border bg-surface px-4 py-4 text-sm font-medium text-ink-soft transition-colors hover:border-primary hover:text-primary-dark">
+                    <Icon name="attach_file" className="text-[20px]" />
+                    {(() => {
+                      const n = (vals[f.key] || "").split("|").filter(Boolean).length;
+                      return n === 0 ? "Choose files..." : `${n} file${n === 1 ? "" : "s"} picked (preview only)`;
+                    })()}
+                    <input
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) =>
+                        setVals({
+                          ...vals,
+                          [f.key]: Array.from(e.target.files || [])
+                            .map((x) => x.name)
+                            .join("|"),
+                        })
+                      }
+                    />
+                  </label>
+                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                </>
               ) : f.fieldType === "checkbox" ? (
                 <>
                   <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-ink">
@@ -586,6 +635,9 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 max: cfg.max,
                 minLength: cfg.minLength,
                 maxLength: cfg.maxLength,
+                maxFiles: cfg.maxFiles,
+                maxSizeMB: cfg.maxSizeMB,
+                accept: cfg.accept,
               };
             })
           );
@@ -746,6 +798,20 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
           }
         }
       }
+      if (f.fieldType === "file") {
+        if (f.maxFiles.trim() !== "" && !/^\d+$/.test(f.maxFiles.trim())) {
+          setError(`Field "${f.label}": Max files must be a whole number`);
+          return;
+        }
+        if (f.maxSizeMB.trim() !== "" && !/^\d+(\.\d+)?$/.test(f.maxSizeMB.trim())) {
+          setError(`Field "${f.label}": Max size must be a number`);
+          return;
+        }
+        if (f.accept.trim() !== "" && !/^[A-Za-z0-9.,\s]+$/.test(f.accept)) {
+          setError(`Field "${f.label}": Allowed types must be comma-separated extensions (e.g. pdf, jpg)`);
+          return;
+        }
+      }
     }
     setSaving(true);
     try {
@@ -780,6 +846,9 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
             max: MINMAX_TYPES.includes(f.fieldType) ? f.max : "",
             minLength: LENGTH_TYPES.includes(f.fieldType) ? f.minLength : "",
             maxLength: LENGTH_TYPES.includes(f.fieldType) ? f.maxLength : "",
+            maxFiles: f.fieldType === "file" ? f.maxFiles : "",
+            maxSizeMB: f.fieldType === "file" ? f.maxSizeMB : "",
+            accept: f.fieldType === "file" ? f.accept : "",
           }),
         })),
       };
@@ -1250,6 +1319,51 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           />
                         </div>
                       </div>
+                    )}
+                    {selected.fieldType === "file" && (
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="label">Max files</label>
+                            <input
+                              type="number"
+                              min="1"
+                              step="1"
+                              className="input"
+                              value={selected.maxFiles}
+                              disabled={ro}
+                              onChange={(e) => patchField(selected.key, { maxFiles: e.target.value })}
+                              placeholder="5"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Max MB / file</label>
+                            <input
+                              type="number"
+                              min="1"
+                              step="any"
+                              className="input"
+                              value={selected.maxSizeMB}
+                              disabled={ro}
+                              onChange={(e) => patchField(selected.key, { maxSizeMB: e.target.value })}
+                              placeholder="10"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="label">
+                            Allowed types{" "}
+                            <span className="float-right font-normal text-ink-faint">Optional</span>
+                          </label>
+                          <input
+                            className="input font-mono text-xs"
+                            value={selected.accept}
+                            disabled={ro}
+                            onChange={(e) => patchField(selected.key, { accept: e.target.value })}
+                            placeholder="e.g. pdf, jpg, png (empty = all)"
+                          />
+                        </div>
+                      </>
                     )}
                     {OPTION_TYPES.includes(selected.fieldType) && (
                       <div>

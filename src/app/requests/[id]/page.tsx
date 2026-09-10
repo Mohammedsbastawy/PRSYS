@@ -71,6 +71,63 @@ interface Att {
   UploadedByUserID: string;
   Uploader: { UserID: string; Name: string };
 }
+function FileAnswerLinks({
+  requestId,
+  value,
+  attachments,
+  token,
+  onError,
+}: {
+  requestId: string;
+  value: string;
+  attachments: Att[];
+  token: string | null;
+  onError: (msg: string) => void;
+}) {
+  let ids: string[] = [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) ids = parsed.map((x) => String(x));
+  } catch {
+    ids = [];
+  }
+  const files = ids
+    .map((id) => attachments.find((a) => a.RequestAttachmentID === id))
+    .filter((a): a is Att => !!a);
+  if (files.length === 0) return <span className="text-ink-faint">—</span>;
+  return (
+    <span className="flex flex-wrap gap-1.5">
+      {files.map((a) => (
+        <button
+          key={a.RequestAttachmentID}
+          type="button"
+          title={`Download ${a.FileName}`}
+          className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface-muted py-1 pl-2.5 pr-3 text-xs font-medium text-primary-dark hover:bg-blue-100"
+          onClick={() => {
+            fetch(`/api/requests/${requestId}/attachments/${a.RequestAttachmentID}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+              .then(async (r) => {
+                if (!r.ok) throw new Error("Download failed");
+                const blob = await r.blob();
+                const url = URL.createObjectURL(blob);
+                const el = document.createElement("a");
+                el.href = url;
+                el.download = a.FileName;
+                el.click();
+                URL.revokeObjectURL(url);
+              })
+              .catch(() => onError("Download failed"));
+          }}
+        >
+          <Icon name="attach_file" className="text-[14px]" />
+          <span className="truncate">{a.FileName}</span>
+        </button>
+      ))}
+    </span>
+  );
+}
+
 interface Audit {
   AuditLogID: string;
   FromStatus: string | null;
@@ -952,7 +1009,17 @@ export default function RequestDetailPage() {
             </SummaryRow>
             {req.FieldValues.map((fv, i) => (
               <SummaryRow key={i} icon="info" label={fv.FormField?.Label || "Field"}>
-                {fv.DisplayValue ?? fv.Value}
+                {fv.FormField?.FieldType === "file" ? (
+                  <FileAnswerLinks
+                    requestId={req.RequestID}
+                    value={fv.Value}
+                    attachments={req.Attachments}
+                    token={token}
+                    onError={setActionError}
+                  />
+                ) : (
+                  fv.DisplayValue ?? fv.Value
+                )}
               </SummaryRow>
             ))}
           </div>

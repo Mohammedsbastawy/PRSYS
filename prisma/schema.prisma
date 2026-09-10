@@ -193,6 +193,7 @@ model FormFields {
   FormTemplate    FormTemplates   @relation(fields: [FormTemplateID], references: [FormTemplateID], onDelete: Cascade)
   FieldValues     RequestFieldValues[]
   RequestItems    RequestItems[]
+  FieldAttachments RequestAttachments[]
 }
 
 model WFSteps {
@@ -347,6 +348,7 @@ model RequestAttachments {
   RequestAttachmentID String   @id @default(uuid())
   RequestID          String  
   UploadedByUserID   String  
+  FormFieldID        String?
   FileName           String
   FilePath           String
   MimeType           String
@@ -355,6 +357,7 @@ model RequestAttachments {
 
   Request  Requests @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
   Uploader Users    @relation(fields: [UploadedByUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
+  FormField FormFields? @relation(fields: [FormFieldID], references: [FormFieldID], onDelete: SetNull, onUpdate: SetNull)
 }
 
 model Notifications {

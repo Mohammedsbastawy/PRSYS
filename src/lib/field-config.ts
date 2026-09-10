@@ -7,10 +7,12 @@
 //     → raw string
 //   checkbox        → "true" when checked, empty/absent when not
 //   multiselect     → JSON array string, e.g. '["A","B"]'
+//   file            → JSON array of attachment IDs, e.g. '["uuid1","uuid2"]'
 //   section         → layout only, never stores a value
 //
 // Config protocol (FormFields.Config: JSON string or null):
-//   { options[], help, placeholder, min, max, minLength, maxLength }
+//   { options[], help, placeholder, min, max, minLength, maxLength,
+//     maxFiles, maxSizeMB, accept }
 // Legacy shapes are still parsed on read (bare options array).
 
 export interface FieldTypeDef {
@@ -35,6 +37,7 @@ export const FIELD_TYPES: FieldTypeDef[] = [
   { value: "email", label: "Email", icon: "mail", group: "Basic Input" },
   { value: "tel", label: "Phone", icon: "call", group: "Basic Input" },
   { value: "url", label: "URL / Link", icon: "link", group: "Basic Input" },
+  { value: "file", label: "File Upload", icon: "attach_file", group: "Basic Input" },
   // Numbers & Dates
   { value: "number", label: "Number", icon: "numbers", group: "Numbers & Dates" },
   { value: "currency", label: "Currency", icon: "payments", group: "Numbers & Dates" },
@@ -59,6 +62,7 @@ export const FIELD_TYPE_VALUES = [
   "email",
   "tel",
   "url",
+  "file",
   "number",
   "currency",
   "date",
@@ -97,11 +101,20 @@ export interface ParsedFieldConfig {
   max: string;
   minLength: string;
   maxLength: string;
+  maxFiles: string;
+  maxSizeMB: string;
+  accept: string;
 }
 
 function cfgToString(v: unknown): string {
   if (typeof v === "string") return v;
   if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  return "";
+}
+
+function acceptToString(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (Array.isArray(v)) return v.map((x: unknown) => String(x)).join(",");
   return "";
 }
 
@@ -114,6 +127,9 @@ export function parseFieldConfig(cfg: string | null | undefined): ParsedFieldCon
     max: "",
     minLength: "",
     maxLength: "",
+    maxFiles: "",
+    maxSizeMB: "",
+    accept: "",
   };
   if (!cfg) return empty;
   try {
@@ -140,6 +156,9 @@ export function parseFieldConfig(cfg: string | null | undefined): ParsedFieldCon
         max: cfgToString(rec.max),
         minLength: cfgToString(rec.minLength),
         maxLength: cfgToString(rec.maxLength),
+        maxFiles: cfgToString(rec.maxFiles),
+        maxSizeMB: cfgToString(rec.maxSizeMB),
+        accept: acceptToString(rec.accept),
       };
     }
   } catch {
@@ -156,6 +175,9 @@ export function buildFieldConfig(o: {
   max?: string | number;
   minLength?: string | number;
   maxLength?: string | number;
+  maxFiles?: string | number;
+  maxSizeMB?: string | number;
+  accept?: string;
 }): string | null {
   const out: Record<string, unknown> = {};
   if (o.options && o.options.length > 0) out.options = o.options;
@@ -172,16 +194,21 @@ export function buildFieldConfig(o: {
   const max = num(o.max);
   const minL = num(o.minLength);
   const maxL = num(o.maxLength);
+  const maxF = num(o.maxFiles);
+  const maxMB = num(o.maxSizeMB);
   if (min !== null) out.min = min;
   if (max !== null) out.max = max;
   if (minL !== null) out.minLength = minL;
   if (maxL !== null) out.maxLength = maxL;
+  if (maxF !== null) out.maxFiles = maxF;
+  if (maxMB !== null) out.maxSizeMB = maxMB;
+  if (o.accept && o.accept.trim()) out.accept = o.accept.trim();
   return Object.keys(out).length > 0 ? JSON.stringify(out) : null;
 }
 
 /* ---------------- Value helpers ---------------- */
 
-/** Parse a stored multiselect value (JSON array string) into an array. */
+/** Parse a stored multiselect/file value (JSON array string) into an array. */
 export function parseMultiValue(raw: string | null | undefined): string[] {
   if (!raw) return [];
   try {
@@ -194,13 +221,22 @@ export function parseMultiValue(raw: string | null | undefined): string[] {
   return t ? [t] : [];
 }
 
+/** Parse an "accept" extensions string ("pdf, jpg") into clean lowercase extensions. */
+export function parseAcceptList(accept: string | null | undefined): string[] {
+  if (!accept) return [];
+  return accept
+    .split(",")
+    .map((s) => s.trim().toLowerCase().replace(/^\.+/, ""))
+    .filter((s) => /^[a-z0-9]{1,10}$/.test(s));
+}
+
 /** True when a stored value counts as "not filled" for a required check. */
 export function isValueEmpty(type: string, raw: string | null | undefined): boolean {
   if (type === "section") return true;
   if (!raw) return true;
   const t = raw.trim();
   if (t === "") return true;
-  if (type === "multiselect") return parseMultiValue(t).length === 0;
+  if (type === "multiselect" || type === "file") return parseMultiValue(t).length === 0;
   return false;
 }
 
@@ -302,6 +338,16 @@ export function validateFieldValue(
         const bad = arr.some((x) => !cfg.options.includes(String(x)));
         if (bad) return "must only contain available options";
       }
+      return null;
+    }
+    case "file": {
+      let arr: unknown;
+      try {
+        arr = JSON.parse(v);
+      } catch {
+        return "must be a valid file selection";
+      }
+      if (!Array.isArray(arr)) return "must be a valid file selection";
       return null;
     }
     case "checkbox":

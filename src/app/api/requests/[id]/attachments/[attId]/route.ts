@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getUserFromRequest } from '@/lib/auth'
 import { json, unauthorized, forbidden, notFound } from '@/lib/http'
 import { getUserContext, hasPermission } from '@/lib/rbac'
-import { uploadDir } from '../../attachments/route'
+import { syncFieldAttachmentsValue, uploadDir } from '../../attachments/route'
 
 interface Params { params: { id: string; attId: string } }
 
@@ -68,6 +68,13 @@ export async function DELETE(req: NextRequest, { params }: Params) {
     await fs.unlink(path.join(uploadDir(), att.FilePath))
   } catch {
     /* already gone */
+  }
+  if (att.FormFieldID) {
+    try {
+      await syncFieldAttachmentsValue(params.id, att.FormFieldID)
+    } catch (e) {
+      console.error('field value sync after delete failed:', e)
+    }
   }
   await prisma.requestAuditLog.create({
     data: {
