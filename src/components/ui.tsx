@@ -1,4 +1,4 @@
-import { Fragment, ReactNode, useEffect } from "react";
+import { Fragment, ReactNode, useCallback, useEffect, useRef, useState } from "react";
 
 /* ---------- Material Symbol icon ---------- */
 export function Icon({
@@ -412,6 +412,178 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
           </div>
         </Fragment>
       ))}
+    </div>
+  );
+}
+
+/* ---------- Toast notifications ---------- */
+export interface ToastMsg {
+  id: number;
+  type: "success" | "error";
+  text: string;
+}
+
+export function useToasts() {
+  const [toasts, setToasts] = useState<ToastMsg[]>([]);
+  const counter = useRef(0);
+  const push = useCallback((type: "success" | "error", text: string) => {
+    counter.current += 1;
+    const id = counter.current;
+    setToasts((t) => [...t, { id, type, text }]);
+    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 4500);
+  }, []);
+  return { toasts, push };
+}
+
+export function ToastStack({ toasts }: { toasts: ToastMsg[] }) {
+  if (toasts.length === 0) return null;
+  return (
+    <div className="fixed bottom-6 right-6 z-[200] flex w-[340px] flex-col gap-2">
+      {toasts.map((t) => (
+        <div
+          key={t.id}
+          className="animate-dropdown flex items-start gap-2 rounded-md border px-4 py-3 text-sm shadow-lg bg-white"
+          style={{
+            borderColor: t.type === "success" ? "#bbf7d0" : "#fecaca",
+          }}
+        >
+          <Icon
+            name={t.type === "success" ? "check_circle" : "error"}
+            className={`text-[20px] ${t.type === "success" ? "text-success" : "text-danger"}`}
+            filled
+          />
+          <div className="flex-1 text-ink">{t.text}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ---------- Confirm dialog ---------- */
+export function ConfirmModal({
+  open,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  note,
+  confirmLabel = "Delete",
+  danger = true,
+  busy = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  message: ReactNode;
+  note?: string;
+  confirmLabel?: string;
+  danger?: boolean;
+  busy?: boolean;
+}) {
+  return (
+    <Modal open={open} onClose={busy ? () => {} : onClose} title={title}>
+      <div className="space-y-4">
+        <div className="text-sm text-ink-soft">{message}</div>
+        {note && (
+          <div className="flex items-start gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <Icon name="warning" className="mt-px text-[16px]" />
+            <span>{note}</span>
+          </div>
+        )}
+        <div className="flex justify-end gap-2 border-t border-surface-border pt-4">
+          <button className="btn-secondary" onClick={onClose} disabled={busy}>
+            Cancel
+          </button>
+          <button className={danger ? "btn-danger" : "btn-primary"} onClick={onConfirm} disabled={busy}>
+            {busy && <Icon name="progress_activity" className="animate-spin text-[18px]" />}
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/* ---------- Row action dropdown menu ---------- */
+export interface RowMenuItem {
+  icon: string;
+  label: string;
+  danger?: boolean;
+  onClick: () => void;
+}
+
+export function RowMenu({ items }: { items: RowMenuItem[] }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const h = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [open]);
+  if (items.length === 0) return null;
+  return (
+    <div className="relative inline-block" ref={ref}>
+      <button className="icon-btn !h-8 !w-8" onClick={() => setOpen((o) => !o)} aria-label="Row actions">
+        <Icon name="more_vert" />
+      </button>
+      {open && (
+        <div className="animate-dropdown absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-md border border-surface-border bg-white py-1 shadow-lg">
+          {items.map((it, i) => (
+            <button
+              key={i}
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-muted ${
+                it.danger ? "text-danger" : "text-ink"
+              }`}
+              onClick={() => {
+                setOpen(false);
+                it.onClick();
+              }}
+            >
+              <Icon name={it.icon} className="text-[18px]" />
+              {it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------- Form field wrapper ---------- */
+export function Field({
+  label,
+  required = false,
+  hint,
+  children,
+}: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <label className="label">
+        {label}
+        {required && <span className="text-danger"> *</span>}
+      </label>
+      {children}
+      {hint && <p className="mt-1 text-xs text-ink-faint">{hint}</p>}
+    </div>
+  );
+}
+
+/* ---------- Inline form error ---------- */
+export function FormError({ message }: { message: string | null }) {
+  if (!message) return null;
+  return (
+    <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+      <Icon name="error" className="mt-px text-[16px]" />
+      <span>{message}</span>
     </div>
   );
 }

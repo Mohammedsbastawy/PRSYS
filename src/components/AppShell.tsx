@@ -166,7 +166,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const can = (p: string) => user?.permissions?.includes(p) ?? false;
   const isSuper = user?.role.code === "SUPER_ADMIN";
   const visibleNav = NAV.filter(
-    (n) => !n.anyOf || n.anyOf.some((p) => can(p)) || (isSuper && true)
+    (n) =>
+      !n.anyOf ||
+      n.anyOf.some((p) => can(p)) ||
+      (isSuper && true) ||
+      // department managers (assignment, not role) see their approval queue
+      (n.href === "/approvals" && pendingCount > 0)
   ).map((n) =>
     n.href === "/requests" && !can("REQUEST_VIEW_ALL") ? { ...n, label: "My Requests" } : n
   );

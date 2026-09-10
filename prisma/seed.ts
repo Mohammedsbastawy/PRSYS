@@ -38,15 +38,37 @@ const PERMISSIONS = [
   { code: 'AUDIT_VIEW', module: 'REPORTS', name: 'View Audit Log' },
 ]
 
-// ---- Roles ----
+// ---- Roles (ticket-system model: osTicket / GLPI style) ----
+// Only THREE system roles:
+//   SUPER_ADMIN — full platform administration
+//   USER        — self-service portal; a USER can be ASSIGNED as the manager of a
+//                 department (DEP.ManagerID) and then receives/approves that
+//                 department's requests. "Department Manager" is NOT a role.
+//   AGENT       — professional workspace to review & process requests
 const ROLES = [
   { code: 'SUPER_ADMIN', name: 'Super Admin', desc: 'Full system access', perms: '*' as const },
-  { code: 'REQUESTER', name: 'Requester', desc: 'Can create and track requests', perms: ['REQUEST_CREATE', 'REQUEST_VIEW_OWN', 'CATALOG_VIEW', 'FORM_TEMPLATE_VIEW'] },
-  { code: 'DEPT_MANAGER', name: 'Department Manager', desc: 'Approves department requests', perms: ['REQUEST_CREATE', 'REQUEST_VIEW_OWN', 'REQUEST_VIEW_ALL', 'REQUEST_APPROVE', 'CATALOG_VIEW', 'FORM_TEMPLATE_VIEW', 'REPORT_VIEW'] },
-  { code: 'PROCUREMENT_OFFICER', name: 'Procurement Officer', desc: 'Handles PO and fulfillment', perms: ['REQUEST_VIEW_ALL', 'REQUEST_ASSIGN', 'REQUEST_VERIFY_ITEMS', 'REQUEST_REGISTER_PO', 'REQUEST_FULFILL', 'CATALOG_VIEW', 'CATALOG_SYNC', 'REPORT_VIEW'] },
-  { code: 'STOREKEEPER', name: 'Storekeeper', desc: 'Manages stock issue', perms: ['REQUEST_VIEW_ALL', 'REQUEST_FULFILL', 'CATALOG_VIEW', 'REPORT_VIEW'] },
-  { code: 'AUDITOR', name: 'Auditor', desc: 'Read-only audit access', perms: ['REQUEST_VIEW_ALL', 'REPORT_VIEW', 'AUDIT_VIEW', 'FORM_TEMPLATE_VIEW'] },
+  {
+    code: 'USER', name: 'Self User',
+    desc: 'Self-service portal — create and track own requests. Can be assigned as a department manager.',
+    perms: ['REQUEST_CREATE', 'REQUEST_VIEW_OWN', 'CATALOG_VIEW', 'FORM_TEMPLATE_VIEW'],
+  },
+  {
+    code: 'AGENT', name: 'Agent',
+    desc: 'Professional workspace — review, approve, assign and fulfill requests',
+    perms: ['REQUEST_CREATE', 'REQUEST_VIEW_OWN', 'REQUEST_VIEW_ALL', 'REQUEST_APPROVE', 'REQUEST_ASSIGN',
+      'REQUEST_VERIFY_ITEMS', 'REQUEST_REGISTER_PO', 'REQUEST_FULFILL', 'CATALOG_VIEW', 'CATALOG_SYNC',
+      'REPORT_VIEW', 'AUDIT_VIEW', 'DEP_VIEW', 'FORM_TEMPLATE_VIEW'],
+  },
 ]
+
+// Legacy roles are migrated onto the new model automatically
+const LEGACY_ROLE_MAP: Record<string, string> = {
+  REQUESTER: 'USER',
+  DEPT_MANAGER: 'USER',
+  PROCUREMENT_OFFICER: 'AGENT',
+  STOREKEEPER: 'AGENT',
+  AUDITOR: 'AGENT',
+}
 
 async function main() {
   console.log('🌱 Seeding PRSYS...')
@@ -82,6 +104,32 @@ async function main() {
         const pid = permMap.get(code)
         if (pid) await prisma.rolePermissions.create({ data: { RoleID: role.RoleID, PermissionID: pid } })
       }
+    }
+  }
+
+  // 2b. Migrate legacy roles onto the ticket-system model
+  // ("Department Manager" is an ASSIGNMENT — DEP.ManagerID — never a role)
+  console.log('→ Legacy role migration')
+  for (const [legacy, target] of Object.entries(LEGACY_ROLE_MAP)) {
+    const legacyRole = await prisma.roles.findUnique({ where: { Code: legacy } })
+    const targetRole = await prisma.roles.findUnique({ where: { Code: target } })
+    if (!legacyRole || !targetRole) continue
+    const moved = await prisma.users.updateMany({
+      where: { RoleID: legacyRole.RoleID },
+      data: { RoleID: targetRole.RoleID },
+    })
+    if (moved.count > 0) console.log(`   ${legacy} → ${target}: ${moved.count} user(s) migrated`)
+    // delete the legacy role only if nothing references it anymore
+    try {
+      const usersLeft = await prisma.users.count({ where: { RoleID: legacyRole.RoleID } })
+      const stepsLeft = await prisma.wFSteps.count({ where: { TargetRoleID: legacyRole.RoleID } })
+      if (usersLeft === 0 && stepsLeft === 0) {
+        await prisma.rolePermissions.deleteMany({ where: { RoleID: legacyRole.RoleID } })
+        await prisma.roles.delete({ where: { RoleID: legacyRole.RoleID } })
+        console.log(`   removed legacy role: ${legacy}`)
+      }
+    } catch {
+      console.log(`   kept legacy role: ${legacy} (still referenced)`)
     }
   }
 
@@ -125,13 +173,16 @@ async function main() {
 
   // 6. Demo users (dev/test)
   console.log('→ Demo Users')
-  const reqRole = await prisma.roles.findUnique({ where: { Code: 'REQUESTER' } })
-  const mgrRole = await prisma.roles.findUnique({ where: { Code: 'DEPT_MANAGER' } })
-  const procRole = await prisma.roles.findUnique({ where: { Code: 'PROCUREMENT_OFFICER' } })
+  const userRole = await prisma.roles.findUnique({ where: { Code: 'USER' } })
+  const agentRole = await prisma.roles.findUnique({ where: { Code: 'AGENT' } })
   const demoUsers = [
-    { email: 'requester@prsys.local', name: 'Ahmed Hassan', pass: 'Requester@123', role: reqRole },
-    { email: 'manager@prsys.local', name: 'Mona Adel', pass: 'Manager@123', role: mgrRole },
-    { email: 'procurement@prsys.local', name: 'Karim Samy', pass: 'Procurement@123', role: procRole },
+    // Self User — normal employee, normal interface
+    { email: 'requester@prsys.local', name: 'Ahmed Hassan', pass: 'Requester@123', role: userRole },
+    // ALSO a plain Self User — but ASSIGNED as department manager (not a role!):
+    // sees his own requests + his department's requests and receives approvals
+    { email: 'manager@prsys.local', name: 'Mona Adel', pass: 'Manager@123', role: userRole },
+    // Agent — professional workspace to process requests
+    { email: 'procurement@prsys.local', name: 'Karim Samy', pass: 'Procurement@123', role: agentRole },
   ]
   for (const u of demoUsers) {
     const found = await prisma.users.findUnique({ where: { Email: u.email } })
@@ -153,7 +204,10 @@ async function main() {
   }
   const managerUser = await prisma.users.findUnique({ where: { Email: 'manager@prsys.local' } })
   const requesterUser = await prisma.users.findUnique({ where: { Email: 'requester@prsys.local' } })
+  const procUser = await prisma.users.findUnique({ where: { Email: 'procurement@prsys.local' } })
+  const procTeam = await prisma.groups.findUnique({ where: { GroupID: '00000000-0000-0000-0000-000000000001' } })
   if (managerUser && requesterUser) {
+    // manager@prsys.local stays a plain USER — these ASSIGNMENTS make him a manager
     await prisma.users.update({
       where: { UserID: requesterUser.UserID },
       data: { DirectManagerID: managerUser.UserID },
@@ -162,6 +216,13 @@ async function main() {
       where: { DEPID: dep.DEPID },
       data: { ManagerID: managerUser.UserID },
     }).catch(() => {})
+  }
+  if (procUser && procTeam) {
+    await prisma.groupMembers.upsert({
+      where: { GroupID_UserID: { GroupID: procTeam.GroupID, UserID: procUser.UserID } },
+      update: {},
+      create: { GroupID: procTeam.GroupID, UserID: procUser.UserID },
+    })
   }
 
   // 7. Form categories
@@ -179,22 +240,43 @@ async function main() {
   }
 
   // 8. Standard approval workflow
+  // Step 1 → the requester's DEPARTMENT MANAGER (assignment-based routing)
+  // Step 2 → the Procurement Team GROUP (osTicket-style team routing)
   console.log('→ Standard Workflow')
   let wf = await prisma.wFDefinitions.findFirst({ where: { Name: 'Standard Procurement Approval' } })
+  const team = await prisma.groups.findUnique({ where: { GroupID: '00000000-0000-0000-0000-000000000001' } })
   if (!wf) {
     wf = await prisma.wFDefinitions.create({
       data: {
         Name: 'Standard Procurement Approval',
-        Description: 'Department manager approval followed by procurement review',
+        Description: "Requester's department manager approval, then Procurement Team review",
         Status: 'ACTIVE',
         Steps: {
           create: [
-            { StepName: 'Department Manager Approval', StepOrder: 1, ApproverType: 'ROLE', TargetRoleID: mgrRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'RETURN_TO_REQUESTER', DueDays: 3 },
-            { StepName: 'Procurement Review', StepOrder: 2, ApproverType: 'ROLE', TargetRoleID: procRole!.RoleID, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY', DueDays: 5 },
+            { StepName: 'Department Manager Approval', StepOrder: 1, ApproverType: 'DEPARTMENT_MANAGER', ApprovalMode: 'ANY_ONE', RejectAction: 'RETURN_TO_REQUESTER', DueDays: 3 },
+            { StepName: 'Procurement Review', StepOrder: 2, ApproverType: 'GROUP', TargetGroupID: team?.GroupID ?? null, ApprovalMode: 'ANY_ONE', RejectAction: 'REJECT_COMPLETELY', DueDays: 5 },
           ],
         },
       },
     })
+  } else {
+    // migrate legacy role-targeted steps to assignment-based routing
+    const s1 = await prisma.wFSteps.findFirst({ where: { WFDefinitionID: wf.WFDefinitionID, StepOrder: 1 } })
+    if (s1 && s1.ApproverType !== 'DEPARTMENT_MANAGER') {
+      await prisma.wFSteps.update({
+        where: { WFStepID: s1.WFStepID },
+        data: { StepName: 'Department Manager Approval', ApproverType: 'DEPARTMENT_MANAGER', TargetRoleID: null, TargetUserID: null, TargetGroupID: null },
+      })
+      console.log('   migrated step 1 → DEPARTMENT_MANAGER')
+    }
+    const s2 = await prisma.wFSteps.findFirst({ where: { WFDefinitionID: wf.WFDefinitionID, StepOrder: 2 } })
+    if (s2 && s2.ApproverType === 'ROLE' && team) {
+      await prisma.wFSteps.update({
+        where: { WFStepID: s2.WFStepID },
+        data: { ApproverType: 'GROUP', TargetGroupID: team.GroupID, TargetRoleID: null },
+      })
+      console.log('   migrated step 2 → Procurement Team group')
+    }
   }
 
   // 9. Request form templates
