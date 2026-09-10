@@ -1,5 +1,4 @@
 import { prisma } from './prisma'
-import type { JwtPayload } from './auth'
 
 export interface UserContext {
   userId: string
@@ -9,7 +8,6 @@ export interface UserContext {
   depId: string | null
 }
 
-let cache: Map<string, Set<string>> = new Map()
 
 export async function getUserContext(userId: string): Promise<UserContext | null> {
   const user = await prisma.users.findUnique({

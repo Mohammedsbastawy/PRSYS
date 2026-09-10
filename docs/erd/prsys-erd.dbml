@@ -1,0 +1,308 @@
+// ============================================================
+// PRSYS — Procurement Request System
+// Database: MySQL 8 (Prisma schema) — 22 tables
+// Open this file at https://dbdiagram.io to view/edit the ERD
+// ============================================================
+
+Table Roles {
+  RoleID varchar [pk, note: 'uuid()']
+  Name varchar
+  Code varchar [unique]
+  Description varchar [null]
+  IsSystemDefault boolean [default: false]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table Permissions {
+  PermissionID varchar [pk, note: 'uuid()']
+  Code varchar [unique]
+  Module varchar
+  Name varchar
+  Description varchar [null]
+  CreatedAt datetime [default: `now()`]
+}
+
+Table RolePermissions {
+  RoleID varchar [pk]
+  PermissionID varchar [pk]
+  GrantedAt datetime [default: `now()`]
+}
+
+Table DEP {
+  DEPID varchar [pk, note: 'uuid()']
+  Name varchar
+  Code varchar [unique]
+  ManagerID varchar [unique, null]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table Users {
+  UserID varchar [pk, note: 'uuid()']
+  Name varchar
+  Email varchar [unique]
+  PasswordHash varchar [null]
+  AccountType varchar [default: 'AZURE_AD']
+  RoleID varchar
+  DEPID varchar [null, note: 'logical ref to DEP, no DB FK']
+  DirectManagerID varchar [null]
+  IsActive boolean [default: true]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table Groups {
+  GroupID varchar [pk, note: 'uuid()']
+  Name varchar
+  Description varchar [null]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table GroupMembers {
+  GroupID varchar [pk]
+  UserID varchar [pk]
+  AddedAt datetime [default: `now()`]
+}
+
+Table FormCategories {
+  FormCategoryID varchar [pk, note: 'uuid()']
+  Name varchar
+  SortOrder int [default: 0]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table WFDefinitions {
+  WFDefinitionID varchar [pk, note: 'uuid()']
+  Name varchar
+  Description varchar [null]
+  Status varchar [default: 'ACTIVE']
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table FormTemplates {
+  FormTemplateID varchar [pk, note: 'uuid()']
+  Name varchar
+  Description varchar [null]
+  FormCategoryID varchar [null]
+  WFDefinitionID varchar [null]
+  Status varchar [default: 'DRAFT']
+  Version int [default: 1]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table FormFields {
+  FormFieldID varchar [pk, note: 'uuid()']
+  FormTemplateID varchar
+  Label varchar
+  FieldKey varchar
+  FieldType varchar
+  IsRequired boolean [default: false]
+  SortOrder int [default: 0]
+  Config varchar [null]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table FormPermissions {
+  FormPermissionID varchar [pk, note: 'uuid()']
+  FormTemplateID varchar
+  PermissionType varchar
+  DEPID varchar [null]
+  GroupID varchar [null]
+  UserID varchar [null]
+  CreatedAt datetime [default: `now()`]
+}
+
+Table WFSteps {
+  WFStepID varchar [pk, note: 'uuid()']
+  WFDefinitionID varchar
+  StepName varchar
+  StepOrder int
+  ApproverType varchar [note: 'USER | GROUP | ROLE | MANAGER']
+  TargetUserID varchar [null]
+  TargetGroupID varchar [null]
+  TargetRoleID varchar [null]
+  ApprovalMode varchar [default: 'ANY_ONE']
+  RejectAction varchar [default: 'REJECT_COMPLETELY']
+  Condition varchar [null]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table ItemCatalogCache {
+  ItemCatalogCacheID varchar [pk, note: 'uuid()']
+  OracleItemID varchar [unique]
+  ItemCode varchar [unique]
+  ItemName varchar
+  Description varchar [null]
+  Uom varchar
+  OrganizationCode varchar
+  LastPurchasedPrice decimal(18,4) [null]
+  FirstUsedAt datetime [default: `now()`]
+  LastUsedAt datetime [default: `now()`]
+}
+
+Table Requests {
+  RequestID varchar [pk, note: 'uuid()']
+  TrackingNumber varchar [unique, note: 'REQ-YYYY-00001']
+  FormTemplateID varchar
+  RequesterID varchar
+  Status varchar [default: 'DRAFT', note: 'DRAFT|PENDING_APPROVAL|APPROVED|PO_REGISTERED|FULFILLED|COMPLETED|REJECTED|CANCELLED']
+  CurrentWFStepID varchar [null]
+  FormSnapshot text [note: 'JSON snapshot of template']
+  Priority varchar [default: 'MEDIUM']
+  AssigneeID varchar [null]
+  FulfillmentType varchar [null]
+  StockIssueNumber varchar [null]
+  OraclePoNumber varchar [null]
+  PoCreatedByUserID varchar [null]
+  PoCreatedAt datetime [null]
+  PoNotes varchar [null]
+  SubmittedAt datetime [null]
+  CompletedAt datetime [null]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table RequestFieldValues {
+  RequestFieldValueID varchar [pk, note: 'uuid()']
+  RequestID varchar
+  FormFieldID varchar [null]
+  Value varchar
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+
+  indexes {
+    RequestID [name: 'idx_rfv_request']
+  }
+}
+
+Table RequestItems {
+  RequestItemID varchar [pk, note: 'uuid()']
+  RequestID varchar
+  FormFieldID varchar [null]
+  RequestedItemName varchar
+  RequestedItemDetails varchar [null]
+  RequestedUom varchar [null]
+  RequestedQuantity decimal(18,4)
+  ItemCatalogCacheID varchar [null]
+  OracleItemID varchar [null]
+  ItemCode varchar [null]
+  ItemName varchar [null]
+  Uom varchar [null]
+  OrganizationCode varchar [null]
+  OnHandQuantity decimal(18,4) [null]
+  ItemVerifiedByUserID varchar [null]
+  ItemVerifiedAt datetime [null]
+  IssuedFromStockQuantity decimal(18,4) [default: 0]
+  ToPurchaseQuantity decimal(18,4) [null]
+  EstimatedPrice decimal(18,4) [null]
+  StockDecisionNotes varchar [null]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table RequestApprovals {
+  RequestApprovalID varchar [pk, note: 'uuid()']
+  RequestID varchar
+  WFStepID varchar
+  ApproverUserID varchar
+  Decision varchar [default: 'PENDING']
+  Comment varchar [null]
+  DecidedAt datetime [null]
+  CreatedAt datetime [default: `now()`]
+}
+
+Table RequestComments {
+  RequestCommentID varchar [pk, note: 'uuid()']
+  RequestID varchar
+  AuthorUserID varchar
+  CommentText varchar
+  CommentType varchar [default: 'GENERAL']
+  IsInternal boolean [default: false]
+  CreatedAt datetime [default: `now()`]
+  UpdatedAt datetime
+}
+
+Table RequestAttachments {
+  RequestAttachmentID varchar [pk, note: 'uuid()']
+  RequestID varchar
+  UploadedByUserID varchar
+  FileName varchar
+  FilePath varchar
+  MimeType varchar
+  FileSize bigint
+  CreatedAt datetime [default: `now()`]
+}
+
+Table Notifications {
+  NotificationID varchar [pk, note: 'uuid()']
+  UserID varchar
+  Title varchar
+  Message varchar
+  Type varchar
+  RelatedRequestID varchar [null]
+  IsRead boolean [default: false]
+  CreatedAt datetime [default: `now()`]
+}
+
+Table RequestAuditLog {
+  AuditLogID varchar [pk, note: 'uuid()']
+  RequestID varchar
+  ChangedByUserID varchar [null]
+  FromStatus varchar [null]
+  ToStatus varchar [null]
+  Action varchar [null]
+  Note varchar [null]
+  CreatedAt datetime [default: `now()`]
+}
+
+// ---------------- Relationships ----------------
+Ref: RolePermissions.RoleID > Roles.RoleID
+Ref: RolePermissions.PermissionID > Permissions.PermissionID
+Ref: Users.RoleID > Roles.RoleID
+Ref: Users.DirectManagerID > Users.UserID
+Ref: DEP.ManagerID - Users.UserID [delete: no action]
+Ref: GroupMembers.GroupID > Groups.GroupID
+Ref: GroupMembers.UserID > Users.UserID
+
+Ref: FormTemplates.FormCategoryID > FormCategories.FormCategoryID [delete: set null]
+Ref: FormTemplates.WFDefinitionID > WFDefinitions.WFDefinitionID
+Ref: FormFields.FormTemplateID > FormTemplates.FormTemplateID [delete: cascade]
+Ref: FormPermissions.FormTemplateID > FormTemplates.FormTemplateID [delete: cascade]
+Ref: FormPermissions.DEPID > DEP.DEPID
+Ref: FormPermissions.GroupID > Groups.GroupID
+Ref: FormPermissions.UserID > Users.UserID
+Ref: WFSteps.WFDefinitionID > WFDefinitions.WFDefinitionID [delete: cascade]
+Ref: WFSteps.TargetUserID > Users.UserID
+Ref: WFSteps.TargetGroupID > Groups.GroupID
+Ref: WFSteps.TargetRoleID > Roles.RoleID
+
+Ref: Requests.FormTemplateID > FormTemplates.FormTemplateID
+Ref: Requests.RequesterID > Users.UserID
+Ref: Requests.AssigneeID > Users.UserID
+Ref: Requests.PoCreatedByUserID > Users.UserID
+Ref: Requests.CurrentWFStepID > WFSteps.WFStepID [delete: set null]
+
+Ref: RequestFieldValues.RequestID > Requests.RequestID [delete: cascade]
+Ref: RequestFieldValues.FormFieldID > FormFields.FormFieldID [delete: set null]
+Ref: RequestItems.RequestID > Requests.RequestID [delete: cascade]
+Ref: RequestItems.FormFieldID > FormFields.FormFieldID [delete: set null]
+Ref: RequestItems.ItemCatalogCacheID > ItemCatalogCache.ItemCatalogCacheID [delete: set null]
+Ref: RequestItems.ItemVerifiedByUserID > Users.UserID
+Ref: RequestApprovals.RequestID > Requests.RequestID [delete: cascade]
+Ref: RequestApprovals.WFStepID > WFSteps.WFStepID
+Ref: RequestApprovals.ApproverUserID > Users.UserID
+Ref: RequestComments.RequestID > Requests.RequestID [delete: cascade]
+Ref: RequestComments.AuthorUserID > Users.UserID
+Ref: RequestAttachments.RequestID > Requests.RequestID [delete: cascade]
+Ref: RequestAttachments.UploadedByUserID > Users.UserID
+Ref: Notifications.UserID > Users.UserID [delete: cascade]
+Ref: Notifications.RelatedRequestID > Requests.RequestID [delete: set null]
+Ref: RequestAuditLog.RequestID > Requests.RequestID [delete: cascade]
+Ref: RequestAuditLog.ChangedByUserID > Users.UserID [delete: set null]

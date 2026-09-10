@@ -5,9 +5,18 @@ import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { PageHeader, StatusBadge } from "@/components/ui";
 
+interface TemplateRow {
+  FormTemplateID: string;
+  Name: string;
+  Status: string;
+  Category?: { Name: string } | null;
+  Workflow?: { Name: string } | null;
+  Fields?: { FormFieldID: string }[];
+}
+
 export default function FormsPage() {
   const { token } = useAuth();
-  const [forms, setForms] = useState<any[]>([]);
+  const [forms, setForms] = useState<TemplateRow[]>([]);
 
   useEffect(() => {
     if (!token) return;
