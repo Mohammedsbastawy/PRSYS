@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { EmptyState, Icon } from "@/components/ui";
-import { isValueEmpty, parseAcceptList, parseFieldConfig, parseMultiValue } from "@/lib/field-config";
+import { currencyByCode, formatMoney, isValueEmpty, parseAcceptList, parseFieldConfig, parseMultiValue } from "@/lib/field-config";
 
 interface TField {
   FormFieldID: string;
@@ -492,6 +492,7 @@ export default function DynamicRequestFormPage() {
                     const fileMB = cfg.maxSizeMB.trim() === "" ? 10 : Math.max(1, parseFloat(cfg.maxSizeMB) || 10);
                     const fileAccept = parseAcceptList(cfg.accept);
                     const filePicked = fieldFiles[f.FormFieldID] || [];
+                    const curDef = currencyByCode(cfg.currency) || null;
 
                     if (f.FieldType === "section") {
                       return (
@@ -685,6 +686,31 @@ export default function DynamicRequestFormPage() {
                               </option>
                             ))}
                           </select>
+                        ) : f.FieldType === "currency" ? (
+                          <div>
+                            <div className="relative">
+                              <input
+                                id={f.FormFieldID}
+                                type="number"
+                                step="0.01"
+                                placeholder={cfg.placeholder || undefined}
+                                className={`${cls} ${curDef ? "!pr-14" : ""}`}
+                                value={val}
+                                onChange={(e) => set(e.target.value)}
+                                {...numAttrs}
+                              />
+                              {curDef && (
+                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-soft">
+                                  {curDef.symbol}
+                                </span>
+                              )}
+                            </div>
+                            {curDef && val.trim() !== "" && (
+                              <p className="mt-1 text-xs font-medium text-primary-dark">
+                                {formatMoney(val, curDef.code)}
+                              </p>
+                            )}
+                          </div>
                         ) : (
                           <input
                             id={f.FormFieldID}

@@ -13,6 +13,9 @@ import {
   fieldTypeIcon,
   fieldTypeLabel,
   isKnownFieldType,
+  CURRENCIES,
+  currencyByCode,
+  formatMoney,
   parseFieldConfig,
   parseMultiValue,
 } from "@/lib/field-config";
@@ -36,6 +39,7 @@ interface FieldDraft {
   maxFiles: string;
   maxSizeMB: string;
   accept: string;
+  currency: string;
 }
 
 interface LoadedField {
@@ -155,6 +159,7 @@ function blankField(type: string): FieldDraft {
     maxFiles: "",
     maxSizeMB: "",
     accept: "",
+    currency: "",
   };
 }
 
@@ -260,6 +265,7 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
       </div>
     );
   }
+  const fcur = f.fieldType === "currency" ? currencyByCode(f.currency) || null : null;
   return (
     <div className="pointer-events-none">
       <div className="mb-1 block text-sm font-medium text-ink">
@@ -273,6 +279,18 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
           className="input bg-surface-muted"
           placeholder={f.placeholder || undefined}
         />
+      ) : fcur ? (
+        <div className="relative">
+          <input
+            disabled
+            type="number"
+            className="input bg-surface-muted !pr-14"
+            placeholder={f.placeholder || undefined}
+          />
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-soft">
+            {fcur.symbol}
+          </span>
+        </div>
       ) : (
         <input
           disabled
@@ -336,6 +354,7 @@ function LivePreview({
                 maxLength: f.maxLength.trim() ? Number(f.maxLength) : undefined,
               }
             : {};
+          const pcur = f.fieldType === "currency" ? currencyByCode(f.currency) || null : null;
           return (
             <div key={f.key} className={wide ? "md:col-span-2" : ""}>
               {f.fieldType === "section" ? (
@@ -486,6 +505,28 @@ function LivePreview({
                         </option>
                       ))}
                     </select>
+                  ) : pcur ? (
+                    <div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="input !pr-14"
+                          placeholder={f.placeholder || undefined}
+                          value={vals[f.key] || ""}
+                          onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
+                          {...numAttrs}
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-soft">
+                          {pcur.symbol}
+                        </span>
+                      </div>
+                      {(vals[f.key] || "").trim() !== "" && (
+                        <p className="mt-1 text-xs font-medium text-primary-dark">
+                          {formatMoney(vals[f.key] || "", pcur.code)}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <input
                       type={inputType(f.fieldType)}
@@ -638,6 +679,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 maxFiles: cfg.maxFiles,
                 maxSizeMB: cfg.maxSizeMB,
                 accept: cfg.accept,
+                currency: cfg.currency,
               };
             })
           );
@@ -812,6 +854,10 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
           return;
         }
       }
+      if (f.fieldType === "currency" && f.currency && !currencyByCode(f.currency)) {
+        setError(`Field "${f.label}": Unknown currency`);
+        return;
+      }
     }
     setSaving(true);
     try {
@@ -849,6 +895,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
             maxFiles: f.fieldType === "file" ? f.maxFiles : "",
             maxSizeMB: f.fieldType === "file" ? f.maxSizeMB : "",
             accept: f.fieldType === "file" ? f.accept : "",
+            currency: f.fieldType === "currency" ? f.currency : "",
           }),
         })),
       };
@@ -1364,6 +1411,24 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           />
                         </div>
                       </>
+                    )}
+                    {selected.fieldType === "currency" && (
+                      <div>
+                        <label className="label">Currency</label>
+                        <select
+                          className="input"
+                          value={selected.currency}
+                          disabled={ro}
+                          onChange={(e) => patchField(selected.key, { currency: e.target.value })}
+                        >
+                          <option value="">No currency (plain number)</option>
+                          {CURRENCIES.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.code} — {c.nameAr} ({c.name})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     )}
                     {OPTION_TYPES.includes(selected.fieldType) && (
                       <div>

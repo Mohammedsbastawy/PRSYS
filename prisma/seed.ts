@@ -265,7 +265,7 @@ async function main() {
         { label: 'Destination', key: 'destination', type: 'text', req: true },
         { label: 'Travel Dates', key: 'travelDates', type: 'text', req: true },
         { label: 'Purpose', key: 'purpose', type: 'textarea', req: true },
-        { label: 'Estimated Cost', key: 'estimatedCost', type: 'number', req: false },
+        { label: 'Estimated Cost', key: 'estimatedCost', type: 'currency', req: false, config: '{"currency":"EGP"}' },
       ],
     },
   ]

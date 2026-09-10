@@ -6,7 +6,7 @@ import { getUserContext, hasPermission } from '@/lib/rbac'
 import { notifyUsers, usersWithPermission } from '@/lib/notifications'
 import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
 import type { StepLookups } from '@/lib/workflow-targets'
-import { parseFieldConfig, isValueEmpty, validateFieldValue, parseMultiValue } from '@/lib/field-config'
+import { parseFieldConfig, isValueEmpty, validateFieldValue, parseMultiValue, formatMoney } from '@/lib/field-config'
 import { z } from 'zod'
 
 interface Params { params: { id: string } }
@@ -154,6 +154,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       }
       display = names.length > 0 ? names.join(', ') : '\u2014'
     }
+    else if (t === 'currency') display = formatMoney(fv.Value, parseFieldConfig(fv.FormField?.Config).currency)
     else if (t === 'datetime') display = fv.Value.replace('T', ' ')
     return { ...fv, DisplayValue: display ?? fv.Value }
   })

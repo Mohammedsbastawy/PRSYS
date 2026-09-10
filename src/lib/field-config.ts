@@ -12,7 +12,7 @@
 //
 // Config protocol (FormFields.Config: JSON string or null):
 //   { options[], help, placeholder, min, max, minLength, maxLength,
-//     maxFiles, maxSizeMB, accept }
+//     maxFiles, maxSizeMB, accept, currency }
 // Legacy shapes are still parsed on read (bare options array).
 
 export interface FieldTypeDef {
@@ -91,6 +91,48 @@ export function isKnownFieldType(v: string): boolean {
   return FIELD_TYPES.some((t) => t.value === v);
 }
 
+/* ---------------- Currencies ---------------- */
+
+export interface CurrencyDef {
+  code: string;
+  symbol: string;
+  name: string;
+  nameAr: string;
+}
+
+export const CURRENCIES: CurrencyDef[] = [
+  { code: "EGP", symbol: "ج.م", name: "Egyptian Pound", nameAr: "جنيه مصري" },
+  { code: "USD", symbol: "$", name: "US Dollar", nameAr: "دولار أمريكي" },
+  { code: "EUR", symbol: "€", name: "Euro", nameAr: "يورو" },
+  { code: "GBP", symbol: "£", name: "British Pound", nameAr: "جنيه إسترليني" },
+  { code: "SAR", symbol: "ر.س", name: "Saudi Riyal", nameAr: "ريال سعودي" },
+  { code: "AED", symbol: "د.إ", name: "UAE Dirham", nameAr: "درهم إماراتي" },
+  { code: "KWD", symbol: "د.ك", name: "Kuwaiti Dinar", nameAr: "دينار كويتي" },
+  { code: "QAR", symbol: "ر.ق", name: "Qatari Riyal", nameAr: "ريال قطري" },
+  { code: "BHD", symbol: "د.ب", name: "Bahraini Dinar", nameAr: "دينار بحريني" },
+  { code: "OMR", symbol: "ر.ع.", name: "Omani Rial", nameAr: "ريال عماني" },
+  { code: "JOD", symbol: "د.ا", name: "Jordanian Dinar", nameAr: "دينار أردني" },
+  { code: "CHF", symbol: "CHF", name: "Swiss Franc", nameAr: "فرنك سويسري" },
+  { code: "CNY", symbol: "¥", name: "Chinese Yuan", nameAr: "يوان صيني" },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen", nameAr: "ين ياباني" },
+  { code: "TRY", symbol: "₺", name: "Turkish Lira", nameAr: "ليرة تركية" },
+];
+
+export function currencyByCode(code: string | null | undefined): CurrencyDef | undefined {
+  if (!code) return undefined;
+  const c = code.trim().toUpperCase();
+  return CURRENCIES.find((x) => x.code === c);
+}
+
+/** Format a stored numeric value with its currency, e.g. 1000 + EGP → "1,000 جنيه مصري". */
+export function formatMoney(raw: string, code: string | null | undefined): string {
+  const cur = currencyByCode(code);
+  const n = Number((raw ?? "").trim());
+  if (!cur || !Number.isFinite(n)) return raw;
+  const grouped = n.toLocaleString("en-US", { maximumFractionDigits: 2 });
+  return `${grouped} ${cur.nameAr}`;
+}
+
 /* ---------------- Config read/write ---------------- */
 
 export interface ParsedFieldConfig {
@@ -104,6 +146,7 @@ export interface ParsedFieldConfig {
   maxFiles: string;
   maxSizeMB: string;
   accept: string;
+  currency: string;
 }
 
 function cfgToString(v: unknown): string {
@@ -130,6 +173,7 @@ export function parseFieldConfig(cfg: string | null | undefined): ParsedFieldCon
     maxFiles: "",
     maxSizeMB: "",
     accept: "",
+    currency: "",
   };
   if (!cfg) return empty;
   try {
@@ -159,6 +203,7 @@ export function parseFieldConfig(cfg: string | null | undefined): ParsedFieldCon
         maxFiles: cfgToString(rec.maxFiles),
         maxSizeMB: cfgToString(rec.maxSizeMB),
         accept: acceptToString(rec.accept),
+        currency: typeof rec.currency === "string" ? rec.currency : "",
       };
     }
   } catch {
@@ -178,6 +223,7 @@ export function buildFieldConfig(o: {
   maxFiles?: string | number;
   maxSizeMB?: string | number;
   accept?: string;
+  currency?: string;
 }): string | null {
   const out: Record<string, unknown> = {};
   if (o.options && o.options.length > 0) out.options = o.options;
@@ -203,6 +249,7 @@ export function buildFieldConfig(o: {
   if (maxF !== null) out.maxFiles = maxF;
   if (maxMB !== null) out.maxSizeMB = maxMB;
   if (o.accept && o.accept.trim()) out.accept = o.accept.trim();
+  if (o.currency && o.currency.trim()) out.currency = o.currency.trim().toUpperCase();
   return Object.keys(out).length > 0 ? JSON.stringify(out) : null;
 }
 
