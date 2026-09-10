@@ -21,6 +21,7 @@ const PERMISSIONS = [
   // Workflow
   { code: 'WF_VIEW', module: 'WORKFLOW', name: 'View Workflows' },
   { code: 'WF_MANAGE', module: 'WORKFLOW', name: 'Manage Workflows' },
+  { code: 'SLA_MANAGE', module: 'WORKFLOW', name: 'Manage SLA Policies' },
   // Requests
   { code: 'REQUEST_CREATE', module: 'REQUESTS', name: 'Create Request' },
   { code: 'REQUEST_VIEW_OWN', module: 'REQUESTS', name: 'View Own Requests' },
@@ -276,6 +277,57 @@ async function main() {
         data: { ApproverType: 'GROUP', TargetGroupID: team.GroupID, TargetRoleID: null },
       })
       console.log('   migrated step 2 → Procurement Team group')
+    }
+  }
+
+  // 8b. Workflow v2 — manager must explain a return/rejection, demo automation rule
+  const step1 = await prisma.wFSteps.findFirst({ where: { WFDefinitionID: wf.WFDefinitionID, StepOrder: 1 } })
+  if (step1 && (step1.CommentPolicy ?? 'OPTIONAL') !== 'ON_REJECT') {
+    await prisma.wFSteps.update({ where: { WFStepID: step1.WFStepID }, data: { CommentPolicy: 'ON_REJECT' } })
+    console.log('   step 1 CommentPolicy → ON_REJECT (managers must explain returns)')
+  }
+  const demoRule = await prisma.wFRules.findFirst({ where: { WFDefinitionID: wf.WFDefinitionID, Name: 'Large purchase escalates priority' } })
+  if (!demoRule) {
+    await prisma.wFRules.create({
+      data: {
+        WFDefinitionID: wf.WFDefinitionID,
+        Name: 'Large purchase escalates priority',
+        Trigger: 'ON_SUBMIT',
+        Condition: JSON.stringify({ field: 'totalValue', op: '>=', value: '50000' }),
+        Action: 'SET_PRIORITY',
+        ActionValue: JSON.stringify({ priority: 'HIGH' }),
+        SortOrder: 1,
+      },
+    })
+    console.log('   demo rule: ON_SUBMIT totalValue >= 50000 → priority HIGH')
+  }
+
+  // 8c. Default SLA policy (TTA/TTR per priority, in minutes)
+  console.log('→ Default SLA Policy')
+  const slaTargets = [
+    { Priority: 'LOW', ResponseMins: 24 * 60, ResolveMins: 72 * 60 },        // 24h / 72h
+    { Priority: 'MEDIUM', ResponseMins: 8 * 60, ResolveMins: 48 * 60 },      // 8h / 48h
+    { Priority: 'HIGH', ResponseMins: 4 * 60, ResolveMins: 24 * 60 },        // 4h / 24h
+    { Priority: 'URGENT', ResponseMins: 1 * 60, ResolveMins: 8 * 60 },       // 1h / 8h
+  ]
+  let sla = await prisma.sLAPolicies.findFirst({ where: { IsDefault: true } })
+  if (!sla) {
+    sla = await prisma.sLAPolicies.create({
+      data: {
+        Name: 'Standard SLA',
+        Description: 'Platform default response & resolution targets by request priority',
+        IsDefault: true,
+        Targets: { create: slaTargets },
+      },
+    })
+    console.log('   created "Standard SLA" (LOW 24/72h · MEDIUM 8/48h · HIGH 4/24h · URGENT 1/8h)')
+  } else {
+    for (const t of slaTargets) {
+      await prisma.sLATargets.upsert({
+        where: { SLAPolicyID_Priority: { SLAPolicyID: sla.SLAPolicyID, Priority: t.Priority } },
+        update: { ResponseMins: t.ResponseMins, ResolveMins: t.ResolveMins },
+        create: { SLAPolicyID: sla.SLAPolicyID, ...t },
+      })
     }
   }
 

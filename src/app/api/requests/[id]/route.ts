@@ -7,6 +7,8 @@ import { notifyUsers, usersWithPermission } from '@/lib/notifications'
 import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
 import type { StepTargetInput } from '@/lib/workflow-targets'
 import { stepLookups } from '@/lib/workflow-targets-prisma'
+import { computeDueDates, type SLATargetRow } from '@/lib/sla'
+import { runWorkflowRules, type RuleRunResult } from '@/lib/workflow-rules-run'
 import { parseFieldConfig, isValueEmpty, validateFieldValue, parseMultiValue, formatMoney } from '@/lib/field-config'
 import { parseStepCondition, evaluateStepCondition } from '@/lib/workflow-conditions'
 import type { ConditionContext } from '@/lib/workflow-conditions'
@@ -35,6 +37,34 @@ async function conditionContext(requestId: string, priority: string): Promise<Co
 
 function stepApplies(step: { Condition: string | null }, ctx: ConditionContext): boolean {
   return evaluateStepCondition(parseStepCondition(step.Condition), ctx)
+}
+
+// Writes RULE_APPLIED audit entries returned by the automation executor
+async function auditRuleResults(requestId: string, from: string, to: string, userId: string, res: RuleRunResult): Promise<void> {
+  for (const note of res.applied) {
+    await prisma.requestAuditLog.create({
+      data: { RequestID: requestId, FromStatus: from, ToStatus: to, Action: 'RULE_APPLIED', ChangedByUserID: userId, Note: note.slice(0, 400) },
+    })
+  }
+}
+
+// SLA policy for a form template (explicit policy preferred, platform default otherwise)
+async function resolveSlaTarget(formTemplateId: string, priority: string): Promise<{ policyId: string; target: SLATargetRow } | null> {
+  const ft = await prisma.formTemplates.findUnique({
+    where: { FormTemplateID: formTemplateId },
+    select: { SLAPolicyID: true },
+  })
+  const policy = await prisma.sLAPolicies.findFirst({
+    where: ft?.SLAPolicyID ? { SLAPolicyID: ft.SLAPolicyID } : { IsDefault: true },
+    include: { Targets: true },
+  })
+  if (!policy) return null
+  const target =
+    policy.Targets.find((t) => t.Priority === priority) ??
+    policy.Targets.find((t) => t.Priority === 'MEDIUM') ??
+    policy.Targets[0]
+  if (!target) return null
+  return { policyId: policy.SLAPolicyID, target }
 }
 
 // Fresh due date when a request enters a step (null = no due date on the step)
@@ -67,6 +97,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       Requester: { select: { UserID: true, Name: true, Email: true, DEPID: true } },
       Assignee: { select: { UserID: true, Name: true } },
       PoCreator: { select: { UserID: true, Name: true } },
+      SLAPolicy: { select: { SLAPolicyID: true, Name: true } },
       CurrentStep: {
         include: {
           TargetUser: { select: { Name: true } },
@@ -253,6 +284,7 @@ const actionSchema = z.object({
     'COMPLETE',
     'CANCEL',
     'UPDATE_DRAFT',
+    'SET_PRIORITY',
   ]),
   comment: z.string().optional().nullable(),
   assigneeId: z.string().optional().nullable(),
@@ -355,6 +387,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       CurrentWFStepID: firstStep?.WFStepID ?? null,
       CurrentStepDueAt: firstDueAt,
     }
+    // SLA snapshot: due dates from the form's policy (or the default one) by priority
+    const sla = await resolveSlaTarget(request.FormTemplateID, request.Priority)
+    if (sla) {
+      update.SLAPolicyID = sla.policyId
+      const due = computeDueDates(sla.target, now)
+      update.ResponseDueAt = due.responseDueAt
+      update.ResolveDueAt = due.resolveDueAt
+    }
     const updated = await prisma.requests.update({ where: { RequestID: params.id }, data: update })
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'SUBMIT', ChangedByUserID: payload.userId },
@@ -403,7 +443,21 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         requestId: params.id,
       })
     }
-    return json(updated)
+    // ---- automation: fire ON_SUBMIT rules (priority routing, auto-assign, notifications) ----
+    if (request.FormTemplate.WFDefinitionID) {
+      const condCtx2 = await conditionContext(params.id, updated.Priority)
+      const res = await runWorkflowRules({
+        wfDefinitionId: request.FormTemplate.WFDefinitionID,
+        trigger: 'ON_SUBMIT',
+        requestId: params.id,
+        condCtx: condCtx2,
+        actorName,
+        excludeUserIds: [payload.userId],
+      })
+      await auditRuleResults(params.id, updated.Status, updated.Status, payload.userId, res)
+    }
+    const fresh = await prisma.requests.findUnique({ where: { RequestID: params.id } })
+    return json(fresh ?? updated)
   }
 
   // ---- APPROVE / REJECT ----
@@ -447,6 +501,13 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!verdict.canDecide) return json({ error: verdict.reason ?? 'You cannot decide this step' }, 403)
 
     const decision = action === 'APPROVE' ? 'APPROVED' : 'REJECTED'
+    // step comment policy — e.g. forcing the manager to explain a send-back
+    const cp = step.CommentPolicy ?? 'OPTIONAL'
+    const commentRequired =
+      cp === 'ALWAYS' || (decision === 'APPROVED' && cp === 'ON_APPROVE') || (decision === 'REJECTED' && cp === 'ON_REJECT')
+    if (commentRequired && !(data!.comment ?? '').trim()) {
+      return json({ error: `Step "${step.StepName}" requires a comment with this decision` }, 400)
+    }
     await prisma.requestApprovals.create({
       data: {
         RequestID: params.id,
@@ -569,9 +630,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
     }
 
+    // TTA — first action taken anywhere on the request
+    const ttaPatch = !request.RespondedAt ? { RespondedAt: now } : {}
+    // TTR — request reached a final approval verdict
+    const ttrPatch =
+      !request.ResolvedAt && ['APPROVED', 'REJECTED'].includes(newStatus) ? { ResolvedAt: now } : {}
     const updated = await prisma.requests.update({
       where: { RequestID: params.id },
-      data: { Status: newStatus, CurrentWFStepID: currentStepId, CurrentStepDueAt: newDueAt, Round: newRound },
+      data: { Status: newStatus, CurrentWFStepID: currentStepId, CurrentStepDueAt: newDueAt, Round: newRound, ...ttaPatch, ...ttrPatch },
     })
     for (const s of skipped) {
       await prisma.requestAuditLog.create({
@@ -642,7 +708,26 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         })
       }
     }
-    return json(updated)
+    // ---- automation rules ----
+    if (request.FormTemplate.WFDefinitionID) {
+      const wfId = request.FormTemplate.WFDefinitionID
+      const condCtx2 = await conditionContext(params.id, updated.Priority)
+      const base = { wfDefinitionId: wfId, requestId: params.id, condCtx: condCtx2, actorName, excludeUserIds: [payload.userId] }
+      const stepRes = await runWorkflowRules({
+        ...base,
+        trigger: decision === 'APPROVED' ? 'ON_STEP_APPROVED' : 'ON_STEP_REJECTED',
+      })
+      await auditRuleResults(params.id, updated.Status, updated.Status, payload.userId, stepRes)
+      if (newStatus === 'APPROVED' || newStatus === 'REJECTED') {
+        const finalRes = await runWorkflowRules({
+          ...base,
+          trigger: newStatus === 'APPROVED' ? 'ON_REQUEST_APPROVED' : 'ON_REQUEST_REJECTED',
+        })
+        await auditRuleResults(params.id, updated.Status, updated.Status, payload.userId, finalRes)
+      }
+    }
+    const fresh = await prisma.requests.findUnique({ where: { RequestID: params.id } })
+    return json(fresh ?? updated)
   }
 
   // ---- REQUEST_CLARIFICATION ----
@@ -917,7 +1002,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
     const updated = await prisma.requests.update({
       where: { RequestID: params.id },
-      data: { Status: 'CANCELLED' },
+      data: { Status: 'CANCELLED', ...(!request.ResolvedAt ? { ResolvedAt: now } : {}) },
     })
     await prisma.requestAuditLog.create({
       data: { RequestID: params.id, FromStatus: request.Status, ToStatus: updated.Status, Action: 'CANCEL', ChangedByUserID: payload.userId },
@@ -930,6 +1015,30 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         requestId: params.id,
       })
     }
+    return json(updated)
+  }
+
+  // ---- SET_PRIORITY ----
+  if (action === 'SET_PRIORITY') {
+    if (!hasPermission(ctx, 'REQUEST_ASSIGN') && ctx.roleCode !== 'SUPER_ADMIN') return forbidden()
+    if (!data!.priority) return json({ error: 'priority required' }, 400)
+    if (['CANCELLED', 'COMPLETED', 'FULFILLED'].includes(request.Status)) {
+      return json({ error: 'Cannot change priority of a closed request' }, 400)
+    }
+    const updated = await prisma.requests.update({
+      where: { RequestID: params.id },
+      data: { Priority: data!.priority },
+    })
+    await prisma.requestAuditLog.create({
+      data: {
+        RequestID: params.id,
+        FromStatus: request.Status,
+        ToStatus: updated.Status,
+        Action: 'PRIORITY_CHANGED',
+        ChangedByUserID: payload.userId,
+        Note: `${request.Priority} → ${data!.priority}`,
+      },
+    })
     return json(updated)
   }
 

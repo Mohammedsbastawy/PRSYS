@@ -23,6 +23,7 @@ const NAV: NavItem[] = [
   { href: "/groups", label: "Groups", anyOf: ["GROUP_MANAGE"] },
   { href: "/forms", label: "Forms", anyOf: ["FORM_TEMPLATE_VIEW", "FORM_TEMPLATE_MANAGE"] },
   { href: "/workflows", label: "Workflows", anyOf: ["WF_VIEW", "WF_MANAGE"] },
+  { href: "/sla", label: "SLA Policies", anyOf: ["SLA_MANAGE"] },
   { href: "/reports", label: "Reports", anyOf: ["REPORT_VIEW"] },
 ];
 

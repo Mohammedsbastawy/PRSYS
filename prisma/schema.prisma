@@ -134,6 +134,52 @@ model WFDefinitions {
 
   Templates  FormTemplates[]
   Steps      WFSteps[]
+  Rules      WFRules[]
+}
+
+// Event-driven automation rules (osTicket "Ticket Filters" / JSM "Automation"):
+// WHEN trigger happens AND condition matches → THEN actions run.
+model WFRules {
+  RuleID         String   @id @default(uuid())
+  WFDefinitionID String
+  Name           String
+  Trigger        String   // ON_SUBMIT | ON_STEP_APPROVED | ON_STEP_REJECTED | ON_REQUEST_APPROVED | ON_REQUEST_REJECTED
+  Condition      String?  // JSON condition like WFSteps.Condition (null = always)
+  Action         String   // SET_PRIORITY | ASSIGN_TO_USER | NOTIFY | JUMP_TO_STEP
+  ActionValue    String?  // JSON payload per action type
+  SortOrder      Int      @default(0)
+  IsActive       Boolean  @default(true)
+  CreatedAt      DateTime @default(now())
+  UpdatedAt      DateTime @updatedAt
+
+  Workflow WFDefinitions @relation(fields: [WFDefinitionID], references: [WFDefinitionID], onDelete: Cascade)
+
+  @@index([WFDefinitionID, Trigger])
+}
+
+// SLA plans (GLPI-style): per-priority TTA (response) & TTR (resolution) targets.
+model SLAPolicies {
+  SLAPolicyID String   @id @default(uuid())
+  Name        String   @unique
+  Description String?
+  IsDefault   Boolean  @default(false)
+  CreatedAt   DateTime @default(now())
+  UpdatedAt   DateTime @updatedAt
+
+  Targets   SLATargets[]
+  Templates FormTemplates[]
+  Requests  Requests[]
+}
+
+model SLATargets {
+  SLAPolicyID  String
+  Priority     String // LOW | MEDIUM | HIGH | URGENT
+  ResponseMins Int    // TTA target — time to first action
+  ResolveMins  Int    // TTR target — time to final approval/rejection
+
+  Policy SLAPolicies @relation(fields: [SLAPolicyID], references: [SLAPolicyID], onDelete: Cascade)
+
+  @@id([SLAPolicyID, Priority])
 }
 
 model FormTemplates {
@@ -146,6 +192,7 @@ model FormTemplates {
   Version          Int      @default(1)
   OwnerDEPID       String?
   OwnerGroupID     String?
+  SLAPolicyID      String?
   IdPrefix         String?  @unique
   IdSeparator      String?
   IdPadding        Int      @default(0)
@@ -158,6 +205,7 @@ model FormTemplates {
   Workflow    WFDefinitions?  @relation(fields: [WFDefinitionID], references: [WFDefinitionID], onDelete: NoAction, onUpdate: NoAction)
   OwnerDEP    DEP?    @relation("TemplateOwnerDEP", fields: [OwnerDEPID], references: [DEPID], onDelete: SetNull)
   OwnerGroup  Groups? @relation("TemplateOwnerGroup", fields: [OwnerGroupID], references: [GroupID], onDelete: SetNull)
+  SLAPolicy   SLAPolicies? @relation(fields: [SLAPolicyID], references: [SLAPolicyID], onDelete: SetNull)
   Fields      FormFields[]
   FormPerms   FormPermissions[] @relation("TemplateFormPerms")
   Requests    Requests[]
@@ -207,6 +255,7 @@ model WFSteps {
   TargetRoleID     String? 
   ApprovalMode     String   @default("ANY_ONE")
   RejectAction     String   @default("REJECT_COMPLETELY")
+  CommentPolicy    String   @default("OPTIONAL") // OPTIONAL | ON_APPROVE | ON_REJECT | ALWAYS
   Condition        String?
   DueDays          Int?
   ApproveAction      String   @default("CONTINUE")
@@ -252,13 +301,19 @@ model Requests {
   FormSnapshot       String @db.Text
   Priority           String   @default("MEDIUM")
   NeededByDate       DateTime?
-  AssigneeID         String? 
+  AssigneeID         String?
   FulfillmentType    String?
   StockIssueNumber   String?
   OraclePoNumber     String?
-  PoCreatedByUserID  String? 
+  PoCreatedByUserID  String?
   PoCreatedAt        DateTime?
   PoNotes            String?
+  // SLA tracking (targets snapshotted from the form's SLA policy at submit time)
+  SLAPolicyID        String?
+  ResponseDueAt      DateTime?  // TTA due
+  ResolveDueAt       DateTime?  // TTR due
+  RespondedAt        DateTime?  // first action taken (TTA actual)
+  ResolvedAt         DateTime?  // reached APPROVED / REJECTED / CANCELLED (TTR actual)
   SubmittedAt        DateTime?
   CompletedAt        DateTime?
   CreatedAt          DateTime @default(now())
@@ -267,6 +322,7 @@ model Requests {
   FormTemplate    FormTemplates    @relation(fields: [FormTemplateID], references: [FormTemplateID], onDelete: NoAction, onUpdate: NoAction)
   Requester       Users            @relation("ReqRequester", fields: [RequesterID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
   Assignee        Users?           @relation("ReqAssignee", fields: [AssigneeID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
+  SLAPolicy       SLAPolicies?     @relation(fields: [SLAPolicyID], references: [SLAPolicyID], onDelete: SetNull)
   CurrentStep     WFSteps?         @relation(fields: [CurrentWFStepID], references: [WFStepID], onDelete: SetNull)
   PoCreator       Users?           @relation("ReqPoCreator", fields: [PoCreatedByUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
   Items           RequestItems[]

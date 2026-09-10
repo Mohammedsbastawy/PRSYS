@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { Icon, PageHeader, StatusBadge } from "@/components/ui";
+import { SLA_BADGE, slaHealth } from "@/lib/sla";
 
 interface Req {
   RequestID: string;
@@ -13,6 +14,11 @@ interface Req {
   Status: string;
   Priority: string;
   CreatedAt: string;
+  SubmittedAt: string | null;
+  ResponseDueAt: string | null;
+  ResolveDueAt: string | null;
+  RespondedAt: string | null;
+  ResolvedAt: string | null;
   Requester: { Name: string };
   FormTemplate: { Name: string };
   CurrentStep: { StepName: string } | null;
@@ -167,6 +173,20 @@ export default function RequestsPage() {
                   {r.CurrentStep && (
                     <span className="block text-[11px] text-ink-faint">{r.CurrentStep.StepName}</span>
                   )}
+                  {(() => {
+                    const h = slaHealth(r);
+                    if (h.state === "NONE") return null;
+                    const b = SLA_BADGE[h.state];
+                    return (
+                      <span
+                        className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${b.cls}`}
+                        title={`SLA — respond: ${h.response}, resolve: ${h.resolve}`}
+                      >
+                        <Icon name={b.icon} className="text-[12px]" />
+                        {b.label}
+                      </span>
+                    );
+                  })()}
                 </td>
                 <td className="px-4 py-3 text-ink-faint">
                   {new Date(r.CreatedAt).toLocaleDateString()}

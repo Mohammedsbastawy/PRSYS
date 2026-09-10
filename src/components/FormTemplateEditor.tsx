@@ -565,6 +565,8 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [workflowId, setWorkflowId] = useState("");
+  const [slaPolicyId, setSlaPolicyId] = useState("");
+  const [slaPolicies, setSlaPolicies] = useState<(Option & { isDefault?: boolean })[]>([]);
   const [status, setStatus] = useState("DRAFT");
   const [fields, setFields] = useState<FieldDraft[]>([]);
   const [cats, setCats] = useState<Option[]>([]);
@@ -603,6 +605,12 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         setWfs((d || []).map((w) => ({ id: w.WFDefinitionID, name: w.Name, status: w.Status })))
       )
       .catch(() => setWfs([]));
+    fetch("/api/sla-policies", { headers: h })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((d: { id: string; name: string; isDefault: boolean }[]) =>
+        setSlaPolicies((Array.isArray(d) ? d : []).map((x) => ({ id: x.id, name: x.name, isDefault: x.isDefault })))
+      )
+      .catch(() => setSlaPolicies([]));
     fetch("/api/departments", { headers: h })
       .then((r) => (r.ok ? r.json() : []))
       .then((d: DepRow[]) =>
@@ -632,6 +640,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
           setDescription(t.Description ?? "");
           setCategoryId(t.FormCategoryID ?? "");
           setWorkflowId(t.WFDefinitionID ?? "");
+          setSlaPolicyId((t as { SLAPolicyID?: string | null }).SLAPolicyID ?? "");
           setStatus(t.Status);
           setOwnerType(t.OwnerGroupID ? "group" : t.OwnerDEPID ? "dep" : "none");
           setOwnerDepId(t.OwnerDEPID ?? "");
@@ -869,6 +878,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         status,
         ownerDepId: ownerType === "dep" ? ownerDepId || null : null,
         ownerGroupId: ownerType === "group" ? ownerGroupId || null : null,
+        slaPolicyId: slaPolicyId || null,
         idPrefix: idPrefixNorm,
         idSeparator: idSeparator || null,
         idPadding: idPadNum,
@@ -1515,6 +1525,26 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         </option>
                       ))}
                     </select>
+                  </div>
+                  <div>
+                    <label className="label">SLA Policy</label>
+                    <select
+                      className="input"
+                      value={slaPolicyId}
+                      disabled={ro}
+                      onChange={(e) => setSlaPolicyId(e.target.value)}
+                    >
+                      <option value="">Platform default</option>
+                      {slaPolicies.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                          {s.isDefault ? " ★" : ""}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="mt-1 text-[11px] text-ink-faint">
+                      Response & resolution deadlines (TTA/TTR) applied to requests of this form, by priority.
+                    </p>
                   </div>
                   <div>
                     <label className="label">Status</label>

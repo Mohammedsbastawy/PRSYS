@@ -26,6 +26,26 @@ const stepSchema = z.object({
   dueDays: z.number().int().min(1).max(365).optional().nullable(),
   approveAction: z.enum(['CONTINUE', 'APPROVE_COMPLETELY', 'JUMP_TO_STEP']).default('CONTINUE'),
   approveTargetIndex: z.number().int().min(1).max(100).optional().nullable(),
+  commentPolicy: z.enum(['OPTIONAL', 'ON_APPROVE', 'ON_REJECT', 'ALWAYS']).default('OPTIONAL'),
+})
+
+const ruleSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1).max(150),
+  trigger: z.enum(['ON_SUBMIT', 'ON_STEP_APPROVED', 'ON_STEP_REJECTED', 'ON_REQUEST_APPROVED', 'ON_REQUEST_REJECTED']),
+  condition: conditionSchema,
+  action: z.enum(['SET_PRIORITY', 'ASSIGN_TO_USER', 'NOTIFY', 'JUMP_TO_STEP']),
+  actionValue: z.object({
+    priority: z.string().optional(),
+    userId: z.string().optional(),
+    notifyTargetType: z.enum(['USER', 'GROUP', 'ROLE', 'DEPARTMENT_MANAGER', 'REQUESTER']).optional(),
+    notifyTargetId: z.string().optional().nullable(),
+    notifyTitle: z.string().max(150).optional(),
+    notifyMessage: z.string().max(500).optional(),
+    jumpToStepOrder: z.number().int().min(0).max(100).optional(),
+  }).default({}),
+  sortOrder: z.number().int().default(0),
+  isActive: z.boolean().default(true),
 })
 
 const wfSchema = z.object({
@@ -33,6 +53,7 @@ const wfSchema = z.object({
   description: z.string().max(500).optional().nullable(),
   status: z.enum(['ACTIVE', 'DRAFT']).default('ACTIVE'),
   steps: z.array(stepSchema).default([]),
+  rules: z.array(ruleSchema).default([]),
 })
 
 type StepInput = {
@@ -47,6 +68,59 @@ type StepInput = {
   dueDays?: number | null
   approveAction?: 'CONTINUE' | 'APPROVE_COMPLETELY' | 'JUMP_TO_STEP'
   approveTargetIndex?: number | null
+  commentPolicy?: 'OPTIONAL' | 'ON_APPROVE' | 'ON_REJECT' | 'ALWAYS'
+}
+
+type RuleInput = {
+  name: string
+  trigger: 'ON_SUBMIT' | 'ON_STEP_APPROVED' | 'ON_STEP_REJECTED' | 'ON_REQUEST_APPROVED' | 'ON_REQUEST_REJECTED'
+  condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
+  action: 'SET_PRIORITY' | 'ASSIGN_TO_USER' | 'NOTIFY' | 'JUMP_TO_STEP'
+  actionValue?: {
+    priority?: string
+    userId?: string
+    notifyTargetType?: 'USER' | 'GROUP' | 'ROLE' | 'DEPARTMENT_MANAGER' | 'REQUESTER'
+    notifyTargetId?: string | null
+    notifyTitle?: string
+    notifyMessage?: string
+    jumpToStepOrder?: number
+  }
+  sortOrder?: number
+  isActive?: boolean
+}
+
+function validateRules(rules: RuleInput[], stepCount: number): string | null {
+  for (const r of rules) {
+    if (!r.name.trim()) return 'Every rule needs a name'
+    if (r.condition) {
+      const cErr = validateConditionInput(r.condition.field, r.condition.op, r.condition.value)
+      if (cErr) return `Rule "${r.name}": ${cErr}`
+    }
+    const v = r.actionValue ?? {}
+    if (r.action === 'SET_PRIORITY' && !['LOW', 'MEDIUM', 'HIGH', 'URGENT'].includes(v.priority ?? ''))
+      return `Rule "${r.name}": choose a priority`
+    if (r.action === 'ASSIGN_TO_USER' && !v.userId) return `Rule "${r.name}": choose a user`
+    if (r.action === 'JUMP_TO_STEP' && (typeof v.jumpToStepOrder !== 'number' || v.jumpToStepOrder < 0 || v.jumpToStepOrder >= stepCount))
+      return `Rule "${r.name}": jump target is out of range`
+    if (r.action === 'NOTIFY') {
+      if (!v.notifyTargetType) return `Rule "${r.name}": choose who to notify`
+      if (['USER', 'GROUP', 'ROLE'].includes(v.notifyTargetType) && !v.notifyTargetId)
+        return `Rule "${r.name}": choose the notify target`
+    }
+  }
+  return null
+}
+
+function ruleRow(r: RuleInput, order: number) {
+  return {
+    Name: r.name.trim(),
+    Trigger: r.trigger,
+    Condition: r.condition ? buildStepCondition(r.condition.field, r.condition.op, r.condition.value) : null,
+    Action: r.action,
+    ActionValue: JSON.stringify(r.actionValue ?? {}),
+    SortOrder: r.sortOrder ?? order,
+    IsActive: r.isActive ?? true,
+  }
 }
 
 async function validateSteps(steps: StepInput[]): Promise<string | null> {
@@ -93,6 +167,7 @@ function stepRow(s: StepInput, order: number) {
     TargetRoleID: s.approverType === 'ROLE' ? s.targetRoleId! : null,
     ApprovalMode: s.approvalMode ?? 'ANY_ONE',
     RejectAction: s.rejectAction ?? 'REJECT_COMPLETELY',
+    CommentPolicy: s.commentPolicy ?? 'OPTIONAL',
     ApproveAction: s.approveAction ?? 'CONTINUE',
     Condition: s.condition ? buildStepCondition(s.condition.field, s.condition.op, s.condition.value) : null,
     DueDays: s.dueDays ?? null,
@@ -114,6 +189,7 @@ export async function GET(req: NextRequest) {
         orderBy: { StepOrder: 'asc' },
       },
       Templates: { select: { FormTemplateID: true, Name: true, Status: true } },
+      Rules: { orderBy: { SortOrder: 'asc' } },
       _count: { select: { Templates: true } },
     },
     orderBy: { CreatedAt: 'desc' },
@@ -133,6 +209,8 @@ export async function POST(req: NextRequest) {
 
   const stepErr = await validateSteps(data!.steps ?? [])
   if (stepErr) return json({ error: stepErr }, 400)
+  const ruleErr = validateRules(data!.rules ?? [], (data!.steps ?? []).length)
+  if (ruleErr) return json({ error: ruleErr }, 400)
 
   const wf = await prisma.wFDefinitions.create({
     data: {
@@ -141,6 +219,9 @@ export async function POST(req: NextRequest) {
       Status: data!.status,
       Steps: {
         create: (data!.steps ?? []).map((s, i) => stepRow(s, i)),
+      },
+      Rules: {
+        create: (data!.rules ?? []).map((r, i) => ruleRow(r, i)),
       },
     },
     include: { Steps: true },

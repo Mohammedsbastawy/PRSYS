@@ -55,6 +55,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 const patchSchema = z.object({
   status: z.enum(['DRAFT', 'ACTIVE']).optional(),
   wfDefinitionId: z.string().nullable().optional(),
+  slaPolicyId: z.string().nullable().optional(),
 })
 
 // PATCH /api/form-templates/[id] — publish/unpublish + workflow assignment
@@ -72,8 +73,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     select: { FormTemplateID: true },
   })
   if (!existing) return notFound('Template not found')
-  if (data!.status === undefined && data!.wfDefinitionId === undefined) {
+  if (data!.status === undefined && data!.wfDefinitionId === undefined && data!.slaPolicyId === undefined) {
     return json({ error: 'Nothing to update' }, 400)
+  }
+  if (data!.slaPolicyId) {
+    const pol = await prisma.sLAPolicies.findUnique({
+      where: { SLAPolicyID: data!.slaPolicyId },
+      select: { SLAPolicyID: true },
+    })
+    if (!pol) return json({ error: 'SLA policy not found' }, 400)
   }
   if (data!.wfDefinitionId) {
     const wf = await prisma.wFDefinitions.findUnique({
@@ -88,8 +96,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     data: {
       ...(data!.status !== undefined ? { Status: data!.status } : {}),
       ...(data!.wfDefinitionId !== undefined ? { WFDefinitionID: data!.wfDefinitionId } : {}),
+      ...(data!.slaPolicyId !== undefined ? { SLAPolicyID: data!.slaPolicyId } : {}),
     },
-    select: { FormTemplateID: true, Status: true, WFDefinitionID: true },
+    select: { FormTemplateID: true, Status: true, WFDefinitionID: true, SLAPolicyID: true },
   })
   return json(tmpl)
 }
@@ -118,6 +127,7 @@ const tmplSchema = z.object({
   status: z.enum(['DRAFT', 'ACTIVE']).default('DRAFT'),
   ownerDepId: z.string().optional().nullable(),
   ownerGroupId: z.string().optional().nullable(),
+  slaPolicyId: z.string().optional().nullable(),
   visibility: z.array(visibilitySchema).default([]),
   idPrefix: z.string().max(10).optional().nullable(),
   idSeparator: z.string().max(3).optional().nullable(),
@@ -338,6 +348,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
           Status: data!.status,
           OwnerDEPID: data!.ownerDepId ?? null,
           OwnerGroupID: data!.ownerGroupId ?? null,
+          SLAPolicyID: data!.slaPolicyId ?? null,
           IdPrefix: prefix,
           IdSeparator: separator === '' ? null : separator,
           IdPadding: padding,

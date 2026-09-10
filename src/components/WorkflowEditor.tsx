@@ -14,6 +14,12 @@ import {
   parseStepCondition,
   validateConditionInput,
 } from "@/lib/workflow-conditions";
+import {
+  RULE_TRIGGERS,
+  RULE_ACTIONS,
+  NOTIFY_TARGET_TYPES,
+  parseRuleActionValue,
+} from "@/lib/workflow-rules";
 
 interface StepDraft {
   key: string;
@@ -31,6 +37,26 @@ interface StepDraft {
   condOp: string;
   condValue: string;
   dueDays: string;
+  commentPolicy: string;
+}
+
+interface RuleDraft {
+  key: string;
+  name: string;
+  trigger: string;
+  condField: string;
+  condOp: string;
+  condValue: string;
+  action: string;
+  actionPriority: string;
+  actionUserId: string;
+  notifyTargetType: string;
+  notifyUserId: string;
+  notifyGroupId: string;
+  notifyRoleId: string;
+  notifyTitle: string;
+  notifyMessage: string;
+  jumpToStepIndex: string;
 }
 
 interface LoadedStep {
@@ -47,6 +73,17 @@ interface LoadedStep {
   ApproveTargetStepID: string | null;
   Condition: string | null;
   DueDays: number | null;
+  CommentPolicy: string | null;
+}
+
+interface LoadedRule {
+  RuleID: string;
+  Name: string;
+  Trigger: string;
+  Condition: string | null;
+  Action: string;
+  ActionValue: string | null;
+  IsActive: boolean;
 }
 
 interface LoadedWorkflow {
@@ -55,6 +92,7 @@ interface LoadedWorkflow {
   Description: string | null;
   Status: string;
   Steps: LoadedStep[];
+  Rules?: LoadedRule[];
   Templates: { FormTemplateID: string; Name: string; Status: string }[];
   usage?: { templates: number; liveRequests: number; decisions: number };
 }
@@ -97,6 +135,13 @@ const APPROVAL_MODES = [
   { value: "ALL", label: "Everyone assigned must approve" },
 ];
 
+const COMMENT_POLICIES = [
+  { value: "OPTIONAL", label: "Comment optional" },
+  { value: "ON_REJECT", label: "Comment required to reject / return" },
+  { value: "ON_APPROVE", label: "Comment required to approve" },
+  { value: "ALWAYS", label: "Comment always required" },
+];
+
 const REJECT_ACTIONS = [
   { value: "REJECT_COMPLETELY", label: "Reject the request completely" },
   { value: "RETURN_TO_REQUESTER", label: "Return to requester for correction" },
@@ -131,6 +176,28 @@ function blankStep(): StepDraft {
     condOp: ">=",
     condValue: "",
     dueDays: "",
+    commentPolicy: "OPTIONAL",
+  };
+}
+
+function blankRule(): RuleDraft {
+  return {
+    key: nextKey(),
+    name: "",
+    trigger: "ON_SUBMIT",
+    condField: "none",
+    condOp: ">=",
+    condValue: "",
+    action: "SET_PRIORITY",
+    actionPriority: "MEDIUM",
+    actionUserId: "",
+    notifyTargetType: "REQUESTER",
+    notifyUserId: "",
+    notifyGroupId: "",
+    notifyRoleId: "",
+    notifyTitle: "",
+    notifyMessage: "",
+    jumpToStepIndex: "",
   };
 }
 
@@ -148,6 +215,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("ACTIVE");
   const [steps, setSteps] = useState<StepDraft[]>([]);
+  const [rules, setRules] = useState<RuleDraft[]>([]);
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [groups, setGroups] = useState<GroupRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
@@ -216,6 +284,31 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                 dueDays: s.DueDays != null ? String(s.DueDays) : "",
                 approveAction: s.ApproveAction ?? "CONTINUE",
                 approveTargetIndex: jumpIdx >= 0 ? String(jumpIdx + 1) : "",
+                commentPolicy: s.CommentPolicy ?? "OPTIONAL",
+              };
+            })
+          );
+          setRules(
+            (w.Rules || []).map((r) => {
+              const cond = parseStepCondition(r.Condition);
+              const v = parseRuleActionValue(r.ActionValue ?? null);
+              return {
+                key: nextKey(),
+                name: r.Name,
+                trigger: r.Trigger,
+                condField: cond?.field ?? "none",
+                condOp: cond?.op ?? ">=",
+                condValue: cond?.value ?? "",
+                action: r.Action,
+                actionPriority: v.priority ?? "MEDIUM",
+                actionUserId: v.userId ?? "",
+                notifyTargetType: v.notifyTargetType ?? "REQUESTER",
+                notifyUserId: v.notifyTargetType === "USER" ? (v.notifyTargetId ?? "") : "",
+                notifyGroupId: v.notifyTargetType === "GROUP" ? (v.notifyTargetId ?? "") : "",
+                notifyRoleId: v.notifyTargetType === "ROLE" ? (v.notifyTargetId ?? "") : "",
+                notifyTitle: v.notifyTitle ?? "",
+                notifyMessage: v.notifyMessage ?? "",
+                jumpToStepIndex: v.jumpToStepOrder != null ? String(v.jumpToStepOrder + 1) : "",
               };
             })
           );
@@ -243,6 +336,14 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
 
   function removeStep(key: string) {
     setSteps((prev) => prev.filter((s) => s.key !== key));
+  }
+
+  function patchRule(key: string, patch: Partial<RuleDraft>) {
+    setRules((prev) => prev.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+
+  function removeRule(key: string) {
+    setRules((prev) => prev.filter((r) => r.key !== key));
   }
 
   function toggleTemplate(id: string) {
@@ -306,6 +407,52 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         return;
       }
     }
+    for (const r of rules) {
+      const rn = r.name.trim() || "(unnamed rule)";
+      if (!r.name.trim()) {
+        setError("Each automation rule needs a name");
+        return;
+      }
+      const cErr = validateConditionInput(
+        r.condField === "none" ? null : r.condField,
+        r.condOp,
+        r.condValue
+      );
+      if (cErr) {
+        setError(`Rule "${rn}": ${cErr}`);
+        return;
+      }
+      if (r.action === "SET_PRIORITY" && !r.actionPriority) {
+        setError(`Rule "${rn}": choose the priority to set`);
+        return;
+      }
+      if (r.action === "ASSIGN_TO_USER" && !r.actionUserId) {
+        setError(`Rule "${rn}": choose the user to assign`);
+        return;
+      }
+      if (r.action === "NOTIFY") {
+        if (r.notifyTargetType === "USER" && !r.notifyUserId) {
+          setError(`Rule "${rn}": choose the user to notify`);
+          return;
+        }
+        if (r.notifyTargetType === "GROUP" && !r.notifyGroupId) {
+          setError(`Rule "${rn}": choose the group to notify`);
+          return;
+        }
+        if (r.notifyTargetType === "ROLE" && !r.notifyRoleId) {
+          setError(`Rule "${rn}": choose the role to notify`);
+          return;
+        }
+        if (!r.notifyTitle.trim() || !r.notifyMessage.trim()) {
+          setError(`Rule "${rn}": notification needs a title and a message`);
+          return;
+        }
+      }
+      if (r.action === "JUMP_TO_STEP" && r.jumpToStepIndex === "") {
+        setError(`Rule "${rn}": choose the step to jump to`);
+        return;
+      }
+    }
     setSaving(true);
     try {
       const body = {
@@ -332,6 +479,36 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
               ? null
               : { field: s.condField, op: s.condOp, value: s.condValue.trim() },
           dueDays: s.dueDays.trim() === "" ? null : Number(s.dueDays),
+          commentPolicy: s.commentPolicy,
+        })),
+        rules: rules.map((r) => ({
+          name: r.name.trim(),
+          trigger: r.trigger,
+          condition:
+            r.condField === "none"
+              ? null
+              : { field: r.condField, op: r.condOp, value: r.condValue.trim() },
+          action: r.action,
+          actionValue:
+            r.action === "SET_PRIORITY"
+              ? { priority: r.actionPriority }
+              : r.action === "ASSIGN_TO_USER"
+                ? { userId: r.actionUserId }
+                : r.action === "NOTIFY"
+                  ? {
+                      notifyTargetType: r.notifyTargetType,
+                      notifyTargetId:
+                        r.notifyTargetType === "USER"
+                          ? r.notifyUserId
+                          : r.notifyTargetType === "GROUP"
+                            ? r.notifyGroupId
+                            : r.notifyTargetType === "ROLE"
+                              ? r.notifyRoleId
+                              : "",
+                      notifyTitle: r.notifyTitle.trim(),
+                      notifyMessage: r.notifyMessage.trim(),
+                    }
+                  : { jumpToStepOrder: Number(r.jumpToStepIndex) - 1 },
         })),
       };
       const url = isNew ? "/api/workflows" : `/api/workflows/${workflowId}`;
@@ -735,6 +912,27 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                           onChange={(e) => patchStep(s.key, { dueDays: e.target.value })}
                         />
                       </div>
+                      <div className="md:col-span-2">
+                        <label className="label">Comment policy</label>
+                        <select
+                          className="input"
+                          value={s.commentPolicy}
+                          disabled={ro}
+                          onChange={(e) => patchStep(s.key, { commentPolicy: e.target.value })}
+                        >
+                          {COMMENT_POLICIES.map((c) => (
+                            <option key={c.value} value={c.value}>
+                              {c.label}
+                            </option>
+                          ))}
+                        </select>
+                        {s.commentPolicy === "ON_REJECT" && (
+                          <p className="mt-1 text-[11px] text-ink-faint">
+                            The approver must explain what to fix or why the request was rejected — the explanation
+                            reaches the requester in the activity feed.
+                          </p>
+                        )}
+                      </div>
                       {s.condField !== "none" && (
                         <>
                           <div>
@@ -796,6 +994,317 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                 )}
               </div>
             </div>
+
+            <div className="card p-5">
+              <div className="mb-1 flex items-center justify-between">
+                <h2 className="text-base font-semibold text-ink">Automation Rules ({rules.length})</h2>
+                {canManage && (
+                  <button
+                    onClick={() => setRules((prev) => [...prev, blankRule()])}
+                    className="inline-flex items-center gap-1 rounded border border-surface-border bg-white px-3 py-1.5 text-xs font-semibold text-ink-soft hover:border-primary hover:text-primary"
+                  >
+                    <Icon name="add" className="text-[16px]" /> Add rule
+                  </button>
+                )}
+              </div>
+              <p className="mb-4 text-xs text-ink-soft">
+                Run automatically when events fire on requests using this workflow: change priority, assign
+                ownership, notify people, or move the request between steps.
+              </p>
+              <div className="space-y-3">
+                {rules.map((r) => (
+                  <div key={r.key} className="rounded border border-surface-border bg-surface p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-faint">
+                        <Icon name="bolt" className="text-[16px] text-amber-500" />
+                        Automation
+                      </span>
+                      {canManage && (
+                        <button
+                          className="icon-btn !h-7 !w-7 text-danger hover:bg-red-50"
+                          onClick={() => removeRule(r.key)}
+                          aria-label="Remove rule"
+                        >
+                          <Icon name="delete" className="text-[18px]" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="md:col-span-2">
+                        <label className="label">Rule name</label>
+                        <input
+                          className="input"
+                          value={r.name}
+                          disabled={ro}
+                          onChange={(e) => patchRule(r.key, { name: e.target.value })}
+                          placeholder='e.g. "Large purchases go straight to Procurement"'
+                        />
+                      </div>
+                      <div>
+                        <label className="label">When this happens</label>
+                        <select
+                          className="input"
+                          value={r.trigger}
+                          disabled={ro}
+                          onChange={(e) => patchRule(r.key, { trigger: e.target.value })}
+                        >
+                          {RULE_TRIGGERS.map((t) => (
+                            <option key={t.value} value={t.value}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="label">And this is true (optional)</label>
+                        <select
+                          className="input"
+                          value={r.condField}
+                          disabled={ro}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            patchRule(r.key, {
+                              condField: v,
+                              condOp: v === "priority" ? "==" : ">=",
+                              condValue: "",
+                            });
+                          }}
+                        >
+                          {CONDITION_FIELDS.map((f) => (
+                            <option key={f.value} value={f.value}>
+                              {f.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {r.condField !== "none" && (
+                        <>
+                          <div>
+                            <label className="label">Condition</label>
+                            <select
+                              className="input"
+                              value={r.condOp}
+                              disabled={ro}
+                              onChange={(e) => patchRule(r.key, { condOp: e.target.value, condValue: "" })}
+                            >
+                              {(r.condField === "priority" ? PRIORITY_OPS : NUMERIC_OPS).map((o) => (
+                                <option key={o.value} value={o.value}>
+                                  {o.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="label">Value</label>
+                            {r.condField === "priority" && r.condOp !== "in" ? (
+                              <select
+                                className="input"
+                                value={r.condValue}
+                                disabled={ro}
+                                onChange={(e) => patchRule(r.key, { condValue: e.target.value })}
+                              >
+                                <option value="">Select priority...</option>
+                                {PRIORITY_VALUES.map((pr) => (
+                                  <option key={pr} value={pr}>
+                                    {pr}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                className="input"
+                                value={r.condValue}
+                                disabled={ro}
+                                inputMode={r.condField === "priority" ? "text" : "decimal"}
+                                placeholder={r.condField === "priority" ? "e.g. HIGH, URGENT" : "e.g. 50000"}
+                                onChange={(e) => patchRule(r.key, { condValue: e.target.value })}
+                              />
+                            )}
+                          </div>
+                        </>
+                      )}
+                      <div>
+                        <label className="label">Do this</label>
+                        <select
+                          className="input"
+                          value={r.action}
+                          disabled={ro}
+                          onChange={(e) => patchRule(r.key, { action: e.target.value })}
+                        >
+                          {RULE_ACTIONS.map((a) => (
+                            <option key={a.value} value={a.value}>
+                              {a.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {r.action === "SET_PRIORITY" && (
+                        <div>
+                          <label className="label">Set priority to</label>
+                          <select
+                            className="input"
+                            value={r.actionPriority}
+                            disabled={ro}
+                            onChange={(e) => patchRule(r.key, { actionPriority: e.target.value })}
+                          >
+                            {PRIORITY_VALUES.map((o) => (
+                              <option key={o} value={o}>
+                                {o}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      {r.action === "ASSIGN_TO_USER" && (
+                        <div>
+                          <label className="label">Assign to</label>
+                          <select
+                            className="input"
+                            value={r.actionUserId}
+                            disabled={ro}
+                            onChange={(e) => patchRule(r.key, { actionUserId: e.target.value })}
+                          >
+                            <option value="">Select user...</option>
+                            {users.map((u) => (
+                              <option key={u.UserID} value={u.UserID}>
+                                {u.Name} — {u.Email}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      {r.action === "JUMP_TO_STEP" && (
+                        <div>
+                          <label className="label">Move request to</label>
+                          <select
+                            className="input"
+                            value={r.jumpToStepIndex}
+                            disabled={ro}
+                            onChange={(e) => patchRule(r.key, { jumpToStepIndex: e.target.value })}
+                          >
+                            <option value="">Select step...</option>
+                            {steps.map((t, ti) => (
+                              <option key={t.key} value={ti + 1}>
+                                Step {ti + 1} — {t.stepName.trim() || "(unnamed step)"}
+                              </option>
+                            ))}
+                          </select>
+                          {steps.length === 0 && (
+                            <p className="mt-1 text-[11px] text-ink-faint">Add steps above to jump between them.</p>
+                          )}
+                        </div>
+                      )}
+                      {r.action === "NOTIFY" && (
+                        <>
+                          <div>
+                            <label className="label">Notify</label>
+                            <select
+                              className="input"
+                              value={r.notifyTargetType}
+                              disabled={ro}
+                              onChange={(e) =>
+                                patchRule(r.key, {
+                                  notifyTargetType: e.target.value,
+                                  notifyUserId: "",
+                                  notifyGroupId: "",
+                                  notifyRoleId: "",
+                                })
+                              }
+                            >
+                              {NOTIFY_TARGET_TYPES.map((t) => (
+                                <option key={t.value} value={t.value}>
+                                  {t.label}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          {r.notifyTargetType === "USER" && (
+                            <div>
+                              <label className="label">User</label>
+                              <select
+                                className="input"
+                                value={r.notifyUserId}
+                                disabled={ro}
+                                onChange={(e) => patchRule(r.key, { notifyUserId: e.target.value })}
+                              >
+                                <option value="">Select user...</option>
+                                {users.map((u) => (
+                                  <option key={u.UserID} value={u.UserID}>
+                                    {u.Name} — {u.Email}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                          {r.notifyTargetType === "GROUP" && (
+                            <div>
+                              <label className="label">Group</label>
+                              <select
+                                className="input"
+                                value={r.notifyGroupId}
+                                disabled={ro}
+                                onChange={(e) => patchRule(r.key, { notifyGroupId: e.target.value })}
+                              >
+                                <option value="">Select group...</option>
+                                {groups.map((g) => (
+                                  <option key={g.id} value={g.id}>
+                                    {g.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                          {r.notifyTargetType === "ROLE" && (
+                            <div>
+                              <label className="label">Role</label>
+                              <select
+                                className="input"
+                                value={r.notifyRoleId}
+                                disabled={ro}
+                                onChange={(e) => patchRule(r.key, { notifyRoleId: e.target.value })}
+                              >
+                                <option value="">Select role...</option>
+                                {roles.map((ro2) => (
+                                  <option key={ro2.id} value={ro2.id}>
+                                    {ro2.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                          <div>
+                            <label className="label">Notification title</label>
+                            <input
+                              className="input"
+                              value={r.notifyTitle}
+                              disabled={ro}
+                              onChange={(e) => patchRule(r.key, { notifyTitle: e.target.value })}
+                              placeholder="e.g. New urgent request"
+                            />
+                          </div>
+                          <div>
+                            <label className="label">Message</label>
+                            <input
+                              className="input"
+                              value={r.notifyMessage}
+                              disabled={ro}
+                              onChange={(e) => patchRule(r.key, { notifyMessage: e.target.value })}
+                              placeholder="e.g. An urgent purchase request needs attention"
+                            />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {rules.length === 0 && (
+                  <div className="rounded border border-dashed border-surface-border px-4 py-6 text-center text-sm text-ink-soft">
+                    No automation yet.
+                    {canManage && " Add a rule to react to request events automatically."}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-4">
@@ -849,6 +1358,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                   round while history is kept.
                 </li>
                 <li>Each assignee decides once per round; overdue steps are flagged.</li>
+                <li>
+                  Automation rules react to submission / approval / rejection — priority changes, assigns,
+                  notifications and step jumps happen on their own.
+                </li>
                 <li>Link forms here, or pick the workflow in a form&apos;s settings.</li>
                 <li>Steps with live requests or history cannot be removed.</li>
               </ul>

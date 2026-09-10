@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { SLA_BADGE, slaHealth, fmtDuration } from "@/lib/sla";
 import AppShell from "@/components/AppShell";
 import {
   Avatar,
@@ -28,6 +29,7 @@ interface Step {
   ApproveAction?: string | null;
   ApproveTargetStepID?: string | null;
   DueDays?: number | null;
+  CommentPolicy?: string | null;
 }
 interface Approval {
   RequestApprovalID: string;
@@ -165,6 +167,11 @@ interface ReqDetail {
   PoNotes: string | null;
   CurrentWFStepID: string | null;
   CurrentStepDueAt: string | null;
+  ResponseDueAt: string | null;
+  ResolveDueAt: string | null;
+  RespondedAt: string | null;
+  ResolvedAt: string | null;
+  SLAPolicy: { SLAPolicyID: string; Name: string } | null;
   Round?: number | null;
   CanDecide: boolean;
   DecideReason: string | null;
@@ -270,6 +277,7 @@ function DecisionModal({
   mode,
   stepName,
   hint,
+  commentPolicy,
   busy,
   onClose,
   onConfirm,
@@ -277,6 +285,7 @@ function DecisionModal({
   mode: "APPROVE" | "REJECT" | "REQUEST_CLARIFICATION";
   stepName: string;
   hint: string | null;
+  commentPolicy?: string | null;
   busy: boolean;
   onClose: () => void;
   onConfirm: (comment: string) => void;
@@ -287,7 +296,12 @@ function DecisionModal({
     REJECT: `Reject — ${stepName}`,
     REQUEST_CLARIFICATION: "Request Clarification",
   };
-  const required = mode !== "APPROVE";
+  const cp = commentPolicy ?? "OPTIONAL";
+  const required =
+    mode === "REQUEST_CLARIFICATION" ||
+    cp === "ALWAYS" ||
+    (cp === "ON_REJECT" && mode === "REJECT") ||
+    (cp === "ON_APPROVE" && mode === "APPROVE");
   return (
     <Modal open onClose={onClose} title={titles[mode]}>
       {hint && (
@@ -306,9 +320,11 @@ function DecisionModal({
         className="input"
         placeholder={
           mode === "APPROVE"
-            ? "Optional note for the requester..."
+            ? required
+              ? "This step requires a comment — explain your approval..."
+              : "Optional note for the requester..."
             : mode === "REJECT"
-              ? "Explain why this request is rejected..."
+              ? "Explain what must be corrected, or why this request is rejected..."
               : "e.g. Please attach the supplier quotation and confirm the delivery date..."
         }
         value={text}
@@ -1021,9 +1037,26 @@ export default function RequestDetailPage() {
           <Icon name="category" className="text-[16px]" />
           {req.FormTemplate.Category?.Name || "General"} · {req.FormTemplate.Name}
         </span>
-        <span className="flex items-center gap-1">
-          <Icon name="flag" className="text-[16px]" /> Priority: {req.Priority}
-        </span>
+        {p("REQUEST_ASSIGN") && !["CANCELLED", "COMPLETED", "FULFILLED"].includes(req.Status) ? (
+          <select
+            className="input w-auto !py-0.5 !pl-2 text-xs font-semibold"
+            value={req.Priority}
+            disabled={busy !== null}
+            onChange={(e) => act("SET_PRIORITY", { priority: e.target.value })}
+            aria-label="Change priority"
+            title="Change priority"
+          >
+            {["LOW", "MEDIUM", "HIGH", "URGENT"].map((pv) => (
+              <option key={pv} value={pv}>
+                ⚑ {pv}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <span className="flex items-center gap-1">
+            <Icon name="flag" className="text-[16px]" /> Priority: {req.Priority}
+          </span>
+        )}
         <span className="flex items-center gap-1">
           <Icon name="event" className="text-[16px]" /> Needed by: {fmtDate(req.NeededByDate)}
         </span>
@@ -1036,6 +1069,65 @@ export default function RequestDetailPage() {
           </span>
         )}
       </div>
+
+      {(() => {
+        const h = slaHealth(req);
+        if (!req.SLAPolicy && h.state === "NONE") return null;
+        const stateBadge = SLA_BADGE[h.state];
+        const metric = (label: string, state: keyof typeof SLA_BADGE, due: string | null, done: string | null) => {
+          const b = SLA_BADGE[state];
+          return (
+            <div className="min-w-[150px] flex-1 rounded border border-surface-border p-3">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-ink-faint">{label}</span>
+                {state !== "NONE" && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${b.cls}`}>{b.label}</span>
+                )}
+              </div>
+              {due ? (
+                <div className="text-xs text-ink">
+                  Due {fmtDateTime(due)}
+                  {done ? (
+                    <span className="ml-1 text-ink-faint">· done in {fmtDuration(new Date(req.SubmittedAt ?? req.CreatedAt).getTime(), new Date(done).getTime())}</span>
+                  ) : (
+                    <span className="ml-1 text-ink-faint">· {fmtDuration(Date.now(), new Date(due).getTime())} left</span>
+                  )}
+                </div>
+              ) : (
+                <div className="text-xs text-ink-faint">No deadline</div>
+              )}
+            </div>
+          );
+        };
+        return (
+          <div className="card mb-4 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-faint">
+                <Icon name="timer" className="text-[16px]" />
+                SLA{req.SLAPolicy ? ` — ${req.SLAPolicy.Name}` : ""}
+              </h3>
+              {h.state !== "NONE" && (
+                <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${stateBadge.cls}`}>
+                  <Icon name={stateBadge.icon} className="text-[13px]" />
+                  {stateBadge.label}
+                </span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {metric("Response (TTA)", h.response, req.ResponseDueAt, req.RespondedAt)}
+              {metric("Resolution (TTR)", h.resolve, req.ResolveDueAt, req.ResolvedAt)}
+            </div>
+            {h.resolve !== "MET" && h.resolve !== "MISSED" && h.resolve !== "NONE" && req.ResolveDueAt && (
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-muted">
+                <div
+                  className={`h-full rounded-full ${h.state === "BREACHED" ? "bg-red-500" : h.state === "DUE_SOON" ? "bg-amber-500" : "bg-green-500"}`}
+                  style={{ width: `${Math.round(h.ttrElapsed * 100)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })()}
 
       {actionError && (
         <div className="mb-4 flex items-start gap-2 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -1403,6 +1495,7 @@ export default function RequestDetailPage() {
         <DecisionModal
           mode={decision}
           stepName={stepName}
+          commentPolicy={req.CurrentStep?.CommentPolicy}
           hint={
             decision === "REJECT"
               ? req.CurrentStep?.RejectAction === "RETURN_TO_REQUESTER"
