@@ -18,30 +18,84 @@ export async function GET(req: NextRequest, { params }: Params) {
   const request = await prisma.requests.findUnique({
     where: { RequestID: params.id },
     include: {
-      FormTemplate: true,
-      Requester: { select: { UserID: true, Name: true, Email: true } },
+      FormTemplate: {
+        include: {
+          Category: { select: { Name: true } },
+          Workflow: { include: { Steps: { orderBy: { StepOrder: 'asc' } } } },
+        },
+      },
+      Requester: { select: { UserID: true, Name: true, Email: true, DEPID: true } },
       Assignee: { select: { UserID: true, Name: true } },
-      CurrentStep: true,
+      PoCreator: { select: { UserID: true, Name: true } },
+      CurrentStep: {
+        include: {
+          TargetUser: { select: { Name: true } },
+          TargetGroup: { select: { Name: true } },
+          TargetRole: { select: { Name: true } },
+        },
+      },
       FieldValues: { include: { FormField: true } },
-      Items: true,
+      Items: {
+        include: {
+          ItemCatalog: true,
+          Verifier: { select: { UserID: true, Name: true } },
+        },
+      },
       Approvals: { include: { WFStep: true, Approver: { select: { UserID: true, Name: true } } }, orderBy: { CreatedAt: 'asc' } },
-      Comments: { include: { Author: { select: { UserID: true, Name: true } } }, orderBy: { CreatedAt: 'asc' } },
-      Attachments: true,
-      AuditLogs: { orderBy: { CreatedAt: 'asc' } },
+      Comments: {
+        include: { Author: { select: { UserID: true, Name: true, Role: { select: { Name: true } } } } },
+        orderBy: { CreatedAt: 'asc' },
+      },
+      Attachments: {
+        include: { Uploader: { select: { UserID: true, Name: true } } },
+        orderBy: { CreatedAt: 'asc' },
+      },
+      AuditLogs: {
+        include: { ChangedBy: { select: { Name: true } } },
+        orderBy: { CreatedAt: 'asc' },
+      },
     },
   })
   if (!request) return notFound('Request not found')
 
   // visibility check
-  if (request.RequesterID !== payload.userId && !hasPermission(ctx, 'REQUEST_VIEW_ALL')) {
+  const isOwner = request.RequesterID === payload.userId
+  if (!isOwner && !hasPermission(ctx, 'REQUEST_VIEW_ALL')) {
     return forbidden()
   }
-  return json(request)
+
+  let department: string | null = null
+  if (request.Requester.DEPID) {
+    const dep = await prisma.dEP.findUnique({
+      where: { DEPID: request.Requester.DEPID },
+      select: { Name: true },
+    })
+    department = dep?.Name ?? null
+  }
+
+  // internal notes are hidden from the requester
+  const canSeeInternal = hasPermission(ctx, 'REQUEST_VIEW_ALL')
+  const comments = canSeeInternal ? request.Comments : request.Comments.filter((c) => !c.IsInternal)
+
+  // BigInt is not JSON-serializable — stringify file sizes
+  const attachments = request.Attachments.map((a) => ({ ...a, FileSize: a.FileSize.toString() }))
+
+  return json({ ...request, RequesterDepartment: department, Comments: comments, Attachments: attachments })
 }
 
-// PATCH /api/requests/[id] — status transitions: submit, approve, reject, register-po, complete
+// PATCH /api/requests/[id] — status transitions
 const actionSchema = z.object({
-  action: z.enum(['SUBMIT', 'APPROVE', 'REJECT', 'ASSIGN', 'REGISTER_PO', 'FULFILL_STOCK', 'COMPLETE', 'CANCEL']),
+  action: z.enum([
+    'SUBMIT',
+    'APPROVE',
+    'REJECT',
+    'REQUEST_CLARIFICATION',
+    'ASSIGN',
+    'REGISTER_PO',
+    'FULFILL_STOCK',
+    'COMPLETE',
+    'CANCEL',
+  ]),
   comment: z.string().optional().nullable(),
   assigneeId: z.string().optional().nullable(),
   oraclePoNumber: z.string().optional().nullable(),
@@ -125,6 +179,9 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   // ---- APPROVE / REJECT ----
   if (action === 'APPROVE' || action === 'REJECT') {
     if (!hasPermission(ctx, 'REQUEST_APPROVE')) return forbidden()
+    if (!['PENDING_APPROVAL', 'CLARIFICATION_REQUESTED'].includes(request.Status)) {
+      return json({ error: 'Request is not awaiting approval' }, 400)
+    }
     if (!request.CurrentWFStepID) return json({ error: 'No active step' }, 400)
 
     const decision = action === 'APPROVE' ? 'APPROVED' : 'REJECTED'
@@ -185,6 +242,49 @@ export async function PATCH(req: NextRequest, { params }: Params) {
               requestId: params.id,
             }
       )
+    }
+    return json(updated)
+  }
+
+  // ---- REQUEST_CLARIFICATION ----
+  if (action === 'REQUEST_CLARIFICATION') {
+    if (!hasPermission(ctx, 'REQUEST_APPROVE')) return forbidden()
+    if (request.Status !== 'PENDING_APPROVAL') {
+      return json({ error: 'Only pending requests can be sent back for clarification' }, 400)
+    }
+    const msg = data!.comment?.trim()
+    if (!msg) return json({ error: 'Please write what you need clarified' }, 400)
+
+    await prisma.requestComments.create({
+      data: {
+        RequestID: params.id,
+        AuthorUserID: payload.userId,
+        CommentText: msg,
+        CommentType: 'CLARIFICATION',
+        IsInternal: false,
+      },
+    })
+    const updated = await prisma.requests.update({
+      where: { RequestID: params.id },
+      data: { Status: 'CLARIFICATION_REQUESTED' },
+    })
+    await prisma.requestAuditLog.create({
+      data: {
+        RequestID: params.id,
+        FromStatus: request.Status,
+        ToStatus: updated.Status,
+        Action: 'CLARIFICATION_REQUESTED',
+        ChangedByUserID: payload.userId,
+        Note: msg.slice(0, 200),
+      },
+    })
+    if (notActor(request.RequesterID)) {
+      await notifyUsers([request.RequesterID], {
+        title: `Clarification needed on ${request.TrackingNumber}`,
+        message: `${actorName} asked: ${msg.slice(0, 140)}`,
+        type: 'CLARIFICATION_REQUESTED',
+        requestId: params.id,
+      })
     }
     return json(updated)
   }
@@ -262,6 +362,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   // ---- COMPLETE ----
   if (action === 'COMPLETE') {
+    if (!hasPermission(ctx, 'REQUEST_FULFILL')) return forbidden()
     const updated = await prisma.requests.update({
       where: { RequestID: params.id },
       data: { Status: 'COMPLETED', CompletedAt: now },

@@ -339,3 +339,67 @@ export function timeAgo(iso: string): string {
   if (d < 30) return `${d}d ago`;
   return new Date(iso).toLocaleDateString();
 }
+
+/* ---------- File size ---------- */
+export function fmtSize(bytes: number): string {
+  if (!bytes || bytes < 0) return "0 B";
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+/* ---------- Full workflow timeline (labeled nodes, detail pages) ---------- */
+export interface TimelineNode {
+  name: string;
+  state: "done" | "current" | "todo" | "rejected";
+  sub?: string;
+}
+
+export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
+  return (
+    <div className="slim-scroll flex items-start overflow-x-auto py-2">
+      {nodes.map((n, i) => (
+        <Fragment key={i}>
+          {i > 0 && (
+            <div
+              className={`mx-1 mt-[13px] h-0.5 min-w-[24px] flex-1 ${
+                nodes[i - 1].state === "done" ? "bg-primary" : "bg-gray-200"
+              }`}
+            />
+          )}
+          <div className="flex w-28 shrink-0 flex-col items-center gap-1.5 text-center">
+            {n.state === "done" ? (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
+                <Icon name="check" className="text-[16px] font-bold text-white" />
+              </span>
+            ) : n.state === "current" ? (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border-[2.5px] border-primary bg-white">
+                <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+              </span>
+            ) : n.state === "rejected" ? (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600">
+                <Icon name="close" className="text-[16px] font-bold text-white" />
+              </span>
+            ) : (
+              <span className="h-7 w-7 rounded-full border-2 border-gray-200 bg-white" />
+            )}
+            <span
+              className={`text-xs leading-tight ${
+                n.state === "todo"
+                  ? "text-ink-faint"
+                  : n.state === "rejected"
+                    ? "font-semibold text-red-600"
+                    : n.state === "current"
+                      ? "font-semibold text-primary-dark"
+                      : "font-medium text-ink"
+              }`}
+            >
+              {n.name}
+            </span>
+            {n.sub && <span className="text-[11px] leading-tight text-ink-faint">{n.sub}</span>}
+          </div>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
