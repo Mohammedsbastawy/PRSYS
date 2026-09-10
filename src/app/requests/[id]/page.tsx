@@ -109,7 +109,7 @@ interface ReqDetail {
     TargetGroup: { Name: string } | null;
     TargetRole: { Name: string } | null;
   }) | null;
-  FieldValues: { Value: string; FormField: { Label: string } | null }[];
+  FieldValues: { Value: string; FormField: { Label: string; FieldType: string } | null }[];
   Items: Item[];
   Approvals: Approval[];
   Comments: CommentT[];
@@ -936,7 +936,7 @@ export default function RequestDetailPage() {
             </SummaryRow>
             {req.FieldValues.map((fv, i) => (
               <SummaryRow key={i} icon="info" label={fv.FormField?.Label || "Field"}>
-                {fv.Value}
+                {fv.FormField?.FieldType === "checkbox" ? (fv.Value === "true" ? "Yes" : "No") : fv.Value}
               </SummaryRow>
             ))}
           </div>

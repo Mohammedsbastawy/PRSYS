@@ -25,7 +25,7 @@ const fieldSchema = z.object({
   id: z.string().optional(), // present on update, ignored on create
   label: z.string().min(1).max(100),
   fieldKey: z.string().min(1).max(60).regex(/^[A-Za-z0-9_]+$/, 'Use letters, numbers and underscore only'),
-  fieldType: z.enum(['text', 'textarea', 'number', 'date', 'select']),
+  fieldType: z.enum(['text', 'textarea', 'number', 'date', 'select', 'checkbox']),
   isRequired: z.boolean().default(false),
   sortOrder: z.number().int().default(0),
   config: z.string().optional().nullable(),
