@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { verifyPassword, signToken } from '@/lib/auth'
+import { getUserContext } from '@/lib/rbac'
 import { json, error, parseBody } from '@/lib/http'
 
 const loginSchema = z.object({
@@ -38,6 +39,11 @@ export async function POST(req: NextRequest) {
     roleCode: user.Role.Code,
   })
 
+  // NOTE: `permissions` must be present here — the client-side RBAC guards
+  // (user?.permissions?.includes(...)) hydrate from the login response, so a
+  // payload without it shows "No permission" screens until the user reloads.
+  const ctx = await getUserContext(user.UserID)
+
   return json({
     token,
     user: {
@@ -47,6 +53,7 @@ export async function POST(req: NextRequest) {
       role: { id: user.RoleID, code: user.Role.Code, name: user.Role.Name },
       department: user.ManagedDEP ? { id: user.ManagedDEP.DEPID, name: user.ManagedDEP.Name } : null,
       accountType: user.AccountType,
+      permissions: ctx ? Array.from(ctx.permissions) : [],
     },
   })
 }

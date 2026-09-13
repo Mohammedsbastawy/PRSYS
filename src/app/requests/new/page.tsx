@@ -21,7 +21,7 @@ interface Category {
 }
 
 function CatalogInner() {
-  const { token, user } = useAuth();
+  const { token, user, loading } = useAuth();
   const router = useRouter();
   const sp = useSearchParams();
   const [cats, setCats] = useState<Category[] | null>(null);
@@ -68,6 +68,14 @@ function CatalogInner() {
     );
   }
 
+  if (loading) {
+    return (
+      <AppShell>
+        <div className="py-10 text-center text-sm text-ink-soft">Loading your access...</div>
+      </AppShell>
+    );
+  }
+
   if (!canCreate) {
     return (
       <AppShell>
@@ -75,7 +83,7 @@ function CatalogInner() {
           <EmptyState
             icon="block"
             title="No permission"
-            hint="Your account is not allowed to create requests. Contact your administrator for access."
+            hint={`Your role (${user?.role?.name ?? "unknown"}) is missing the "Create Request" permission — this is a role setting, not a form setting. Ask an administrator to grant it under Users & Permissions → Roles, or to assign you the "Self User" role.`}
           />
         </div>
       </AppShell>

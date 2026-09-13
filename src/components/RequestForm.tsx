@@ -125,7 +125,7 @@ export default function RequestForm({
   templateId: string | null;
   editRequestId: string | null;
 }) {
-  const { token, user } = useAuth();
+  const { token, user, loading } = useAuth();
   const router = useRouter();
   const isEdit = editRequestId !== null;
 
@@ -578,11 +578,25 @@ export default function RequestForm({
     }
   }
 
+  // Never answer "No permission" while the session is still being resolved —
+  // that was shown to users whose permissions had not loaded yet.
+  if (!isEdit && loading) {
+    return (
+      <AppShell>
+        <div className="py-10 text-center text-sm text-ink-soft">Loading your access...</div>
+      </AppShell>
+    );
+  }
+
   if (!isEdit && !canCreate) {
     return (
       <AppShell>
         <div className="card">
-          <EmptyState icon="block" title="No permission" hint="Your account is not allowed to create requests." />
+          <EmptyState
+            icon="block"
+            title="No permission"
+            hint={`The ${user?.role?.name ?? "employee"} role is missing the "Create Request" permission. Ask an administrator to grant it under Users & Permissions.`}
+          />
         </div>
       </AppShell>
     );

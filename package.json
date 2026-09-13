@@ -10,6 +10,8 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/seed.ts",
+    "db:reset-password": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/reset-admin-password.ts",
+    "db:check-access": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/check-access.ts",
     "seed": "ts-node --compiler-options {\"module\":\"commonjs\"} prisma/seed.ts"
   },
   "prisma": {

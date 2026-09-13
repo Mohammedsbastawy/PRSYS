@@ -60,7 +60,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const data = await res.json();
     localStorage.setItem(TOKEN_KEY, data.token);
     setToken(data.token);
-    setUser(data.user);
+    // Hydrate from /api/auth/me — it is the single source of truth for the
+    // permission list that every RBAC guard reads. Falling back to the login
+    // payload keeps the app usable if that call is slow/unavailable.
+    try {
+      const me = await fetch("/api/auth/me", {
+        headers: { Authorization: `Bearer ${data.token}` },
+      });
+      if (me.ok) {
+        setUser(await me.json());
+        return;
+      }
+    } catch {
+      /* ignore — use the login payload below */
+    }
+    setUser({ ...(data.user ?? {}), permissions: data.user?.permissions ?? [] });
   }
 
   function logout() {

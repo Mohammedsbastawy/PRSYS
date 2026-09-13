@@ -65,6 +65,39 @@ npm run db:seed        # creates admin@prsys.local / Admin@123 + demo roles/user
 npm run dev
 ```
 
+### Lost the admin password?
+
+`prisma/seed.ts` never overwrites an existing admin (it logs "Admin already exists"), so re-seeding will **not** restore
+`Admin@123`. Reset the hash instead — the app verifies with `bcrypt.compare` (`src/lib/auth.ts`, rounds = 10):
+
+```bash
+npm run db:reset-password -- --list                                  # see admin accounts + who has a hash
+npm run db:reset-password -- admin@prsys.local 'NewPass@123'          # set a new password
+npm run db:reset-password -- admin@prsys.local 'NewPass@123' --enable # also reactivate a disabled account
+```
+
+Prefer the UI if any `SUPER_ADMIN` account still works: `/users` → edit user → set password (`PUT /api/users/[id]`, min 6 chars).
+
+### "No permission" when an employee opens a form (two independent gates)
+
+Access to a request form is gated twice — a form marked **Public** only clears the second one:
+
+| Gate | Where it's enforced | Symptom | Fix |
+| --- | --- | --- | --- |
+| **1 · Role permission** | `REQUEST_CREATE` on the user's role (`/requests/new` page, `POST /api/requests`) | *"No permission — Your account is not allowed to create requests"* | grant **Create Request** to the role (`USER` / `Self User` already have it in `prisma/seed.ts`) |
+| **2 · Form visibility** | `FormPermissions` rows with `PermissionType = 'VIEW'` (`src/lib/form-visibility.ts`) — no rows = Public | *"No access to this form"* (403 on the fill page) | publish the form (`Status = ACTIVE`) and/or add the department/group/user to its allow-list |
+
+Diagnose either user without touching the DB:
+
+```bash
+npm run db:check-access -- requester@prsys.local                      # gate 1
+npm run db:check-access -- requester@prsys.local 'Hardware Request'  # gate 1 + gate 2
+npm run db:check-access -- requester@prsys.local --grant REQUEST_CREATE   # writes the missing grant
+```
+
+Note: there is no UI/API to edit role permissions (`/api/roles` is read-only), and permissions are read at
+login/page-load (from `GET /api/auth/me`), so after granting one the employee must **reload the page**.
+
 ### Access model (ticket-system style)
 
 Three roles only — **Super Admin**, **Agent** (professional workspace: review/approve/assign/fulfill), **Self User** (portal: own requests). *Department Manager* is an **assignment** (`DEP.ManagerID`), not a role: any Self User assigned as manager sees their department's requests and approves steps routed with the **DEPARTMENT_MANAGER** approver type — seeded workflow migrates legacy role-based steps automatically, and legacy roles (REQUESTER, DEPT_MANAGER, …) are reassigned to USER/AGENT on `npm run db:seed`.
