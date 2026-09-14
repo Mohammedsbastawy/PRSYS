@@ -5,7 +5,8 @@ import { prisma } from './prisma'
 import { notifyUsers } from './notifications'
 import { filterVisibleUserIds } from './form-visibility'
 import { evaluateStepCondition, parseStepCondition, type ConditionContext } from './workflow-conditions'
-import { parseRuleActionValue, type RuleTrigger } from './workflow-rules'
+import { parseRuleActionValue, ruleAppliesToStep, type RuleTrigger } from './workflow-rules'
+import { computeDueDates } from './sla'
 
 export interface RuleRunResult {
   applied: string[]         // audit notes, e.g. "Rule «VIP orders»: priority → URGENT"
@@ -25,6 +26,8 @@ export async function runWorkflowRules(opts: {
   condCtx: ConditionContext
   actorName: string
   excludeUserIds?: string[] // don't notify the actor
+  /** StepOrder of the step being decided — used to filter step-scoped rules */
+  stepOrder?: number | null
 }): Promise<RuleRunResult> {
   const rules = await prisma.wFRules.findMany({
     where: { WFDefinitionID: opts.wfDefinitionId, Trigger: opts.trigger, IsActive: true },
@@ -46,6 +49,11 @@ export async function runWorkflowRules(opts: {
     if (!evaluateStepCondition(cond, opts.condCtx)) continue
 
     const v = parseRuleActionValue(rule.ActionValue)
+
+    // a rule bound to another step must not fire here (flow-wide rules have no binding)
+    if (opts.trigger === 'ON_STEP_APPROVED' || opts.trigger === 'ON_STEP_REJECTED') {
+      if (!ruleAppliesToStep(v, opts.stepOrder)) continue
+    }
 
     switch (rule.Action) {
       case 'SET_PRIORITY': {
@@ -108,6 +116,30 @@ export async function runWorkflowRules(opts: {
           requestId: request.RequestID,
         })
         result.applied.push(`Rule "${rule.Name}": notified ${ids.length} user(s)`)
+        break
+      }
+      case 'SET_SLA': {
+        // re-snapshot the SLA targets mid-flight (e.g. a finance review upgrades
+        // a LOW request to URGENT and gives it the 1h/8h clock)
+        if (!v.slaPolicyId) break
+        const policy = await prisma.sLAPolicies.findUnique({
+          where: { SLAPolicyID: v.slaPolicyId },
+          select: { SLAPolicyID: true, Name: true, Targets: true },
+        })
+        if (!policy) break
+        const t =
+          policy.Targets.find((x: { Priority: string }) => x.Priority === request.Priority) ??
+          policy.Targets.find((x: { Priority: string }) => x.Priority === 'MEDIUM') ??
+          policy.Targets[0]
+        if (!t) break
+        const due = computeDueDates(
+          { Priority: t.Priority, ResponseMins: t.ResponseMins, ResolveMins: t.ResolveMins },
+          new Date()
+        )
+        patch.SLAPolicyID = policy.SLAPolicyID
+        if (due.responseDueAt) patch.ResponseDueAt = due.responseDueAt
+        if (due.resolveDueAt) patch.ResolveDueAt = due.resolveDueAt
+        result.applied.push(`Rule "${rule.Name}": SLA → ${policy.Name}`)
         break
       }
       case 'JUMP_TO_STEP': {

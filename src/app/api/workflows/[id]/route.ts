@@ -68,7 +68,7 @@ const ruleSchema = z.object({
   name: z.string().min(1).max(150),
   trigger: z.enum(['ON_SUBMIT', 'ON_STEP_APPROVED', 'ON_STEP_REJECTED', 'ON_REQUEST_APPROVED', 'ON_REQUEST_REJECTED']),
   condition: conditionSchema,
-  action: z.enum(['SET_PRIORITY', 'ASSIGN_TO_USER', 'NOTIFY', 'JUMP_TO_STEP']),
+  action: z.enum(['SET_PRIORITY', 'SET_SLA', 'ASSIGN_TO_USER', 'NOTIFY', 'JUMP_TO_STEP']),
   actionValue: z.object({
     priority: z.string().optional(),
     userId: z.string().optional(),
@@ -77,6 +77,8 @@ const ruleSchema = z.object({
     notifyTitle: z.string().max(150).optional(),
     notifyMessage: z.string().max(500).optional(),
     jumpToStepOrder: z.number().int().min(0).max(100).optional(),
+    slaPolicyId: z.string().optional().nullable(),
+    fireOnStepOrder: z.number().int().min(0).max(100).optional(),
   }).default({}),
   sortOrder: z.number().int().default(0),
   isActive: z.boolean().default(true),
@@ -109,7 +111,7 @@ type RuleInput = {
   name: string
   trigger: 'ON_SUBMIT' | 'ON_STEP_APPROVED' | 'ON_STEP_REJECTED' | 'ON_REQUEST_APPROVED' | 'ON_REQUEST_REJECTED'
   condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
-  action: 'SET_PRIORITY' | 'ASSIGN_TO_USER' | 'NOTIFY' | 'JUMP_TO_STEP'
+  action: 'SET_PRIORITY' | 'SET_SLA' | 'ASSIGN_TO_USER' | 'NOTIFY' | 'JUMP_TO_STEP'
   actionValue?: {
     priority?: string
     userId?: string
@@ -118,6 +120,8 @@ type RuleInput = {
     notifyTitle?: string
     notifyMessage?: string
     jumpToStepOrder?: number
+    slaPolicyId?: string | null
+    fireOnStepOrder?: number
   }
   sortOrder?: number
   isActive?: boolean
@@ -134,6 +138,12 @@ function validateRules(rules: RuleInput[], stepCount: number): string | null {
     if (r.action === 'SET_PRIORITY' && !['LOW', 'MEDIUM', 'HIGH', 'URGENT'].includes(v.priority ?? ''))
       return `Rule "${r.name}": choose a priority`
     if (r.action === 'ASSIGN_TO_USER' && !v.userId) return `Rule "${r.name}": choose a user`
+    if (r.action === 'SET_SLA' && !v.slaPolicyId) return `Rule "${r.name}": choose an SLA policy`
+    if (
+      typeof v.fireOnStepOrder === 'number' &&
+      (v.fireOnStepOrder < 0 || v.fireOnStepOrder >= stepCount)
+    )
+      return `Rule "${r.name}": the step it is bound to no longer exists`
     if (r.action === 'JUMP_TO_STEP' && (typeof v.jumpToStepOrder !== 'number' || v.jumpToStepOrder < 0 || v.jumpToStepOrder >= stepCount))
       return `Rule "${r.name}": jump target is out of range`
     if (r.action === 'NOTIFY') {
@@ -191,6 +201,22 @@ async function validateSteps(steps: StepInput[]): Promise<string | null> {
   return null
 }
 
+/** validateRules + the lookups that need the DB (SLA policy existence) */
+async function validateRulesAsync(rules: RuleInput[], stepCount: number): Promise<string | null> {
+  const basic = validateRules(rules, stepCount)
+  if (basic) return basic
+  for (const r of rules) {
+    if (r.action === 'SET_SLA' && r.actionValue?.slaPolicyId) {
+      const pol = await prisma.sLAPolicies.findUnique({
+        where: { SLAPolicyID: r.actionValue.slaPolicyId },
+        select: { SLAPolicyID: true },
+      })
+      if (!pol) return `Rule "${r.name}": SLA policy not found`
+    }
+  }
+  return null
+}
+
 // PUT /api/workflows/[id] — full update (settings + steps merge)
 export async function PUT(req: NextRequest, { params }: Params) {
   const payload = getUserFromRequest(req)
@@ -204,7 +230,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
   const stepErr = await validateSteps(steps)
   if (stepErr) return json({ error: stepErr }, 400)
-  const ruleErr = validateRules(data!.rules ?? [], steps.length)
+  const ruleErr = await validateRulesAsync(data!.rules ?? [], steps.length)
   if (ruleErr) return json({ error: ruleErr }, 400)
 
   const existing = await prisma.wFDefinitions.findUnique({

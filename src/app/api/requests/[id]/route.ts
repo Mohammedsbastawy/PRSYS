@@ -799,6 +799,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       const stepRes = await runWorkflowRules({
         ...base,
         trigger: decision === 'APPROVED' ? 'ON_STEP_APPROVED' : 'ON_STEP_REJECTED',
+        // lets the executor run only the automations bound to this step
+        stepOrder: step.StepOrder,
       })
       await auditRuleResults(params.id, updated.Status, updated.Status, payload.userId, stepRes)
       if (newStatus === 'APPROVED' || newStatus === 'REJECTED') {

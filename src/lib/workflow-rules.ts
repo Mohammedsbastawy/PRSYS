@@ -12,6 +12,7 @@ export type RuleTrigger = (typeof RULE_TRIGGERS)[number]['value']
 
 export const RULE_ACTIONS = [
   { value: 'SET_PRIORITY', label: 'Set priority' },
+  { value: 'SET_SLA', label: 'Apply an SLA policy' },
   { value: 'ASSIGN_TO_USER', label: 'Assign to a user' },
   { value: 'NOTIFY', label: 'Notify people' },
   { value: 'JUMP_TO_STEP', label: 'Jump to a step' },
@@ -38,6 +39,20 @@ export interface RuleActionValue {
   notifyMessage?: string
   /** JUMP_TO_STEP */
   jumpToStepOrder?: number
+  /** SET_SLA — policy whose target matches the request's priority */
+  slaPolicyId?: string
+  /**
+   * Step binding: when set, the rule only runs for the step with this StepOrder
+   * (its index in the workflow). Rules without it are flow-wide and fire after
+   * every step — that is how pre-existing rules were stored, so nothing breaks.
+   */
+  fireOnStepOrder?: number
+}
+
+/** Does a step-scoped rule belong to this step? Unscoped (legacy) rules match all. */
+export function ruleAppliesToStep(v: RuleActionValue, stepOrder: number | null | undefined): boolean {
+  if (typeof v.fireOnStepOrder !== 'number') return true
+  return stepOrder != null && v.fireOnStepOrder === stepOrder
 }
 
 export interface RuleDraft {
@@ -64,7 +79,13 @@ export function parseRuleActionValue(raw: string | null | undefined): RuleAction
 /** Human-readable summary used on rule list rows. */
 export function describeRule(
   r: RuleDraft,
-  look?: { groupName?: (id: string) => string; userName?: (id: string) => string; roleName?: (id: string) => string }
+  look?: {
+    groupName?: (id: string) => string
+    userName?: (id: string) => string
+    roleName?: (id: string) => string
+    slaName?: (id: string) => string
+    stepName?: (order: number) => string
+  }
 ): string {
   const when = RULE_TRIGGERS.find((t) => t.value === r.trigger)?.label ?? r.trigger
   const cond = r.condition
@@ -93,9 +114,16 @@ export function describeRule(
       then = `notify ${tgt}`
       break
     }
+    case 'SET_SLA':
+      then = `apply SLA → ${v.slaPolicyId ? look?.slaName?.(v.slaPolicyId) ?? 'policy' : 'policy'}`
+      break
     case 'JUMP_TO_STEP':
       then = `jump to step #${(v.jumpToStepOrder ?? 0) + 1}`
       break
   }
-  return `${when}${cond} → ${then}`
+  const scope =
+    typeof v.fireOnStepOrder === 'number' && look?.stepName
+      ? ` after "${look.stepName(v.fireOnStepOrder)}"`
+      : ''
+  return `${when}${cond}${scope} → ${then}`
 }
