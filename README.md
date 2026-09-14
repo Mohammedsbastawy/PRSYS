@@ -65,6 +65,31 @@ npm run db:seed        # creates admin@prsys.local / Admin@123 + demo roles/user
 npm run dev
 ```
 
+### Workflow builder (`/workflows/[id]`)
+
+One canvas, top to bottom: **Submit → step 1 → step 2 → … → Close**. Approval routing and automation live in the
+same step card, in the order they actually run:
+
+| Part of a step | Stored as |
+| --- | --- |
+| Who decides (department manager / direct manager / group / role / one person / any approver), quorum, comment policy, due days | `WFSteps` |
+| When this step applies (total value / item count / priority) | `WFSteps.Condition` |
+| On approve → next step / approve & stop / jump to… | `WFSteps.ApproveAction` + `ApproveTargetStepID` |
+| On reject → reject / return to requester / send back a step | `WFSteps.RejectAction` |
+| **Then run, in order** (set priority · apply SLA · assign owner · notify · jump) | `WFRules` with `ActionValue.fireOnStepOrder` |
+| On submit / after final approval / after rejection | `WFRules` with the flow-level triggers |
+
+* `Apply an SLA policy` (`SET_SLA`) is a new automation action: it re-snapshots `SLAPolicyID`, `ResponseDueAt` and
+  `ResolveDueAt` from the policy target matching the request priority — so “approve → set URGENT → apply the
+  1h/8h clock” works as one chain, in order (the SLA action sees the priority the previous action just set).
+* Rules bound to no step are flow-wide and keep firing after every step; the builder shows them under
+  “After any step”, so pre-existing automations survive the redesign untouched.
+* Steps are reordered by dragging the number badge (or the ↑/↓ buttons), duplicated, and deleted; a step whose
+  automations would be lost on delete has them moved to the flow-wide lanes instead.
+* The right rail holds the flow map, a **readiness** checklist (every issue jumps to the step that causes it) and
+  the attached-forms picker. `Ctrl/Cmd+S` saves, and an *unsaved changes* badge + unload guard track the diff.
+* No schema change: automation is still `WFRules`, so nothing needs `prisma db push`.
+
 ### Lost the admin password?
 
 `prisma/seed.ts` never overwrites an existing admin (it logs "Admin already exists"), so re-seeding will **not** restore
