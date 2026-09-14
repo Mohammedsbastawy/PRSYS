@@ -1,19 +1,22 @@
 "use client";
 
 /**
- * Workflow builder — one canvas for routing AND automation.
+ * Workflow builder — a blank canvas of blocks you add yourself.
  *
- * A workflow is drawn as a vertical flow: Start (on submit) → approval steps →
- * End (final verdict). Every step card carries its own automations ("after
- * approve" / "after reject" lanes), because that is how the flow is actually
- * read: approve → set priority URGENT → apply the SLA clock, in one place.
+ * There are no pre-baked sections and no fixed "submit → approvals → close"
+ * shape: every block is created here, in the order you want, and each block
+ * declares for itself when it runs and what it does.
  *
- * Storage contract (unchanged, no migration):
- *   steps  → WFSteps
- *   lanes  → WFRules { Trigger: ON_STEP_APPROVED | ON_STEP_REJECTED | ... ,
- *                      ActionValue: { ...action, fireOnStepOrder } }
- * Rules without a step binding stay flow-wide (legacy rules keep firing as
- * before, and are shown in the End node under "after any step").
+ *   APPROVAL block   who decides, quorum, due, comment policy, where the flow
+ *                    goes on approve / on reject, and when it applies at all
+ *   AUTOMATION block one action (priority / SLA / assign / notify / jump) plus
+ *                    its own "runs after …" binding and its own condition
+ *
+ * Persistence reuses what already exists (no migration):
+ *   APPROVAL   → WFSteps (StepOrder = position among approval blocks)
+ *   AUTOMATION → WFRules { Trigger, ActionValue: { …action, fireOnStepOrder } }
+ * where the bound step is the nearest APPROVAL block above it, so dragging a
+ * block between two approvals re-targets it automatically.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -27,69 +30,95 @@ import {
   NUMERIC_OPS,
   PRIORITY_OPS,
   PRIORITY_VALUES,
-  parseStepCondition,
   validateConditionInput,
 } from "@/lib/workflow-conditions";
-import { parseRuleActionValue, RULE_ACTIONS } from "@/lib/workflow-rules";
+import { RULE_ACTIONS } from "@/lib/workflow-rules";
+import {
+  apiToBlocks,
+  blocksToApi,
+  boundApprovalIndex,
+  approvalNameAt,
+  cloneBlock,
+  newBlock,
+  patchBy,
+  type ActionKind,
+  type Block,
+  type BlockType,
+  type Decision,
+  type RunScope,
+} from "@/lib/workflow-builder";
 
-/* ------------------------------------------------------------------ types -- */
+/* ------------------------------------------------------------------ model -- */
 
-type ActionKind = "SET_PRIORITY" | "SET_SLA" | "ASSIGN_TO_USER" | "NOTIFY" | "JUMP_TO_STEP";
+/* --------------------------------------------------------------- options -- */
 
-interface ActionDraft {
-  key: string;
-  /** stored as WFRules.Name — auto-derived from the action when left empty */
-  name: string;
-  kind: ActionKind;
-  enabled: boolean;
-  condField: string;
-  condOp: string;
-  condValue: string;
-  priority: string;
-  slaPolicyId: string;
-  userId: string;
-  notifyTargetType: string;
-  notifyUserId: string;
-  notifyGroupId: string;
-  notifyRoleId: string;
-  notifyTitle: string;
-  notifyMessage: string;
-  /** target step identified by its editor key (resolved to an index on save) */
-  jumpToStepKey: string;
-  open: boolean;
-}
+const APPROVER_TYPES: { value: string; label: string; icon: string; hint: string }[] = [
+  {
+    value: "DEPARTMENT_MANAGER",
+    label: "Department manager",
+    icon: "apartment",
+    hint: "Per request: the requester's department Manager, else their direct manager.",
+  },
+  {
+    value: "REQUESTER_MANAGER",
+    label: "Direct manager",
+    icon: "account_balance",
+    hint: "Per request: Users → Direct manager, else the department manager.",
+  },
+  { value: "GROUP", label: "Group", icon: "groups", hint: "Every member of the group can decide." },
+  { value: "ROLE", label: "Role", icon: "admin_panel_settings", hint: "Every active user holding the role." },
+  { value: "USER", label: "One person", icon: "person", hint: "A single named approver." },
+  {
+    value: "ANY_APPROVER",
+    label: "Any approver",
+    icon: "how_to_reg",
+    hint: "Anyone with the approve permission. Super Admins are excluded on purpose.",
+  },
+];
 
-interface StepDraft {
-  key: string;
-  id?: string;
-  stepName: string;
-  approverType: string;
-  targetUserId: string;
-  targetGroupId: string;
-  targetRoleId: string;
-  approvalMode: string;
-  rejectAction: string;
-  approveAction: string;
-  approveTargetKey: string;
-  condField: string;
-  condOp: string;
-  condValue: string;
-  dueDays: string;
-  commentPolicy: string;
-  afterApprove: ActionDraft[];
-  afterReject: ActionDraft[];
-  open: boolean;
-}
+const QUORUMS = [
+  { value: "ANY_ONE", label: "First answer wins" },
+  { value: "ALL", label: "Everyone must approve" },
+];
 
-interface FlowDraft {
-  onSubmit: ActionDraft[];
-  onApproved: ActionDraft[];
-  onRejected: ActionDraft[];
-  /** flow-wide step rules (no step binding) — kept so legacy data still shows */
-  anyStepApproved: ActionDraft[];
-  anyStepRejected: ActionDraft[];
-  open: boolean;
-}
+const REJECT_ACTIONS = [
+  { value: "REJECT_COMPLETELY", label: "Reject the request" },
+  { value: "RETURN_TO_REQUESTER", label: "Return to requester" },
+  { value: "RETURN_TO_PREVIOUS_STEP", label: "Send back a step" },
+];
+
+const APPROVE_ACTIONS = [
+  { value: "CONTINUE", label: "Go to the next block" },
+  { value: "APPROVE_COMPLETELY", label: "Approve and stop" },
+  { value: "JUMP_TO_STEP", label: "Jump to another block" },
+];
+
+const COMMENT_POLICIES = [
+  { value: "OPTIONAL", label: "Comment optional" },
+  { value: "ON_REJECT", label: "Required to reject" },
+  { value: "ON_APPROVE", label: "Required to approve" },
+  { value: "ALWAYS", label: "Always required" },
+];
+
+const ACTION_META: Record<ActionKind, { label: string; icon: string; ring: string; text: string }> = {
+  SET_PRIORITY: { label: "Set priority", icon: "priority_high", ring: "border-amber-200", text: "text-amber-700" },
+  SET_SLA: { label: "Apply SLA", icon: "timer", ring: "border-violet-200", text: "text-violet-700" },
+  ASSIGN_TO_USER: { label: "Assign owner", icon: "assignment_ind", ring: "border-sky-200", text: "text-sky-700" },
+  NOTIFY: { label: "Notify", icon: "notifications_active", ring: "border-blue-200", text: "text-blue-700" },
+  JUMP_TO_STEP: { label: "Jump to block", icon: "subdirectory_arrow_right", ring: "border-rose-200", text: "text-rose-700" },
+};
+
+const SCOPE_LABELS: Record<RunScope, string> = {
+  AFTER_STEP: "After a block's decision",
+  ANY_STEP: "After any approval block",
+  SUBMIT: "Right after submit",
+  FINAL_APPROVED: "After the whole request is approved",
+  FINAL_REJECTED: "After the whole request is rejected",
+};
+
+/* ----------------------------------------------------------------- utils --- */
+
+/* ------------------------------------------------------------ data shapes -- */
 
 interface RoleRow {
   id: string;
@@ -147,210 +176,25 @@ interface LoadedWorkflow {
   Status: string;
   Steps: LoadedStep[];
   Rules?: LoadedRule[];
-  Templates: { FormTemplateID: string; Name: string; Status: string }[];
   usage?: { templates: number; liveRequests: number; decisions: number };
 }
 
-/* -------------------------------------------------------------- constants -- */
+/* ----------------------------------------------------------- small pieces -- */
 
-const APPROVER_TYPES: { value: string; label: string; icon: string; hint: string }[] = [
-  {
-    value: "DEPARTMENT_MANAGER",
-    label: "Department manager",
-    icon: "apartment",
-    hint: "Resolved per request: the requester's department Manager, else their direct manager.",
-  },
-  {
-    value: "REQUESTER_MANAGER",
-    label: "Direct manager",
-    icon: "account_balance",
-    hint: "Resolved per request: Users → Direct manager, else the department manager.",
-  },
-  { value: "GROUP", label: "Group", icon: "groups", hint: "Everyone in the group can decide." },
-  { value: "ROLE", label: "Role", icon: "admin_panel_settings", hint: "Every active user holding the role." },
-  { value: "USER", label: "One person", icon: "person", hint: "A single named approver." },
-  {
-    value: "ANY_APPROVER",
-    label: "Any approver",
-    icon: "how_to_reg",
-    hint: "Anyone with the approve permission — Super Admins are excluded on purpose.",
-  },
-];
-
-const APPROVAL_MODES = [
-  { value: "ANY_ONE", label: "First answer wins" },
-  { value: "ALL", label: "Everyone must approve" },
-];
-
-const REJECT_ACTIONS = [
-  { value: "REJECT_COMPLETELY", label: "Reject the request" },
-  { value: "RETURN_TO_REQUESTER", label: "Return to requester" },
-  { value: "RETURN_TO_PREVIOUS_STEP", label: "Send back a step" },
-];
-
-const APPROVE_ACTIONS = [
-  { value: "CONTINUE", label: "Next step" },
-  { value: "APPROVE_COMPLETELY", label: "Approve & stop" },
-  { value: "JUMP_TO_STEP", label: "Jump to…" },
-];
-
-const COMMENT_POLICIES = [
-  { value: "OPTIONAL", label: "Comment optional" },
-  { value: "ON_REJECT", label: "Required to reject" },
-  { value: "ON_APPROVE", label: "Required to approve" },
-  { value: "ALWAYS", label: "Always required" },
-];
-
-const ACTION_META: Record<ActionKind, { label: string; icon: string; tone: string }> = {
-  SET_PRIORITY: { label: "Set priority", icon: "priority_high", tone: "bg-amber-50 text-amber-700 border-amber-200" },
-  SET_SLA: { label: "Apply SLA", icon: "timer", tone: "bg-violet-50 text-violet-700 border-violet-200" },
-  ASSIGN_TO_USER: { label: "Assign owner", icon: "assignment_ind", tone: "bg-sky-50 text-sky-700 border-sky-200" },
-  NOTIFY: { label: "Notify", icon: "notifications_active", tone: "bg-blue-50 text-blue-700 border-blue-200" },
-  JUMP_TO_STEP: { label: "Jump to step", icon: "subdirectory_arrow_right", tone: "bg-rose-50 text-rose-700 border-rose-200" },
-};
-
-/* ------------------------------------------------------------- small utils -- */
-
-let seq = 0;
-const nextKey = (prefix: string) => `${prefix}-${Date.now().toString(36)}-${++seq}`;
-
-function blankAction(kind: ActionKind = "SET_PRIORITY"): ActionDraft {
-  return {
-    key: nextKey("act"),
-    name: "",
-    kind,
-    enabled: true,
-    condField: "none",
-    condOp: ">=",
-    condValue: "",
-    priority: "URGENT",
-    slaPolicyId: "",
-    userId: "",
-    notifyTargetType: "REQUESTER",
-    notifyUserId: "",
-    notifyGroupId: "",
-    notifyRoleId: "",
-    notifyTitle: "",
-    notifyMessage: "",
-    jumpToStepKey: "",
-    open: true,
-  };
-}
-
-function blankStep(open = true): StepDraft {
-  return {
-    key: nextKey("step"),
-    stepName: "",
-    approverType: "DEPARTMENT_MANAGER",
-    targetUserId: "",
-    targetGroupId: "",
-    targetRoleId: "",
-    approvalMode: "ANY_ONE",
-    rejectAction: "RETURN_TO_REQUESTER",
-    approveAction: "CONTINUE",
-    approveTargetKey: "",
-    condField: "none",
-    condOp: ">=",
-    condValue: "",
-    dueDays: "",
-    commentPolicy: "OPTIONAL",
-    afterApprove: [],
-    afterReject: [],
-    open,
-  };
-}
-
-function blankFlow(): FlowDraft {
-  return { onSubmit: [], onApproved: [], onRejected: [], anyStepApproved: [], anyStepRejected: [], open: false };
-}
-
-function nameFor(a: ActionDraft, steps: StepDraft[], sla?: SlaRow, user?: UserRow): string {
-  if (a.name.trim()) return a.name.trim();
-  switch (a.kind) {
-    case "SET_PRIORITY":
-      return `Priority → ${a.priority}`;
-    case "SET_SLA":
-      return `SLA → ${sla?.name ?? "policy"}`;
-    case "ASSIGN_TO_USER":
-      return `Assign → ${user?.Name ?? "user"}`;
-    case "NOTIFY":
-      return a.notifyTitle.trim() || "Notify people";
-    case "JUMP_TO_STEP": {
-      const i = steps.findIndex((s) => s.key === a.jumpToStepKey);
-      return `Jump → ${i >= 0 ? steps[i].stepName || `step ${i + 1}` : "step"}`;
-    }
+function whenSummary(b: Block, blocks: Block[]): string {
+  if (b.type !== "ACTION") return "";
+  const dec = b.decision === "BOTH" ? "approve or reject" : b.decision === "REJECTED" ? "reject" : "approve";
+  if (b.scope === "AFTER_STEP") {
+    const i = boundApprovalIndex(blocks, blocks.indexOf(b));
+    return i < 0 ? "no approval block above it yet" : `after “${approvalNameAt(blocks, i)}” ${dec}`;
   }
+  if (b.scope === "ANY_STEP") return `after any block ${dec}`;
+  return SCOPE_LABELS[b.scope].toLowerCase();
 }
 
-/** one-line summary shown on the collapsed chip */
-function summaryFor(a: ActionDraft, steps: StepDraft[], slas: SlaRow[], users: UserRow[]): string {
-  switch (a.kind) {
-    case "SET_PRIORITY":
-      return `priority = ${a.priority}`;
-    case "SET_SLA":
-      return slas.find((s) => s.id === a.slaPolicyId)?.name ?? "pick a policy";
-    case "ASSIGN_TO_USER":
-      return users.find((u) => u.UserID === a.userId)?.Name ?? "pick a user";
-    case "NOTIFY": {
-      const who =
-        a.notifyTargetType === "USER"
-          ? users.find((u) => u.UserID === a.notifyUserId)?.Name ?? "user"
-          : a.notifyTargetType === "ROLE"
-            ? "role members"
-            : a.notifyTargetType === "GROUP"
-              ? "group members"
-              : a.notifyTargetType === "DEPARTMENT_MANAGER"
-                ? "dept manager"
-                : "requester";
-      return `notify ${who}`;
-    }
-    case "JUMP_TO_STEP": {
-      const i = steps.findIndex((s) => s.key === a.jumpToStepKey);
-      return i >= 0 ? `${i + 1}. ${steps[i].stepName || "unnamed"}` : "pick a step";
-    }
-  }
-}
-
-function conditionText(a: ActionDraft): string | null {
-  if (a.condField === "none") return null;
-  return `${a.condField} ${a.condOp} ${a.condValue}`;
-}
-
-function patch<T extends { key: string }>(list: T[], key: string, p: Partial<T>): T[] {
-  return list.map((x) => (x.key === key ? { ...x, ...p } : x));
-}
-
-/* ------------------------------------------------------------- subviews ---- */
-
-interface LaneHandlers {
-  onPatch: (key: string, p: Partial<ActionDraft>) => void;
-  onRemove: (key: string) => void;
-  onAdd: (kind: ActionKind) => void;
-}
-
-function Section({
-  title,
-  hint,
-  children,
-  right,
-}: {
-  title: string;
-  hint?: string;
-  children: React.ReactNode;
-  right?: React.ReactNode;
-}) {
-  return (
-    <div className="border-t border-surface-border/70 px-4 py-3 first:border-t-0">
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div>
-          <h4 className="text-[11px] font-bold uppercase tracking-wider text-ink-faint">{title}</h4>
-          {hint && <p className="mt-0.5 text-[11px] text-ink-faint">{hint}</p>}
-        </div>
-        {right}
-      </div>
-      {children}
-    </div>
-  );
+function condText(b: Block): string | null {
+  if (b.condField === "none") return null;
+  return `${b.condField} ${b.condOp} ${b.condValue}`;
 }
 
 function Segmented({
@@ -463,349 +307,47 @@ function ConditionRow({
   );
 }
 
-function ActionRow({
-  action,
-  steps,
-  slas,
-  users,
-  groups,
-  roles,
-  disabled,
-  onChange,
-  onRemove,
-}: {
-  action: ActionDraft;
-  steps: StepDraft[];
-  slas: SlaRow[];
-  users: UserRow[];
-  groups: GroupRow[];
-  roles: RoleRow[];
-  disabled?: boolean;
-  onChange: (p: Partial<ActionDraft>) => void;
-  onRemove: () => void;
-}) {
-  const meta = ACTION_META[action.kind];
-  const cond = conditionText(action);
-  return (
-    <div className={`rounded border ${meta.tone.split(" ")[2]} bg-white`}>
-      <div className="flex items-center gap-2 px-2 py-1.5">
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange({ open: !action.open })}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-        >
-          <Icon name={meta.icon} className="shrink-0 text-[16px]" />
-          <span className="shrink-0 text-[11px] font-bold uppercase tracking-wide text-ink-faint">{meta.label}</span>
-          <span className="truncate text-xs text-ink">{summaryFor(action, steps, slas, users)}</span>
-          {cond && <span className="shrink-0 rounded bg-surface-muted px-1.5 py-0.5 text-[10px] text-ink-soft">if {cond}</span>}
-          {!action.enabled && (
-            <span className="shrink-0 rounded bg-gray-100 px-1.5 py-0.5 text-[10px] text-ink-faint">off</span>
-          )}
-        </button>
-        {!disabled && (
-          <>
-            <button
-              type="button"
-              title={action.enabled ? "Pause this action" : "Resume this action"}
-              onClick={() => onChange({ enabled: !action.enabled })}
-              className="icon-btn !h-6 !w-6"
-            >
-              <Icon name={action.enabled ? "pause_circle" : "play_circle"} className="text-[16px]" />
-            </button>
-            <button type="button" title="Remove" onClick={onRemove} className="icon-btn !h-6 !w-6 text-danger">
-              <Icon name="close" className="text-[16px]" />
-            </button>
-          </>
-        )}
-      </div>
-
-      {action.open && (
-        <div className="space-y-3 border-t border-surface-border/70 px-3 py-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">Action</span>
-            <select
-              className="input w-auto !py-1.5 text-xs"
-              disabled={disabled}
-              value={action.kind}
-              onChange={(e) => onChange({ kind: e.target.value as ActionKind })}
-            >
-              {RULE_ACTIONS.map((a) => (
-                <option key={a.value} value={a.value}>
-                  {a.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {action.kind === "SET_PRIORITY" && (
-            <Segmented
-              disabled={disabled}
-              value={action.priority}
-              onChange={(v) => onChange({ priority: v })}
-              options={PRIORITY_VALUES.map((p) => ({ value: p, label: p }))}
-            />
-          )}
-
-          {action.kind === "SET_SLA" && (
-            <div className="grid gap-2 sm:grid-cols-2">
-              <div>
-                <label className="label">SLA policy</label>
-                <select
-                  className="input"
-                  disabled={disabled}
-                  value={action.slaPolicyId}
-                  onChange={(e) => onChange({ slaPolicyId: e.target.value })}
-                >
-                  <option value="">— choose a policy —</option>
-                  {slas.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                      {s.isDefault ? " (default)" : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <p className="self-end pb-2 text-[11px] text-ink-faint">
-                Re-snapshots the response (TTA) and resolution (TTR) clocks from the policy targets for the
-                request priority.
-              </p>
-            </div>
-          )}
-
-          {action.kind === "ASSIGN_TO_USER" && (
-            <div>
-              <label className="label">Assign to</label>
-              <select className="input" disabled={disabled} value={action.userId} onChange={(e) => onChange({ userId: e.target.value })}>
-                <option value="">— choose a user —</option>
-                {users.map((u) => (
-                  <option key={u.UserID} value={u.UserID}>
-                    {u.Name} · {u.Email}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {action.kind === "NOTIFY" && (
-            <div className="space-y-2">
-              <div className="grid gap-2 sm:grid-cols-2">
-                <div>
-                  <label className="label">Who</label>
-                  <select
-                    className="input"
-                    disabled={disabled}
-                    value={action.notifyTargetType}
-                    onChange={(e) => onChange({ notifyTargetType: e.target.value })}
-                  >
-                    <option value="REQUESTER">The requester</option>
-                    <option value="DEPARTMENT_MANAGER">Requester&apos;s department manager</option>
-                    <option value="USER">A specific user</option>
-                    <option value="GROUP">All members of a group</option>
-                    <option value="ROLE">All users with a role</option>
-                  </select>
-                </div>
-                {action.notifyTargetType === "USER" && (
-                  <div>
-                    <label className="label">User</label>
-                    <select className="input" disabled={disabled} value={action.notifyUserId} onChange={(e) => onChange({ notifyUserId: e.target.value })}>
-                      <option value="">— choose —</option>
-                      {users.map((u) => (
-                        <option key={u.UserID} value={u.UserID}>
-                          {u.Name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {action.notifyTargetType === "GROUP" && (
-                  <div>
-                    <label className="label">Group</label>
-                    <select className="input" disabled={disabled} value={action.notifyGroupId} onChange={(e) => onChange({ notifyGroupId: e.target.value })}>
-                      <option value="">— choose —</option>
-                      {groups.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-                {action.notifyTargetType === "ROLE" && (
-                  <div>
-                    <label className="label">Role</label>
-                    <select className="input" disabled={disabled} value={action.notifyRoleId} onChange={(e) => onChange({ notifyRoleId: e.target.value })}>
-                      <option value="">— choose —</option>
-                      {roles.map((r) => (
-                        <option key={r.id} value={r.id}>
-                          {r.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                <input
-                  className="input"
-                  disabled={disabled}
-                  placeholder="Notification title (optional)"
-                  value={action.notifyTitle}
-                  onChange={(e) => onChange({ notifyTitle: e.target.value })}
-                />
-                <input
-                  className="input"
-                  disabled={disabled}
-                  placeholder="Message (optional)"
-                  value={action.notifyMessage}
-                  onChange={(e) => onChange({ notifyMessage: e.target.value })}
-                />
-              </div>
-            </div>
-          )}
-
-          {action.kind === "JUMP_TO_STEP" && (
-            <div>
-              <label className="label">Land on step</label>
-              <select
-                className="input"
-                disabled={disabled}
-                value={action.jumpToStepKey}
-                onChange={(e) => onChange({ jumpToStepKey: e.target.value })}
-              >
-                <option value="">— choose a step —</option>
-                {steps.map((s, i) => (
-                  <option key={s.key} value={s.key}>
-                    {i + 1}. {s.stepName || "Untitled step"}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          <div>
-            <label className="label">Only when</label>
-            <ConditionRow
-              disabled={disabled}
-              field={action.condField}
-              op={action.condOp}
-              value={action.condValue}
-              onChange={(p) => onChange(p)}
-            />
-          </div>
-
-          <details>
-            <summary className="cursor-pointer text-[11px] text-ink-faint hover:text-ink-soft">
-              Audit label (how this shows in the request trail)
-            </summary>
-            <input
-              className="input mt-2"
-              disabled={disabled}
-              placeholder={nameFor(action, steps, slas.find((s) => s.id === action.slaPolicyId), users.find((u) => u.UserID === action.userId))}
-              value={action.name}
-              onChange={(e) => onChange({ name: e.target.value })}
-            />
-          </details>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ActionLane({
-  title,
-  icon,
-  actions,
-  steps,
-  slas,
-  users,
-  groups,
-  roles,
-  disabled,
-  onPatch,
-  onRemove,
-  onAdd,
-}: {
-  title: string;
-  icon: string;
-  actions: ActionDraft[];
-  steps: StepDraft[];
-  slas: SlaRow[];
-  users: UserRow[];
-  groups: GroupRow[];
-  roles: RoleRow[];
-  disabled?: boolean;
-  onPatch: (key: string, p: Partial<ActionDraft>) => void;
-  onRemove: (key: string) => void;
-  onAdd: (kind: ActionKind) => void;
-}) {
-  const [picker, setPicker] = useState(false);
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-        <Icon name={icon} className="text-[14px]" />
-        {title}
-        {actions.length > 0 && <span className="rounded-full bg-surface-muted px-1.5 text-[10px]">{actions.length}</span>}
-      </div>
-      <div className="space-y-1.5">
-        {actions.map((a) => (
-          <ActionRow
-            key={a.key}
-            action={a}
-            steps={steps}
-            slas={slas}
-            users={users}
-            groups={groups}
-            roles={roles}
-            disabled={disabled}
-            onChange={(p) => onPatch(a.key, p)}
-            onRemove={() => onRemove(a.key)}
-          />
-        ))}
-        {actions.length === 0 && !disabled && (
-          <p className="rounded border border-dashed border-surface-border px-3 py-2 text-[11px] text-ink-faint">
-            Nothing runs here yet — add a step for the next thing that should happen.
-          </p>
-        )}
-      </div>
-      {!disabled && (
-        <div className="relative mt-1.5">
-          {picker ? (
-            <div className="flex flex-wrap gap-1 rounded border border-surface-border bg-surface-muted/60 p-1.5">
-              {(Object.keys(ACTION_META) as ActionKind[]).map((k) => (
-                <button
-                  key={k}
-                  type="button"
-                  onClick={() => {
-                    onAdd(k);
-                    setPicker(false);
-                  }}
-                  className="flex items-center gap-1 rounded bg-white px-2 py-1 text-[11px] font-medium text-ink shadow-sm hover:bg-blue-50 hover:text-primary-dark"
-                >
-                  <Icon name={ACTION_META[k].icon} className="text-[14px]" />
-                  {ACTION_META[k].label}
-                </button>
-              ))}
-              <button type="button" onClick={() => setPicker(false)} className="icon-btn !h-6 !w-6">
-                <Icon name="close" className="text-[14px]" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setPicker(true)}
-              className="flex items-center gap-1 rounded border border-dashed border-surface-border px-2 py-1 text-[11px] font-medium text-ink-soft hover:border-primary hover:text-primary"
-            >
-              <Icon name="add" className="text-[14px]" /> Add action
-            </button>
-          )}
-        </div>
-      )}
+      <label className="label">{label}</label>
+      {children}
     </div>
   );
 }
 
-/* -------------------------------------------------------------------- page -- */
+function Palette({
+  onPick,
+  onClose,
+}: {
+  onPick: (t: BlockType) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-surface-border bg-white p-2 shadow-sm">
+      <span className="px-1 text-[11px] font-bold uppercase tracking-wider text-ink-faint">Add block</span>
+      <button
+        type="button"
+        onClick={() => onPick("APPROVAL")}
+        className="flex items-center gap-1.5 rounded border border-surface-border px-2.5 py-1.5 text-xs font-semibold text-ink hover:border-primary hover:bg-blue-50"
+      >
+        <Icon name="verified_user" className="text-[16px]" /> Approval
+      </button>
+      <button
+        type="button"
+        onClick={() => onPick("ACTION")}
+        className="flex items-center gap-1.5 rounded border border-surface-border px-2.5 py-1.5 text-xs font-semibold text-ink hover:border-primary hover:bg-blue-50"
+      >
+        <Icon name="bolt" className="text-[16px]" /> Automation
+      </button>
+      <button type="button" onClick={onClose} className="icon-btn !h-7 !w-7 ml-auto" title="Cancel">
+        <Icon name="close" className="text-[16px]" />
+      </button>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------- app -- */
 
 export default function WorkflowEditor({ workflowId }: { workflowId: string | null }) {
   const { user, token } = useAuth();
@@ -818,12 +360,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [savedAt, setSavedAt] = useState<string | null>(null);
-
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("ACTIVE");
-  const [steps, setSteps] = useState<StepDraft[]>([]);
-  const [flow, setFlow] = useState<FlowDraft>(blankFlow);
+  const [blocks, setBlocks] = useState<Block[]>([]);
   const [usage, setUsage] = useState<LoadedWorkflow["usage"] | null>(null);
 
   const [roles, setRoles] = useState<RoleRow[]>([]);
@@ -834,20 +374,20 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const [assigned, setAssigned] = useState<Set<string>>(new Set());
   const [initialAssigned, setInitialAssigned] = useState<Set<string>>(new Set());
 
+  const [paletteAt, setPaletteAt] = useState<number | null>(null);
   const [dragKey, setDragKey] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
   const baseline = useRef("");
-  const stepRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const refs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const dirty = useMemo(() => JSON.stringify({ name, description, status, steps, flow }) !== baseline.current, [
-    name,
-    description,
-    status,
-    steps,
-    flow,
-  ]);
+  const approvals = useMemo(() => blocks.filter((b) => b.type === "APPROVAL"), [blocks]);
 
-  /* ------------------------------------------------------------ loaders -- */
+  const dirty = useMemo(
+    () => JSON.stringify({ name, description, status, blocks }) !== baseline.current,
+    [name, description, status, blocks]
+  );
+
+  /* ------------------------------------------------------------- loaders -- */
 
   useEffect(() => {
     if (!token) return;
@@ -883,107 +423,20 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const applyLoaded = useCallback(
-    (w: LoadedWorkflow) => {
-      setName(w.Name);
-      setDescription(w.Description ?? "");
-      setStatus(w.Status);
-      setUsage(w.usage ?? null);
-
-      const loadedSteps: StepDraft[] = (w.Steps || []).map((s) => ({
-        key: nextKey("step"),
-        id: s.WFStepID,
-        stepName: s.StepName,
-        approverType: s.ApproverType,
-        targetUserId: s.TargetUserID ?? "",
-        targetGroupId: s.TargetGroupID ?? "",
-        targetRoleId: s.TargetRoleID ?? "",
-        approvalMode: s.ApprovalMode ?? "ANY_ONE",
-        rejectAction: s.RejectAction ?? "REJECT_COMPLETELY",
-        approveAction: s.ApproveAction ?? "CONTINUE",
-        approveTargetKey: "",
-        condField: "none",
-        condOp: ">=",
-        condValue: "",
-        dueDays: s.DueDays != null ? String(s.DueDays) : "",
-        commentPolicy: s.CommentPolicy ?? "OPTIONAL",
-        afterApprove: [],
-        afterReject: [],
-        open: (w.Steps || []).length <= 3,
-      }));
-      // jump targets + conditions need the raw list to map ids → keys
-      loadedSteps.forEach((draft, i) => {
-        const src = (w.Steps || [])[i];
-        const cond = parseStepCondition(src.Condition);
-        draft.condField = cond?.field ?? "none";
-        draft.condOp = cond?.op ?? ">=";
-        draft.condValue = cond?.value ?? "";
-        const jumpIdx = (w.Steps || []).findIndex((x) => x.WFStepID === src.ApproveTargetStepID);
-        if (jumpIdx >= 0) draft.approveTargetKey = loadedSteps[jumpIdx].key;
-      });
-
-      const flowDraft = blankFlow();
-      const orderToKey = new Map<number, string>(loadedSteps.map((s, i) => [i, s.key]));
-      for (const r of w.Rules || []) {
-        const v = parseRuleActionValue(r.ActionValue ?? null);
-        const cond = parseStepCondition(r.Condition);
-        const act: ActionDraft = {
-          key: nextKey("act"),
-          name: r.Name,
-          kind: (RULE_ACTIONS.some((a) => a.value === r.Action) ? r.Action : "NOTIFY") as ActionKind,
-          enabled: r.IsActive,
-          condField: cond?.field ?? "none",
-          condOp: cond?.op ?? ">=",
-          condValue: cond?.value ?? "",
-          priority: v.priority ?? "URGENT",
-          slaPolicyId: v.slaPolicyId ?? "",
-          userId: v.userId ?? "",
-          notifyTargetType: v.notifyTargetType ?? "REQUESTER",
-          notifyUserId: v.notifyTargetType === "USER" ? v.notifyTargetId ?? "" : "",
-          notifyGroupId: v.notifyTargetType === "GROUP" ? v.notifyTargetId ?? "" : "",
-          notifyRoleId: v.notifyTargetType === "ROLE" ? v.notifyTargetId ?? "" : "",
-          notifyTitle: v.notifyTitle ?? "",
-          notifyMessage: v.notifyMessage ?? "",
-          jumpToStepKey:
-            typeof v.jumpToStepOrder === "number" ? orderToKey.get(v.jumpToStepOrder) ?? "" : "",
-          open: false,
-        };
-        if (r.Trigger === "ON_SUBMIT") flowDraft.onSubmit.push(act);
-        else if (r.Trigger === "ON_REQUEST_APPROVED") flowDraft.onApproved.push(act);
-        else if (r.Trigger === "ON_REQUEST_REJECTED") flowDraft.onRejected.push(act);
-        else if (r.Trigger === "ON_STEP_APPROVED") {
-          if (typeof v.fireOnStepOrder === "number") {
-            const target = orderToKey.get(v.fireOnStepOrder);
-            const sIdx = loadedSteps.findIndex((s) => s.key === target);
-            if (sIdx >= 0) loadedSteps[sIdx].afterApprove.push(act);
-            else flowDraft.anyStepApproved.push(act);
-          } else flowDraft.anyStepApproved.push(act);
-        } else if (r.Trigger === "ON_STEP_REJECTED") {
-          if (typeof v.fireOnStepOrder === "number") {
-            const target = orderToKey.get(v.fireOnStepOrder);
-            const sIdx = loadedSteps.findIndex((s) => s.key === target);
-            if (sIdx >= 0) loadedSteps[sIdx].afterReject.push(act);
-            else flowDraft.anyStepRejected.push(act);
-          } else flowDraft.anyStepRejected.push(act);
-        }
-      }
-      // any step carrying automations should be open so nothing is hidden
-      loadedSteps.forEach((s) => {
-        if (s.afterApprove.length || s.afterReject.length) s.open = true;
-      });
-
-      setSteps(loadedSteps);
-      setFlow(flowDraft);
-      baseline.current = JSON.stringify({
-        name: w.Name,
-        description: w.Description ?? "",
-        status: w.Status,
-        steps: loadedSteps,
-        flow: flowDraft,
-      });
-    },
-    []
-  );
+  const applyLoaded = useCallback((w: LoadedWorkflow) => {
+    const next = apiToBlocks(w.Steps || [], w.Rules || []);
+    setName(w.Name);
+    setDescription(w.Description ?? "");
+    setStatus(w.Status);
+    setUsage(w.usage ?? null);
+    setBlocks(next);
+    baseline.current = JSON.stringify({
+      name: w.Name,
+      description: w.Description ?? "",
+      status: w.Status,
+      blocks: next,
+    });
+  }, []);
 
   useEffect(() => {
     if (isNew || !token) return;
@@ -999,28 +452,22 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, workflowId, isNew]);
 
-  useEffect(() => {
-    if (isNew && steps.length === 0) {
-      const first = blankStep();
-      setSteps([first]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isNew]);
+  /* ---------------------------------------------------------- block edits -- */
 
-  /* --------------------------------------------------------- step editing -- */
+  const patchBlock = (key: string, p: Partial<Block>) => setBlocks((prev) => patchBy(prev, key, p));
 
-  const patchStep = (key: string, p: Partial<StepDraft>) => setSteps((prev) => patch(prev, key, p));
-
-  const addStepAt = (index: number) =>
-    setSteps((prev) => {
+  const insertAt = (index: number, type: BlockType) => {
+    setBlocks((prev) => {
       const next = [...prev];
-      next.splice(index, 0, blankStep(true));
+      next.splice(index, 0, newBlock(type, type === "APPROVAL" ? { name: `Approval ${countApprovals(next) + 1}` } : {}));
       return next;
     });
+    setPaletteAt(null);
+  };
 
-  const moveStep = (key: string, dir: -1 | 1) =>
-    setSteps((prev) => {
-      const i = prev.findIndex((s) => s.key === key);
+  const moveBlock = (key: string, dir: -1 | 1) =>
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.key === key);
       const j = i + dir;
       if (i < 0 || j < 0 || j >= prev.length) return prev;
       const next = [...prev];
@@ -1028,229 +475,118 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       return next;
     });
 
-  const duplicateStep = (key: string) =>
-    setSteps((prev) => {
-      const i = prev.findIndex((s) => s.key === key);
+  const removeBlock = (key: string) => setBlocks((prev) => prev.filter((b) => b.key !== key));
+
+  const duplicateBlock = (key: string) =>
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.key === key);
       if (i < 0) return prev;
-      const copy: StepDraft = {
-        ...prev[i],
-        key: nextKey("step"),
-        id: undefined,
-        stepName: `${prev[i].stepName || "Step"} (copy)`,
-        afterApprove: prev[i].afterApprove.map((a) => ({ ...a, key: nextKey("act"), open: false })),
-        afterReject: prev[i].afterReject.map((a) => ({ ...a, key: nextKey("act"), open: false })),
-      };
       const next = [...prev];
-      next.splice(i + 1, 0, copy);
+      next.splice(i + 1, 0, cloneBlock(prev[i], { name: `${prev[i].name || "Block"} (copy)` }));
       return next;
     });
 
-  const removeStep = (key: string) => {
-    setSteps((prev) => {
-      const gone = prev.find((s) => s.key === key);
-      if (!gone) return prev;
-      // actions attached to a deleted step would otherwise vanish silently
-      const orphan = [...gone.afterApprove, ...gone.afterReject];
-      if (orphan.length > 0) {
-        setFlow((f) => ({
-          ...f,
-          anyStepApproved: [...f.anyStepApproved, ...gone.afterApprove],
-          anyStepRejected: [...f.anyStepRejected, ...gone.afterReject],
-        }));
-      }
-      return prev.filter((s) => s.key !== key);
-    });
-  };
-
   const onDrop = (targetIndex: number) => {
     if (!dragKey) return;
-    setSteps((prev) => {
-      const from = prev.findIndex((s) => s.key === dragKey);
-      if (from < 0 || from === targetIndex) return prev;
+    setBlocks((prev) => {
+      const from = prev.findIndex((b) => b.key === dragKey);
+      if (from < 0) return prev;
       const next = [...prev];
       const [moved] = next.splice(from, 1);
-      next.splice(targetIndex > from ? targetIndex - 1 : targetIndex, 0, moved);
+      const to = targetIndex > from ? targetIndex - 1 : targetIndex;
+      next.splice(Math.max(0, Math.min(to, next.length)), 0, moved);
       return next;
     });
     setDragKey(null);
     setDragOver(null);
   };
 
-  const laneOps = (get: () => ActionDraft[], set: (v: ActionDraft[]) => void): LaneHandlers => ({
-    onPatch: (key, p) => set(patch(get(), key, p)),
-    onRemove: (key) => set(get().filter((a) => a.key !== key)),
-    onAdd: (kind) => set([...get(), blankAction(kind)]),
-  });
+  function countApprovals(list: Block[]): number {
+    return list.filter((b) => b.type === "APPROVAL").length;
+  }
 
-  const stepLane = (step: StepDraft, which: "afterApprove" | "afterReject") =>
-    laneOps(
-      () => step[which],
-      (v) => patchStep(step.key, { [which]: v } as Partial<StepDraft>)
-    );
-
-  const flowLane = (which: keyof Omit<FlowDraft, "open">) =>
-    laneOps(
-      () => flow[which],
-      (v) => setFlow((f) => ({ ...f, [which]: v }))
-    );
-
-  /* ----------------------------------------------------------- validation -- */
+  /* ------------------------------------------------------------ validation -- */
 
   interface Issue {
     text: string;
-    focusKey?: string;
+    key?: string;
   }
   const issues = useMemo<Issue[]>(() => {
     const out: Issue[] = [];
-    if (!name.trim()) out.push({ text: "The workflow needs a name" });
-    const checkActions = (list: ActionDraft[], owner: string, focusKey?: string) => {
-      for (const a of list) {
-        const at = (t: string) => out.push({ text: `${owner}: ${t}`, focusKey });
-        const cErr = validateConditionInput(a.condField === "none" ? null : a.condField, a.condOp, a.condValue);
-        if (cErr) at(cErr);
-        if (a.kind === "SET_SLA" && !a.slaPolicyId) at("an SLA action needs a policy");
-        if (a.kind === "ASSIGN_TO_USER" && !a.userId) at("an assign action needs a user");
-        if (a.kind === "NOTIFY") {
-          if (a.notifyTargetType === "USER" && !a.notifyUserId) at("notify needs a user");
-          if (a.notifyTargetType === "GROUP" && !a.notifyGroupId) at("notify needs a group");
-          if (a.notifyTargetType === "ROLE" && !a.notifyRoleId) at("notify needs a role");
-        }
-        if (a.kind === "JUMP_TO_STEP" && !a.jumpToStepKey) at("a jump action needs a target step");
-      }
-    };
-    steps.forEach((s, i) => {
-      const label = s.stepName.trim() || `Step ${i + 1}`;
-      if (!s.stepName.trim()) out.push({ text: `Step ${i + 1} has no name`, focusKey: s.key });
-      if (s.approverType === "ROLE" && !s.targetRoleId) out.push({ text: `"${label}": choose a role`, focusKey: s.key });
-      if (s.approverType === "GROUP" && !s.targetGroupId) out.push({ text: `"${label}": choose a group`, focusKey: s.key });
-      if (s.approverType === "USER" && !s.targetUserId) out.push({ text: `"${label}": choose an approver`, focusKey: s.key });
-      if (s.dueDays.trim() !== "") {
-        const n = Number(s.dueDays);
-        if (!Number.isInteger(n) || n < 1 || n > 365)
-          out.push({ text: `"${label}": due days must be a whole number 1-365`, focusKey: s.key });
-      }
-      const cErr = validateConditionInput(s.condField === "none" ? null : s.condField, s.condOp, s.condValue);
-      if (cErr) out.push({ text: `"${label}": ${cErr}`, focusKey: s.key });
-      if (s.approveAction === "JUMP_TO_STEP") {
-        const t = steps.findIndex((x) => x.key === s.approveTargetKey);
-        if (!s.approveTargetKey) out.push({ text: `"${label}": choose a jump target`, focusKey: s.key });
-        else if (t === i) out.push({ text: `"${label}": cannot jump to itself`, focusKey: s.key });
-      }
-      checkActions(s.afterApprove, `"${label}" after approve`, s.key);
-      checkActions(s.afterReject, `"${label}" after reject`, s.key);
-    });
-    checkActions(flow.onSubmit, "On submit");
-    checkActions(flow.onApproved, "On final approval");
-    checkActions(flow.onRejected, "On rejection");
-    checkActions(flow.anyStepApproved, "After any step (approved)");
-    checkActions(flow.anyStepRejected, "After any step (rejected)");
-    return out;
-  }, [name, steps, flow]);
+    if (!name.trim()) out.push({ text: "Give the workflow a name" });
+    blocks.forEach((b, i) => {
+      const label = b.name.trim() || (b.type === "APPROVAL" ? `Approval ${i + 1}` : `Automation ${i + 1}`);
+      const at = (t: string) => out.push({ text: `“${label}”: ${t}`, key: b.key });
+      const cErr = validateConditionInput(b.condField === "none" ? null : b.condField, b.condOp, b.condValue);
+      if (cErr) at(cErr);
 
-  const focusStep = (key?: string) => {
+      if (b.type === "APPROVAL") {
+        if (!b.name.trim()) at("needs a name");
+        if (b.approverType === "ROLE" && !b.targetRoleId) at("choose a role");
+        if (b.approverType === "GROUP" && !b.targetGroupId) at("choose a group");
+        if (b.approverType === "USER" && !b.targetUserId) at("choose an approver");
+        if (b.dueDays.trim() !== "") {
+          const n = Number(b.dueDays);
+          if (!Number.isInteger(n) || n < 1 || n > 365) at("due days must be a whole number from 1 to 365");
+        }
+        if (b.approveAction === "JUMP_TO_STEP") {
+          if (!b.approveTargetKey) at("choose the block to jump to");
+          else if (b.approveTargetKey === b.key) at("cannot jump to itself");
+        }
+      } else {
+        if (!b.enabled) return;
+        if (b.scope === "AFTER_STEP" && boundApprovalIndex(blocks, i) < 0)
+          at("it is set to run after a block's decision but there is no approval block above it — move it below one, or change “runs after”");
+        if (b.actionKind === "SET_SLA" && !b.slaPolicyId) at("choose an SLA policy");
+        if (b.actionKind === "ASSIGN_TO_USER" && !b.userId) at("choose the user to assign");
+        if (b.actionKind === "JUMP_TO_STEP" && !b.jumpToStepKey) at("choose the block to land on");
+        if (b.actionKind === "NOTIFY") {
+          if (b.notifyTargetType === "USER" && !b.notifyUserId) at("choose the user to notify");
+          if (b.notifyTargetType === "GROUP" && !b.notifyGroupId) at("choose the group to notify");
+          if (b.notifyTargetType === "ROLE" && !b.notifyRoleId) at("choose the role to notify");
+        }
+      }
+    });
+    if (approvals.length === 0 && blocks.some((b) => b.type === "ACTION" && b.scope === "AFTER_STEP"))
+      out.push({ text: "There are no approval blocks, so nothing can trigger a step-level action" });
+    return out;
+  }, [name, blocks, approvals]);
+
+  const focus = (key?: string) => {
     if (!key) return;
-    setSteps((prev) => prev.map((s) => (s.key === key ? { ...s, open: true } : s)));
-    const el = stepRefs.current[key];
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setBlocks((prev) => prev.map((b) => (b.key === key ? { ...b, open: true } : b)));
+    refs.current[key]?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   /* ----------------------------------------------------------------- save -- */
 
-  const buildRule = (a: ActionDraft, trigger: string, stepOrder: number | undefined, sortOrder: number) => ({
-    name: nameFor(
-      a,
-      steps,
-      slas.find((s) => s.id === a.slaPolicyId),
-      users.find((u) => u.UserID === a.userId)
-    ),
-    trigger,
-    condition: a.condField === "none" ? null : { field: a.condField, op: a.condOp, value: a.condValue.trim() },
-    action: a.kind,
-    actionValue: {
-      ...(a.kind === "SET_PRIORITY" ? { priority: a.priority } : {}),
-      ...(a.kind === "SET_SLA" ? { slaPolicyId: a.slaPolicyId } : {}),
-      ...(a.kind === "ASSIGN_TO_USER" ? { userId: a.userId } : {}),
-      ...(a.kind === "NOTIFY"
-        ? {
-            notifyTargetType: a.notifyTargetType,
-            notifyTargetId:
-              a.notifyTargetType === "USER"
-                ? a.notifyUserId
-                : a.notifyTargetType === "GROUP"
-                  ? a.notifyGroupId
-                  : a.notifyTargetType === "ROLE"
-                    ? a.notifyRoleId
-                    : "",
-            ...(a.notifyTitle.trim() ? { notifyTitle: a.notifyTitle.trim() } : {}),
-            ...(a.notifyMessage.trim() ? { notifyMessage: a.notifyMessage.trim() } : {}),
-          }
-        : {}),
-      ...(a.kind === "JUMP_TO_STEP"
-        ? { jumpToStepOrder: Math.max(0, steps.findIndex((x) => x.key === a.jumpToStepKey)) }
-        : {}),
-      ...(stepOrder === undefined ? {} : { fireOnStepOrder: stepOrder }),
-    },
-    sortOrder,
-    isActive: a.enabled,
-  });
-
   async function save() {
     setError("");
     if (issues.length > 0) {
-      const first = issues[0];
-      setError(first.text);
-      focusStep(first.focusKey);
+      setError(issues[0].text);
+      focus(issues[0].key);
       return;
     }
-    const stepIndexOf = (key: string) => steps.findIndex((x) => x.key === key);
-    // execution order: submit hooks → per step (approve lane, then reject lane)
-    // → flow-wide step hooks → final verdict hooks
-    const buckets: { lane: ActionDraft[]; trigger: string; stepOrder?: number }[] = [
-      { lane: flow.onSubmit, trigger: "ON_SUBMIT" },
-      ...steps.flatMap(
-        (st, i): { lane: ActionDraft[]; trigger: string; stepOrder: number }[] => [
-          { lane: st.afterApprove, trigger: "ON_STEP_APPROVED", stepOrder: i },
-          { lane: st.afterReject, trigger: "ON_STEP_REJECTED", stepOrder: i },
-        ]
-      ),
-      { lane: flow.anyStepApproved, trigger: "ON_STEP_APPROVED" },
-      { lane: flow.anyStepRejected, trigger: "ON_STEP_REJECTED" },
-      { lane: flow.onApproved, trigger: "ON_REQUEST_APPROVED" },
-      { lane: flow.onRejected, trigger: "ON_REQUEST_REJECTED" },
-    ];
-    let order = 0;
-    const rules = buckets.flatMap((b) => b.lane.map((a) => buildRule(a, b.trigger, b.stepOrder, order++)));
+    const built = blocksToApi(blocks, { slas, users });
+    if (built.skipped.length > 0) {
+      const first = built.skipped[0];
+      setError(`An automation block is set to run after a decision but sits above every approval block — move it below one.`);
+      focus(first.key);
+      return;
+    }
+    const { steps, rules } = built;
 
     const body = {
       name: name.trim(),
       description: description.trim() || null,
       status,
-      steps: steps.map((s, i) => ({
-        ...(s.id ? { id: s.id } : {}),
-        stepName: s.stepName.trim(),
-        stepOrder: i,
-        approverType: s.approverType,
-        targetUserId: s.approverType === "USER" ? s.targetUserId || null : null,
-        targetGroupId: s.approverType === "GROUP" ? s.targetGroupId || null : null,
-        targetRoleId: s.approverType === "ROLE" ? s.targetRoleId || null : null,
-        approvalMode: s.approvalMode,
-        rejectAction: s.rejectAction,
-        approveAction: s.approveAction,
-        approveTargetIndex:
-          s.approveAction === "JUMP_TO_STEP" && s.approveTargetKey
-            ? stepIndexOf(s.approveTargetKey) + 1
-            : null,
-        condition: s.condField === "none" ? null : { field: s.condField, op: s.condOp, value: s.condValue.trim() },
-        dueDays: s.dueDays.trim() === "" ? null : Number(s.dueDays),
-        commentPolicy: s.commentPolicy,
-      })),
+      steps,
       rules,
     };
 
     setSaving(true);
     try {
-      const url = isNew ? "/api/workflows" : `/api/workflows/${workflowId}`;
-      const res = await fetch(url, {
+      const res = await fetch(isNew ? "/api/workflows" : `/api/workflows/${workflowId}`, {
         method: isNew ? "POST" : "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
@@ -1263,22 +599,25 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       const savedId = isNew ? d.WFDefinitionID : workflowId;
       const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
       for (const tid of Array.from(assigned)) {
-        if (initialAssigned.has(tid)) continue;
-        await fetch(`/api/form-templates/${tid}`, {
-          method: "PATCH",
-          headers: h,
-          body: JSON.stringify({ wfDefinitionId: savedId }),
-        });
+        if (!initialAssigned.has(tid))
+          await fetch(`/api/form-templates/${tid}`, {
+            method: "PATCH",
+            headers: h,
+            body: JSON.stringify({ wfDefinitionId: savedId }),
+          });
       }
       for (const tid of Array.from(initialAssigned)) {
-        if (assigned.has(tid)) continue;
-        await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: null }) });
+        if (!assigned.has(tid))
+          await fetch(`/api/form-templates/${tid}`, {
+            method: "PATCH",
+            headers: h,
+            body: JSON.stringify({ wfDefinitionId: null }),
+          });
       }
-      baseline.current = JSON.stringify({ name, description, status, steps, flow });
+      baseline.current = JSON.stringify({ name, description, status, blocks });
       setInitialAssigned(new Set(assigned));
       setSavedAt(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
       if (isNew && savedId) router.replace(`/workflows/${savedId}`);
-      else if (isNew) router.push("/workflows");
       else router.refresh();
     } catch {
       setError("Save failed — check your connection");
@@ -1287,7 +626,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     }
   }
 
-  // Ctrl/Cmd+S
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
@@ -1298,7 +636,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ro, dirty, issues, steps, flow, name, description, status]);
+  }, [ro, dirty, issues, blocks, name, description, status]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -1330,19 +668,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     );
   }
 
-  const totalActions =
-    steps.reduce((n, s) => n + s.afterApprove.length + s.afterReject.length, 0) +
-    flow.onSubmit.length +
-    flow.onApproved.length +
-    flow.onRejected.length +
-    flow.anyStepApproved.length +
-    flow.anyStepRejected.length;
-
-  const laneCommon = { steps, slas, users, groups, roles, disabled: ro };
+  const actionCount = blocks.filter((b) => b.type === "ACTION" && b.enabled).length;
 
   return (
     <AppShell>
-      {/* ---------------- header ---------------- */}
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -1366,34 +695,17 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             onChange={(e) => setDescription(e.target.value)}
           />
           <div className="mt-1 flex flex-wrap items-center gap-3 pl-9 text-[11px] text-ink-faint">
-            <span className="flex items-center gap-1">
-              <Icon name="account_tree" className="text-[14px]" /> {steps.length} step{steps.length === 1 ? "" : "s"}
-            </span>
-            <span className="flex items-center gap-1">
-              <Icon name="bolt" className="text-[14px]" /> {totalActions} automation{totalActions === 1 ? "" : "s"}
-            </span>
-            {usage && (
-              <>
-                <span>{usage.templates} form{usage.templates === 1 ? "" : "s"} use it</span>
-                <span>{usage.liveRequests} live request(s)</span>
-                <span>{usage.decisions} recorded decision(s)</span>
-              </>
-            )}
-            <select
-              className="input w-auto !py-0.5 text-[11px]"
-              disabled={ro}
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              title="Workflow status"
-            >
+            <span>{approvals.length} approval block{approvals.length === 1 ? "" : "s"}</span>
+            <span>{actionCount} automation{actionCount === 1 ? "" : "s"}</span>
+            {usage && <span>{usage.templates} form(s) · {usage.liveRequests} live · {usage.decisions} decisions</span>}
+            <select className="input w-auto !py-0.5 text-[11px]" disabled={ro} value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="ACTIVE">Active</option>
               <option value="DRAFT">Draft</option>
             </select>
           </div>
         </div>
-
         <div className="flex shrink-0 items-center gap-2 lg:pt-6">
-          {savedAt && !dirty && <span className="text-[11px] text-ink-faint">saved at {savedAt}</span>}
+          {savedAt && !dirty && <span className="text-[11px] text-ink-faint">saved {savedAt}</span>}
           {dirty && <span className="badge bg-amber-100 text-amber-800">unsaved changes</span>}
           <button onClick={save} disabled={saving || ro || (!dirty && !isNew)} className="btn-primary">
             <Icon name="save" className="text-[18px]" />
@@ -1410,414 +722,555 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       )}
 
       <div className="grid gap-6 xl:grid-cols-12">
-        {/* ---------------- canvas ---------------- */}
+        {/* canvas */}
         <div className="xl:col-span-8">
-          <div className="mx-auto max-w-3xl">
-            {/* start node */}
-            <div className="rounded-lg border border-surface-border bg-white">
-              <button
-                type="button"
-                onClick={() => setFlow((f) => ({ ...f, open: !f.open }))}
-                className="flex w-full items-center gap-3 px-4 py-3 text-left"
-              >
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-green-100 text-green-700">
-                  <Icon name="play_arrow" className="text-[16px]" />
-                </span>
-                <span className="flex-1">
-                  <span className="block text-sm font-semibold text-ink">Requester submits</span>
-                  <span className="block text-[11px] text-ink-faint">
-                    Validation runs first, then {flow.onSubmit.length} automation
-                    {flow.onSubmit.length === 1 ? "" : "s"} here
-                  </span>
-                </span>
-                <Icon name={flow.open ? "expand_less" : "expand_more"} className="text-ink-faint" />
-              </button>
-              {flow.open && (
-                <Section title="Immediately after submit" hint="Runs before the first approval step.">
-                  <div className="space-y-3">
-                    <ActionLane title="On submit" icon="bolt" actions={flow.onSubmit} {...laneCommon} {...flowLane("onSubmit")} />
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <ActionLane
-                        title="After final approval"
-                        icon="verified"
-                        actions={flow.onApproved}
-                        {...laneCommon}
-                        {...flowLane("onApproved")}
-                      />
-                      <ActionLane
-                        title="After rejection"
-                        icon="block"
-                        actions={flow.onRejected}
-                        {...laneCommon}
-                        {...flowLane("onRejected")}
-                      />
-                    </div>
-                    {(flow.anyStepApproved.length > 0 || flow.anyStepRejected.length > 0) && (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <ActionLane
-                          title="After any step · approved"
-                          icon="unfold_more"
-                          actions={flow.anyStepApproved}
-                          {...laneCommon}
-                          {...flowLane("anyStepApproved")}
-                        />
-                        <ActionLane
-                          title="After any step · rejected"
-                          icon="unfold_more"
-                          actions={flow.anyStepRejected}
-                          {...laneCommon}
-                          {...flowLane("anyStepRejected")}
-                        />
-                      </div>
-                    )}
-                    <p className="text-[11px] text-ink-faint">
-                      &ldquo;After any step&rdquo; lanes are flow-wide (no step binding) and are kept for rules created
-                      before per-step automation existed.
-                    </p>
-                  </div>
-                </Section>
-              )}
-            </div>
+          <div className="mx-auto max-w-3xl space-y-2">
+            {blocks.length === 0 && (
+              <div className="card flex flex-col items-center gap-3 p-10 text-center">
+                <Icon name="account_tree" className="text-[34px] text-ink-faint" />
+                <p className="text-sm font-semibold text-ink">Your canvas is empty — build the flow block by block</p>
+                <p className="max-w-md text-xs text-ink-soft">
+                  Add an approval block when someone has to decide, an automation block when something should
+                  happen, and chain them in whatever order the process needs.
+                </p>
+                {paletteAt === 0 ? (
+                  <Palette onPick={(t) => insertAt(0, t)} onClose={() => setPaletteAt(null)} />
+                ) : (
+                  !ro && (
+                    <button type="button" onClick={() => setPaletteAt(0)} className="btn-primary">
+                      <Icon name="add" className="text-[18px]" /> Add your first block
+                    </button>
+                  )
+                )}
+              </div>
+            )}
 
-            {steps.map((s, i) => {
-              const ap = APPROVER_TYPES.find((t) => t.value === s.approverType);
-              const targetName =
-                s.approverType === "USER"
-                  ? users.find((u) => u.UserID === s.targetUserId)?.Name
-                  : s.approverType === "GROUP"
-                    ? groups.find((g) => g.id === s.targetGroupId)?.name
-                    : s.approverType === "ROLE"
-                      ? roles.find((r) => r.id === s.targetRoleId)?.name
-                      : null;
-              const nActions = s.afterApprove.length + s.afterReject.length;
-              const stepIssues = issues.filter((x) => x.focusKey === s.key).length;
+            {blocks.map((b, i) => {
+              const isApproval = b.type === "APPROVAL";
+              const meta = isApproval
+                ? { icon: "verified_user", label: "Approval", ring: "border-surface-border", text: "text-primary-dark" }
+                : ACTION_META[b.actionKind];
+              const stepIssues = issues.filter((x) => x.key === b.key).length;
+              const approvalIdx = isApproval ? approvals.findIndex((a) => a.key === b.key) : -1;
               return (
-                <div key={s.key}>
-                  <Connector onAdd={ro ? undefined : () => addStepAt(i)} over={dragOver === i} />
+                <div key={b.key}>
                   <div
-                    ref={(el) => {
-                      stepRefs.current[s.key] = el;
-                    }}
                     onDragOver={(e) => {
                       if (ro) return;
                       e.preventDefault();
                       setDragOver(i);
                     }}
                     onDrop={() => !ro && onDrop(i)}
-                    className={`card overflow-hidden transition-shadow ${
-                      dragOver === i ? "ring-2 ring-primary/40" : ""
-                    } ${stepIssues > 0 ? "border-amber-300" : ""}`}
+                    className={`card overflow-hidden ${dragOver === i ? "ring-2 ring-primary/40" : ""} ${
+                      stepIssues > 0 ? "border-amber-300" : ""
+                    }`}
                   >
-                    {/* header */}
                     <div className="flex items-center gap-2 px-3 py-2.5">
                       <button
                         type="button"
-                        disabled={ro}
                         draggable={!ro}
-                        onDragStart={() => setDragKey(s.key)}
+                        disabled={ro}
+                        onDragStart={() => setDragKey(b.key)}
                         onDragEnd={() => {
                           setDragKey(null);
                           setDragOver(null);
                         }}
-                        onClick={() => patchStep(s.key, { open: !s.open })}
-                        className="flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary-dark"
-                        title="Drag to reorder · click to expand"
+                        onClick={() => patchBlock(b.key, { open: !b.open })}
+                        title="Drag to reorder · click to open"
+                        className="flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-full bg-surface-muted"
                       >
-                        {i + 1}
+                        <Icon
+                          name={meta.icon}
+                          className={`text-[16px] ${
+                            stepIssues > 0 ? "text-amber-600" : !b.enabled ? "text-ink-faint" : isApproval ? "text-primary-dark" : meta.text
+                          }`}
+                        />
                       </button>
                       <input
                         className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink outline-none hover:border-surface-border focus:border-primary focus:bg-white"
-                        value={s.stepName}
+                        value={b.name}
                         disabled={ro}
-                        placeholder={`Step ${i + 1} name`}
-                        onChange={(e) => patchStep(s.key, { stepName: e.target.value })}
+                        placeholder={isApproval ? "Approval block name" : "Automation label (optional)"}
+                        onChange={(e) => patchBlock(b.key, { name: e.target.value })}
                       />
-                      <div className="hidden items-center gap-1.5 text-[11px] text-ink-soft sm:flex">
-                        <span className="badge bg-surface-muted">
-                          <Icon name={ap?.icon ?? "person"} className="mr-1 text-[13px]" />
-                          {ap?.label ?? s.approverType}
-                          {targetName ? ` · ${targetName}` : ""}
-                        </span>
-                        {s.approvalMode === "ALL" && <span className="badge bg-indigo-50 text-indigo-700">all must approve</span>}
-                        {s.dueDays.trim() !== "" && (
-                          <span className="badge bg-surface-muted">{s.dueDays}d due</span>
+                      <span className="hidden shrink-0 text-[11px] text-ink-soft sm:block">
+                        {isApproval ? (
+                          <>
+                            <span className="badge mr-1 bg-surface-muted">
+                              approval {approvalIdx + 1} · {APPROVER_TYPES.find((t) => t.value === b.approverType)?.label ?? b.approverType}
+                            </span>
+                            {b.approvalMode === "ALL" && <span className="badge bg-indigo-50 text-indigo-700">all must approve</span>}
+                          </>
+                        ) : (
+                          <>
+                            <span className={`badge mr-1 ${meta.ring} bg-white`}>{meta.label}</span>
+                            <span className="text-ink-faint">{whenSummary(b, blocks)}</span>
+                          </>
                         )}
-                        {s.condField !== "none" && (
-                          <span className="badge bg-surface-muted" title="Conditional step">
-                            <Icon name="if_while" className="text-[13px]" />
-                          </span>
-                        )}
-                        {nActions > 0 && (
-                          <span className="badge bg-violet-50 text-violet-700">
-                            <Icon name="bolt" className="text-[13px]" /> {nActions}
-                          </span>
-                        )}
-                      </div>
+                      </span>
+                      {!b.enabled && <span className="badge shrink-0 bg-gray-100 text-ink-faint">off</span>}
                       {stepIssues > 0 && (
-                        <span className="badge bg-amber-100 text-amber-800" title="This step needs attention">
+                        <span className="badge shrink-0 bg-amber-100 text-amber-800" title="Needs attention">
                           {stepIssues}
                         </span>
                       )}
-                      {!ro && (
-                        <div className="flex items-center">
-                          <button type="button" className="icon-btn !h-7 !w-7" title="Move up" onClick={() => moveStep(s.key, -1)}>
-                            <Icon name="keyboard_arrow_up" className="text-[18px]" />
-                          </button>
-                          <button type="button" className="icon-btn !h-7 !w-7" title="Move down" onClick={() => moveStep(s.key, 1)}>
-                            <Icon name="keyboard_arrow_down" className="text-[18px]" />
-                          </button>
-                          <button type="button" className="icon-btn !h-7 !w-7" title="Expand / collapse" onClick={() => patchStep(s.key, { open: !s.open })}>
-                            <Icon name={s.open ? "expand_less" : "expand_more"} className="text-[18px]" />
-                          </button>
-                        </div>
-                      )}
+                      <div className="flex shrink-0 items-center">
+                        <button type="button" className="icon-btn !h-7 !w-7" title="Move up" onClick={() => moveBlock(b.key, -1)}>
+                          <Icon name="keyboard_arrow_up" className="text-[18px]" />
+                        </button>
+                        <button type="button" className="icon-btn !h-7 !w-7" title="Move down" onClick={() => moveBlock(b.key, 1)}>
+                          <Icon name="keyboard_arrow_down" className="text-[18px]" />
+                        </button>
+                        <button
+                          type="button"
+                          className="icon-btn !h-7 !w-7"
+                          title={b.open ? "Collapse" : "Open"}
+                          onClick={() => patchBlock(b.key, { open: !b.open })}
+                        >
+                          <Icon name={b.open ? "expand_less" : "expand_more"} className="text-[18px]" />
+                        </button>
+                      </div>
                     </div>
 
-                    {s.open && (
-                      <>
-                        <Section title="Who decides" hint={ap?.hint}>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Segmented
-                              disabled={ro}
-                              value={s.approverType}
-                              onChange={(v) => patchStep(s.key, { approverType: v })}
-                              options={APPROVER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
-                            />
-                            {s.approverType === "USER" && (
-                              <select
-                                className="input !w-56 !py-1.5 text-xs"
-                                disabled={ro}
-                                value={s.targetUserId}
-                                onChange={(e) => patchStep(s.key, { targetUserId: e.target.value })}
-                              >
-                                <option value="">— choose a user —</option>
-                                {users.map((u) => (
-                                  <option key={u.UserID} value={u.UserID}>
-                                    {u.Name} · {u.Email}
-                                  </option>
-                                ))}
-                              </select>
+                    {b.open && (
+                      <div className="border-t border-surface-border/70">
+                        {isApproval ? (
+                          <>
+                            <div className="px-4 py-3">
+                              <label className="label">Who decides</label>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <Segmented
+                                  disabled={ro}
+                                  value={b.approverType}
+                                  onChange={(v) => patchBlock(b.key, { approverType: v })}
+                                  options={APPROVER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+                                />
+                                {(b.approverType === "USER" || b.approverType === "GROUP" || b.approverType === "ROLE") && (
+                                  <select
+                                    className="input !w-56 !py-1.5 text-xs"
+                                    disabled={ro}
+                                    value={b.approverType === "USER" ? b.targetUserId : b.approverType === "GROUP" ? b.targetGroupId : b.targetRoleId}
+                                    onChange={(e) =>
+                                      patchBlock(
+                                        b.key,
+                                        b.approverType === "USER"
+                                          ? { targetUserId: e.target.value }
+                                          : b.approverType === "GROUP"
+                                            ? { targetGroupId: e.target.value }
+                                            : { targetRoleId: e.target.value }
+                                      )
+                                    }
+                                  >
+                                    <option value="">— choose —</option>
+                                    {b.approverType === "USER" &&
+                                      users.map((u) => (
+                                        <option key={u.UserID} value={u.UserID}>
+                                          {u.Name} · {u.Email}
+                                        </option>
+                                      ))}
+                                    {b.approverType === "GROUP" &&
+                                      groups.map((g) => (
+                                        <option key={g.id} value={g.id}>
+                                          {g.name}
+                                        </option>
+                                      ))}
+                                    {b.approverType === "ROLE" &&
+                                      roles.map((r) => (
+                                        <option key={r.id} value={r.id}>
+                                          {r.name}
+                                        </option>
+                                      ))}
+                                  </select>
+                                )}
+                              </div>
+                              <p className="mt-1 text-[11px] text-ink-faint">
+                                {APPROVER_TYPES.find((t) => t.value === b.approverType)?.hint}
+                              </p>
+                            </div>
+
+                            <div className="grid gap-3 border-t border-surface-border/70 px-4 py-3 sm:grid-cols-4">
+                              <Field label="Quorum">
+                                <Segmented
+                                  disabled={ro}
+                                  value={b.approvalMode}
+                                  onChange={(v) => patchBlock(b.key, { approvalMode: v })}
+                                  options={QUORUMS}
+                                />
+                              </Field>
+                              <Field label="Comments">
+                                <select
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  value={b.commentPolicy}
+                                  onChange={(e) => patchBlock(b.key, { commentPolicy: e.target.value })}
+                                >
+                                  {COMMENT_POLICIES.map((c) => (
+                                    <option key={c.value} value={c.value}>
+                                      {c.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                              <Field label="Due (days)">
+                                <input
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  inputMode="numeric"
+                                  placeholder="none"
+                                  value={b.dueDays}
+                                  onChange={(e) => patchBlock(b.key, { dueDays: e.target.value })}
+                                />
+                              </Field>
+                              <Field label="On reject">
+                                <select
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  value={b.rejectAction}
+                                  onChange={(e) => patchBlock(b.key, { rejectAction: e.target.value })}
+                                >
+                                  {REJECT_ACTIONS.map((r) => (
+                                    <option key={r.value} value={r.value}>
+                                      {r.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                            </div>
+
+                            <div className="grid gap-3 border-t border-surface-border/70 px-4 py-3 sm:grid-cols-2">
+                              <Field label="On approve">
+                                <select
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  value={b.approveAction}
+                                  onChange={(e) => patchBlock(b.key, { approveAction: e.target.value })}
+                                >
+                                  {APPROVE_ACTIONS.map((a) => (
+                                    <option key={a.value} value={a.value}>
+                                      {a.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                              {b.approveAction === "JUMP_TO_STEP" && (
+                                <Field label="Jump to block">
+                                  <select
+                                    className="input !py-1.5 text-xs"
+                                    disabled={ro}
+                                    value={b.approveTargetKey}
+                                    onChange={(e) => patchBlock(b.key, { approveTargetKey: e.target.value })}
+                                  >
+                                    <option value="">— choose —</option>
+                                    {approvals.map((a, ai) => (
+                                      <option key={a.key} value={a.key} disabled={a.key === b.key}>
+                                        {ai + 1}. {a.name || "Untitled"}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </Field>
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <div className="space-y-3 px-4 py-3">
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <Field label="This block does">
+                                <select
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  value={b.actionKind}
+                                  onChange={(e) => patchBlock(b.key, { actionKind: e.target.value as ActionKind })}
+                                >
+                                  {RULE_ACTIONS.map((a) => (
+                                    <option key={a.value} value={a.value}>
+                                      {a.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                              <Field label="Runs after">
+                                <select
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  value={b.scope}
+                                  onChange={(e) => patchBlock(b.key, { scope: e.target.value as RunScope })}
+                                >
+                                  {(Object.keys(SCOPE_LABELS) as RunScope[]).map((s) => (
+                                    <option key={s} value={s}>
+                                      {SCOPE_LABELS[s]}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                            </div>
+
+                            {(b.scope === "AFTER_STEP" || b.scope === "ANY_STEP") && (
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">On decision</span>
+                                <Segmented
+                                  disabled={ro}
+                                  value={b.decision}
+                                  onChange={(v) => patchBlock(b.key, { decision: v as Decision })}
+                                  options={[
+                                    { value: "APPROVED", label: "Approve" },
+                                    { value: "REJECTED", label: "Reject" },
+                                    { value: "BOTH", label: "Both" },
+                                  ]}
+                                />
+                              </div>
                             )}
-                            {s.approverType === "GROUP" && (
-                              <select
-                                className="input !w-56 !py-1.5 text-xs"
-                                disabled={ro}
-                                value={s.targetGroupId}
-                                onChange={(e) => patchStep(s.key, { targetGroupId: e.target.value })}
-                              >
-                                <option value="">— choose a group —</option>
-                                {groups.map((g) => (
-                                  <option key={g.id} value={g.id}>
-                                    {g.name}
-                                  </option>
-                                ))}
-                              </select>
+
+                            {b.scope === "AFTER_STEP" && (
+                              <p className="text-[11px] text-ink-faint">
+                                {boundApprovalIndex(blocks, i) < 0 ? (
+                                  <span className="text-danger">
+                                    Nothing to attach to — drag this block below an approval block, or pick another
+                                    “runs after”.
+                                  </span>
+                                ) : (
+                                  <>
+                                    Attached to “{approvalNameAt(blocks, boundApprovalIndex(blocks, i))}”. Move this
+                                    block between approvals to re-target it.
+                                  </>
+                                )}
+                              </p>
                             )}
-                            {s.approverType === "ROLE" && (
-                              <select
-                                className="input !w-56 !py-1.5 text-xs"
-                                disabled={ro}
-                                value={s.targetRoleId}
-                                onChange={(e) => patchStep(s.key, { targetRoleId: e.target.value })}
-                              >
-                                <option value="">— choose a role —</option>
-                                {roles.map((r) => (
-                                  <option key={r.id} value={r.id}>
-                                    {r.name}
-                                  </option>
-                                ))}
-                              </select>
-                            )}
-                          </div>
-                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                            <div>
-                              <label className="label">Quorum</label>
+
+                            {b.actionKind === "SET_PRIORITY" && (
                               <Segmented
                                 disabled={ro}
-                                value={s.approvalMode}
-                                onChange={(v) => patchStep(s.key, { approvalMode: v })}
-                                options={APPROVAL_MODES}
+                                value={b.priority}
+                                onChange={(v) => patchBlock(b.key, { priority: v })}
+                                options={PRIORITY_VALUES.map((p) => ({ value: p, label: p }))}
                               />
-                            </div>
-                            <div>
-                              <label className="label">Comment policy</label>
-                              <select
-                                className="input !py-1.5 text-xs"
-                                disabled={ro}
-                                value={s.commentPolicy}
-                                onChange={(e) => patchStep(s.key, { commentPolicy: e.target.value })}
-                              >
-                                {COMMENT_POLICIES.map((c) => (
-                                  <option key={c.value} value={c.value}>
-                                    {c.label}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="label">Respond within (days)</label>
-                              <input
-                                className="input !py-1.5 text-xs"
-                                disabled={ro}
-                                inputMode="numeric"
-                                placeholder="no due date"
-                                value={s.dueDays}
-                                onChange={(e) => patchStep(s.key, { dueDays: e.target.value })}
-                              />
-                            </div>
-                          </div>
-                        </Section>
+                            )}
 
-                        <Section title="When this step applies" hint="Leave as “Always” to run on every request.">
+                            {b.actionKind === "SET_SLA" && (
+                              <Field label="SLA policy">
+                                <select
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  value={b.slaPolicyId}
+                                  onChange={(e) => patchBlock(b.key, { slaPolicyId: e.target.value })}
+                                >
+                                  <option value="">— choose a policy —</option>
+                                  {slas.map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                      {s.name}
+                                      {s.isDefault ? " (default)" : ""}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                            )}
+
+                            {b.actionKind === "ASSIGN_TO_USER" && (
+                              <Field label="Assign to">
+                                <select className="input !py-1.5 text-xs" disabled={ro} value={b.userId} onChange={(e) => patchBlock(b.key, { userId: e.target.value })}>
+                                  <option value="">— choose a user —</option>
+                                  {users.map((u) => (
+                                    <option key={u.UserID} value={u.UserID}>
+                                      {u.Name} · {u.Email}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                            )}
+
+                            {b.actionKind === "NOTIFY" && (
+                              <div className="grid gap-3 sm:grid-cols-2">
+                                <Field label="Who">
+                                  <select
+                                    className="input !py-1.5 text-xs"
+                                    disabled={ro}
+                                    value={b.notifyTargetType}
+                                    onChange={(e) => patchBlock(b.key, { notifyTargetType: e.target.value })}
+                                  >
+                                    <option value="REQUESTER">The requester</option>
+                                    <option value="DEPARTMENT_MANAGER">Requester&apos;s department manager</option>
+                                    <option value="USER">A specific user</option>
+                                    <option value="GROUP">All members of a group</option>
+                                    <option value="ROLE">All users with a role</option>
+                                  </select>
+                                </Field>
+                                {b.notifyTargetType === "USER" && (
+                                  <Field label="User">
+                                    <select className="input !py-1.5 text-xs" disabled={ro} value={b.notifyUserId} onChange={(e) => patchBlock(b.key, { notifyUserId: e.target.value })}>
+                                      <option value="">— choose —</option>
+                                      {users.map((u) => (
+                                        <option key={u.UserID} value={u.UserID}>
+                                          {u.Name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </Field>
+                                )}
+                                {b.notifyTargetType === "GROUP" && (
+                                  <Field label="Group">
+                                    <select className="input !py-1.5 text-xs" disabled={ro} value={b.notifyGroupId} onChange={(e) => patchBlock(b.key, { notifyGroupId: e.target.value })}>
+                                      <option value="">— choose —</option>
+                                      {groups.map((g) => (
+                                        <option key={g.id} value={g.id}>
+                                          {g.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </Field>
+                                )}
+                                {b.notifyTargetType === "ROLE" && (
+                                  <Field label="Role">
+                                    <select className="input !py-1.5 text-xs" disabled={ro} value={b.notifyRoleId} onChange={(e) => patchBlock(b.key, { notifyRoleId: e.target.value })}>
+                                      <option value="">— choose —</option>
+                                      {roles.map((r) => (
+                                        <option key={r.id} value={r.id}>
+                                          {r.name}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </Field>
+                                )}
+                                <input
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  placeholder="Title (optional)"
+                                  value={b.notifyTitle}
+                                  onChange={(e) => patchBlock(b.key, { notifyTitle: e.target.value })}
+                                />
+                                <input
+                                  className="input !py-1.5 text-xs"
+                                  disabled={ro}
+                                  placeholder="Message (optional)"
+                                  value={b.notifyMessage}
+                                  onChange={(e) => patchBlock(b.key, { notifyMessage: e.target.value })}
+                                />
+                              </div>
+                            )}
+
+                            {b.actionKind === "JUMP_TO_STEP" && (
+                              <Field label="Land on approval block">
+                                <select className="input !py-1.5 text-xs" disabled={ro} value={b.jumpToStepKey} onChange={(e) => patchBlock(b.key, { jumpToStepKey: e.target.value })}>
+                                  <option value="">— choose —</option>
+                                  {approvals.map((a, ai) => (
+                                    <option key={a.key} value={a.key}>
+                                      {ai + 1}. {a.name || "Untitled"}
+                                    </option>
+                                  ))}
+                                </select>
+                              </Field>
+                            )}
+                          </div>
+                        )}
+
+                        {/* shared: when it applies at all */}
+                        <div className="flex flex-wrap items-center gap-2 border-t border-surface-border/70 px-4 py-3">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
+                            {isApproval ? "This block applies when" : "Only when"}
+                          </span>
                           <ConditionRow
                             disabled={ro}
-                            field={s.condField}
-                            op={s.condOp}
-                            value={s.condValue}
-                            onChange={(p) => patchStep(s.key, p)}
+                            field={b.condField}
+                            op={b.condOp}
+                            value={b.condValue}
+                            onChange={(p) => patchBlock(b.key, p)}
                           />
-                        </Section>
-
-                        <Section
-                          title="On approve"
-                          right={
-                            <select
-                              className="input w-auto !py-1 text-xs"
-                              disabled={ro}
-                              value={s.approveAction}
-                              onChange={(e) => patchStep(s.key, { approveAction: e.target.value })}
-                            >
-                              {APPROVE_ACTIONS.map((a) => (
-                                <option key={a.value} value={a.value}>
-                                  {a.label}
-                                </option>
-                              ))}
-                            </select>
-                          }
-                        >
-                          {s.approveAction === "JUMP_TO_STEP" && (
-                            <select
-                              className="input mb-2 !w-64 !py-1.5 text-xs"
-                              disabled={ro}
-                              value={s.approveTargetKey}
-                              onChange={(e) => patchStep(s.key, { approveTargetKey: e.target.value })}
-                            >
-                              <option value="">— land on step —</option>
-                              {steps.map((x, xi) => (
-                                <option key={x.key} value={x.key} disabled={xi === i}>
-                                  {xi + 1}. {x.stepName || "Untitled step"}
-                                </option>
-                              ))}
-                            </select>
+                          {condText(b) && (
+                            <span className="rounded bg-surface-muted px-1.5 py-0.5 text-[10px] text-ink-soft">
+                              {condText(b)}
+                            </span>
                           )}
-                          <ActionLane
-                            title="Then run, in order"
-                            icon="bolt"
-                            actions={s.afterApprove}
-                            {...laneCommon}
-                            {...stepLane(s, "afterApprove")}
-                          />
-                        </Section>
-
-                        <Section title="On reject">
-                          <div className="mb-2 flex flex-wrap items-center gap-2">
-                            <span className="text-[11px] text-ink-faint">then</span>
-                            <Segmented
-                              disabled={ro}
-                              value={s.rejectAction}
-                              onChange={(v) => patchStep(s.key, { rejectAction: v })}
-                              options={REJECT_ACTIONS}
-                            />
-                          </div>
-                          <ActionLane
-                            title="Then run, in order"
-                            icon="bolt"
-                            actions={s.afterReject}
-                            {...laneCommon}
-                            {...stepLane(s, "afterReject")}
-                          />
-                        </Section>
+                        </div>
 
                         {!ro && (
-                          <div className="flex items-center justify-end gap-2 border-t border-surface-border/70 px-3 py-2">
-                            <button
-                              type="button"
-                              onClick={() => duplicateStep(s.key)}
-                              className="text-[11px] font-medium text-ink-soft hover:text-primary"
-                            >
+                          <div className="flex items-center justify-end gap-3 border-t border-surface-border/70 px-3 py-2 text-[11px] font-medium">
+                            {!isApproval && (
+                              <button
+                                type="button"
+                                onClick={() => patchBlock(b.key, { enabled: !b.enabled })}
+                                className="text-ink-soft hover:text-primary"
+                              >
+                                {b.enabled ? "Pause" : "Resume"}
+                              </button>
+                            )}
+                            <button type="button" onClick={() => duplicateBlock(b.key)} className="text-ink-soft hover:text-primary">
                               Duplicate
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => removeStep(s.key)}
-                              className="text-[11px] font-medium text-ink-soft hover:text-danger"
-                            >
-                              Delete step
+                            <button type="button" onClick={() => removeBlock(b.key)} className="text-ink-soft hover:text-danger">
+                              Delete
                             </button>
                           </div>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
+
+                  {/* insertion point */}
+                  {!ro && (
+                    <div className="py-1">
+                      {paletteAt === i + 1 ? (
+                        <Palette onPick={(t) => insertAt(i + 1, t)} onClose={() => setPaletteAt(null)} />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setPaletteAt(i + 1)}
+                          className="mx-auto flex h-6 w-full max-w-xs items-center justify-center gap-1 rounded border border-dashed border-surface-border text-[11px] text-ink-faint hover:border-primary hover:text-primary"
+                        >
+                          <Icon name="add" className="text-[14px]" /> block after this
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
 
-            <Connector onAdd={ro ? undefined : () => addStepAt(steps.length)} over={dragOver === steps.length} />
-
-            {/* end node */}
-            <div className="rounded-lg border border-surface-border bg-white p-3">
-              <div className="flex items-center gap-3">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-100 text-gray-600">
-                  <Icon name="flag" className="text-[16px]" />
-                </span>
-                <span className="flex-1 text-sm font-semibold text-ink">
-                  {steps.length === 0 ? "Approved immediately (no steps)" : "Approved when the last step passes"}
-                </span>
-              </div>
-              {!ro && (
-                <button
-                  type="button"
-                  onClick={() => addStepAt(steps.length)}
-                  className="mt-2 flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                >
-                  <Icon name="add" className="text-[15px]" /> Add an approval step
-                </button>
-              )}
-            </div>
+            {blocks.length > 0 &&
+              (paletteAt === -1 ? (
+                <Palette onPick={(t) => insertAt(0, t)} onClose={() => setPaletteAt(null)} />
+              ) : (
+                !ro && (
+                  <button
+                    type="button"
+                    onClick={() => setPaletteAt(-1)}
+                    className="mx-auto flex h-6 w-full max-w-xs items-center justify-center gap-1 rounded border border-dashed border-surface-border text-[11px] text-ink-faint hover:border-primary hover:text-primary"
+                  >
+                    <Icon name="add" className="text-[14px]" /> block before the first one
+                  </button>
+                )
+              ))}
           </div>
         </div>
 
-        {/* ---------------- rail ---------------- */}
+        {/* rail */}
         <div className="space-y-4 xl:col-span-4">
           <div className="card p-4">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Flow map</h3>
-            <ol className="space-y-1.5">
-              <li className="flex items-center gap-2 text-xs text-ink-soft">
-                <Icon name="play_arrow" className="text-[14px] text-green-600" /> Submit
-                {flow.onSubmit.length > 0 && <span className="text-violet-600">· {flow.onSubmit.length} ⚡</span>}
-              </li>
-              {steps.map((s, i) => (
-                <li key={s.key}>
-                  <button
-                    type="button"
-                    onClick={() => focusStep(s.key)}
-                    className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-surface-muted"
-                  >
-                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary-dark">
-                      {i + 1}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-ink">{s.stepName || "Untitled step"}</span>
-                    {s.afterApprove.length + s.afterReject.length > 0 && (
-                      <span className="text-violet-600">{s.afterApprove.length + s.afterReject.length} ⚡</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-              <li className="flex items-center gap-2 text-xs text-ink-soft">
-                <Icon name="flag" className="text-[14px] text-gray-500" /> Close
-              </li>
-            </ol>
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Your flow</h3>
+            {blocks.length === 0 ? (
+              <p className="text-xs text-ink-faint">Empty — nothing runs yet.</p>
+            ) : (
+              <ol className="space-y-1">
+                {blocks.map((b, i) => (
+                  <li key={b.key}>
+                    <button
+                      type="button"
+                      onClick={() => focus(b.key)}
+                      className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-surface-muted"
+                    >
+                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[9px] font-bold text-ink-soft">
+                        {i + 1}
+                      </span>
+                      <Icon
+                        name={b.type === "APPROVAL" ? "verified_user" : ACTION_META[b.actionKind].icon}
+                        className={`text-[14px] ${b.type === "APPROVAL" ? "text-primary" : ACTION_META[b.actionKind].text} ${
+                          b.enabled ? "" : "opacity-40"
+                        }`}
+                      />
+                      <span className="min-w-0 flex-1 truncate text-ink">{b.name || (b.type === "APPROVAL" ? "Untitled approval" : "Untitled automation")}</span>
+                      {b.condField !== "none" && <Icon name="if_while" className="text-[13px] text-ink-faint" />}
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            )}
           </div>
 
           <div className={`card p-4 ${issues.length > 0 ? "border-amber-300" : ""}`}>
@@ -1827,9 +1280,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             </h3>
             {issues.length === 0 ? (
               <p className="text-xs text-green-700">
-                {steps.length === 0
-                  ? "No steps — requests are approved as soon as they are submitted. Add a step if that is not intended."
-                  : "Everything checks out. Save to publish this flow."}
+                {approvals.length === 0
+                  ? "No approval blocks: every request is approved the moment it is submitted. Fine for automations, intentional?"
+                  : "Ready. Save to publish."}
               </p>
             ) : (
               <ul className="space-y-1">
@@ -1837,7 +1290,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                   <li key={i}>
                     <button
                       type="button"
-                      onClick={() => focusStep(x.focusKey)}
+                      onClick={() => focus(x.key)}
                       className="flex w-full items-start gap-1.5 rounded px-1 py-0.5 text-left text-xs text-ink-soft hover:bg-amber-50"
                     >
                       <Icon name="error" className="mt-px shrink-0 text-[14px] text-amber-600" />
@@ -1852,77 +1305,41 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           <div className="card p-4">
             <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Used by forms</h3>
             {templates.length === 0 && <p className="text-xs text-ink-faint">No form templates yet.</p>}
-            <div className="max-h-64 space-y-1 overflow-y-auto">
-              {templates.map((t) => {
-                const on = assigned.has(t.FormTemplateID);
-                const takenByOther = !!t.WFDefinitionID && (!isNew || workflowId !== null) && t.WFDefinitionID !== workflowId;
-                return (
-                  <label
-                    key={t.FormTemplateID}
-                    className={`flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-surface-muted ${
-                      ro ? "cursor-not-allowed opacity-70" : ""
-                    }`}
-                    title={takenByOther ? "Currently attached to another workflow — checking moves it here" : undefined}
-                  >
-                    <input
-                      type="checkbox"
-                      className="h-3.5 w-3.5"
-                      disabled={ro}
-                      checked={on}
-                      onChange={() =>
-                        setAssigned((prev) => {
-                          const n = new Set(prev);
-                          if (n.has(t.FormTemplateID)) n.delete(t.FormTemplateID);
-                          else n.add(t.FormTemplateID);
-                          return n;
-                        })
-                      }
-                    />
-                    <span className="min-w-0 flex-1 truncate text-ink">{t.Name}</span>
-                    <span className={`text-[10px] ${t.Status === "ACTIVE" ? "text-green-600" : "text-ink-faint"}`}>
-                      {t.Status === "ACTIVE" ? "live" : t.Status.toLowerCase()}
-                    </span>
-                  </label>
-                );
-              })}
+            <div className="max-h-56 space-y-1 overflow-y-auto">
+              {templates.map((t) => (
+                <label key={t.FormTemplateID} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-surface-muted">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5"
+                    disabled={ro}
+                    checked={assigned.has(t.FormTemplateID)}
+                    onChange={() =>
+                      setAssigned((prev) => {
+                        const n = new Set(prev);
+                        if (n.has(t.FormTemplateID)) n.delete(t.FormTemplateID);
+                        else n.add(t.FormTemplateID);
+                        return n;
+                      })
+                    }
+                  />
+                  <span className="min-w-0 flex-1 truncate text-ink">{t.Name}</span>
+                  <span className={`text-[10px] ${t.Status === "ACTIVE" ? "text-green-600" : "text-ink-faint"}`}>
+                    {t.Status === "ACTIVE" ? "live" : t.Status.toLowerCase()}
+                  </span>
+                </label>
+              ))}
             </div>
-            <p className="mt-2 text-[11px] text-ink-faint">
-              Ticking a form attaches this workflow to it; unticking detaches. Saved with the workflow.
-            </p>
           </div>
 
           <div className="card p-4 text-[11px] leading-relaxed text-ink-faint">
-            <h3 className="mb-1 text-xs font-bold uppercase tracking-wider">How automation runs</h3>
-            Actions execute in the order shown, after the decision is recorded, and are written to the request audit
-            trail. A Jump to step stops the remaining actions in that lane. Manager-based approvers are resolved per
-            request at decision time, so fixing a user&apos;s manager unblocks parked requests.
+            Blocks run in the order shown. Automation blocks attached to an approval block fire right after that
+            decision is recorded; a Jump stops the rest of its group. Saving writes steps and automation rules in
+            one transaction — no separate screens, no schema change.
           </div>
         </div>
       </div>
 
-      {ro && (
-        <p className="mt-4 text-center text-xs text-ink-faint">Read-only view — you do not have workflow management.</p>
-      )}
+      {ro && <p className="mt-4 text-center text-xs text-ink-faint">Read-only view — you do not have workflow management.</p>}
     </AppShell>
-  );
-}
-
-function Connector({ onAdd, over }: { onAdd?: () => void; over?: boolean }) {
-  return (
-    <div className="flex justify-center py-1">
-      <div className={`relative flex h-8 w-full max-w-3xl items-center justify-center ${over ? "bg-blue-50/60" : ""}`}>
-        <span className="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-surface-border" />
-        {onAdd && (
-          <button
-            type="button"
-            onClick={onAdd}
-            className="relative flex h-6 w-6 items-center justify-center rounded-full border border-surface-border bg-white text-ink-soft shadow-sm hover:border-primary hover:text-primary"
-            title="Insert a step here"
-          >
-            <Icon name="add" className="text-[14px]" />
-          </button>
-        )}
-      </div>
-    </div>
   );
 }

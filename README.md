@@ -67,28 +67,29 @@ npm run dev
 
 ### Workflow builder (`/workflows/[id]`)
 
-One canvas, top to bottom: **Submit → step 1 → step 2 → … → Close**. Approval routing and automation live in the
-same step card, in the order they actually run:
+The editor is a **blank canvas**: nothing is created for you. Every block is yours — you add it, you name it, you
+drag it into position. Two kinds of block:
 
-| Part of a step | Stored as |
-| --- | --- |
-| Who decides (department manager / direct manager / group / role / one person / any approver), quorum, comment policy, due days | `WFSteps` |
-| When this step applies (total value / item count / priority) | `WFSteps.Condition` |
-| On approve → next step / approve & stop / jump to… | `WFSteps.ApproveAction` + `ApproveTargetStepID` |
-| On reject → reject / return to requester / send back a step | `WFSteps.RejectAction` |
-| **Then run, in order** (set priority · apply SLA · assign owner · notify · jump) | `WFRules` with `ActionValue.fireOnStepOrder` |
-| On submit / after final approval / after rejection | `WFRules` with the flow-level triggers |
+| Block | What it is | Stored as |
+| --- | --- | --- |
+| **Approval** | who decides (department manager / direct manager / group / role / one person), quorum, comment policy, due days, what happens on approve and on reject, and when the block applies at all | one `WFSteps` row, `StepOrder` = its position among approval blocks |
+| **Automation** | one action — set priority · apply an SLA policy · assign an owner · notify people · jump to a block — plus its own *Runs after* and its own condition | one `WFRules` row (`ActionValue` carries the payload) |
 
-* `Apply an SLA policy` (`SET_SLA`) is a new automation action: it re-snapshots `SLAPolicyID`, `ResponseDueAt` and
-  `ResolveDueAt` from the policy target matching the request priority — so “approve → set URGENT → apply the
-  1h/8h clock” works as one chain, in order (the SLA action sees the priority the previous action just set).
-* Rules bound to no step are flow-wide and keep firing after every step; the builder shows them under
-  “After any step”, so pre-existing automations survive the redesign untouched.
-* Steps are reordered by dragging the number badge (or the ↑/↓ buttons), duplicated, and deleted; a step whose
-  automations would be lost on delete has them moved to the flow-wide lanes instead.
-* The right rail holds the flow map, a **readiness** checklist (every issue jumps to the step that causes it) and
-  the attached-forms picker. `Ctrl/Cmd+S` saves, and an *unsaved changes* badge + unload guard track the diff.
-* No schema change: automation is still `WFRules`, so nothing needs `prisma db push`.
+* An automation block decides **when it runs** by where it sits and what you pick in *Runs after*:
+  `after the block above it` (bound to that approval, approve / reject / both), `after any approval block`,
+  `when the request is submitted`, `after final approval`, `after final rejection`.
+* Dragging a block between approvals **re-targets** it automatically — the binding is the nearest approval block
+  above it, recomputed on every save. Steps can be duplicated, reordered (drag or ↑/↓), paused, and deleted.
+* `Apply an SLA policy` (`SET_SLA`) re-snapshots `SLAPolicyID`, `ResponseDueAt`, `ResolveDueAt` from the policy
+  target matching the request's *current* priority, so “approve → set URGENT → apply the 1h/8h clock” works as one
+  chain, in the order the blocks are written (the SLA block sees the priority the block above it just set).
+* Mapping lives in `src/lib/workflow-builder.ts` (`blocksToApi` / `apiToBlocks`) — React-free and round-trip
+  stable, so a saved canvas reloads exactly as it was written.
+* The right rail holds the flow map, a **Readiness** checklist (every issue focuses and opens the block that causes
+  it) and the attached-forms picker. `Ctrl/Cmd+S` saves, and an *unsaved changes* badge + unload guard track the diff.
+* No schema change: automation stays in `WFRules`, step bindings ride inside `ActionValue.fireOnStepOrder`, so
+  nothing needs `prisma db push`. Old rules that were never bound to a step keep running flow-wide and load as
+  “after any approval block” instead of disappearing.
 
 ### Lost the admin password?
 
