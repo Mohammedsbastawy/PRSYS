@@ -247,6 +247,7 @@ const AUDIT_LABELS: Record<string, string> = {
   RETURNED_TO_PREVIOUS: "Sent back to previous step",
   JUMPED_TO_STEP: "Jumped to step",
   STEP_SKIPPED: "Step skipped",
+  STEP_UNASSIGNED: "Step has no approver",
   DRAFT_UPDATED: "Draft updated",
   CLARIFICATION_REQUESTED: "Clarification requested",
   ASSIGN: "Assigned",

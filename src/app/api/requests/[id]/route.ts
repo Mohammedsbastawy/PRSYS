@@ -41,6 +41,54 @@ function stepApplies(step: { Condition: string | null }, ctx: ConditionContext):
   return evaluateStepCondition(parseStepCondition(step.Condition), ctx)
 }
 
+/** Active Super Admins — the people who can fix a broken routing gap. */
+async function superAdminIds(): Promise<string[]> {
+  const rows = await prisma.users.findMany({
+    where: { IsActive: true, Role: { Code: 'SUPER_ADMIN' } },
+    select: { UserID: true },
+  })
+  return (rows as { UserID: string }[]).map((r) => r.UserID)
+}
+
+/**
+ * A routed step whose approver cannot be resolved must NOT be auto-passed.
+ * It stays open, gets an audit entry and raises an admin alert, so a missing
+ * manager in the org data is fixed instead of silently approving spend.
+ * Returns true when the step is unassignable.
+ */
+async function alertUnassignableStep(
+  requestId: string,
+  step: (StepTargetInput & { StepName: string; WFStepID: string }) | null | undefined,
+  requesterId: string,
+  fromStatus: string | null,
+  toStatus: string,
+  actorId: string | null
+): Promise<boolean> {
+  if (!step) return false
+  const ids = await stepTargetUserIds(step, requesterId, stepLookups())
+  if (ids.length > 0) return false
+  const note =
+    `"${step.StepName}" has no approver (${describeStepTarget(step)}) — ` +
+    `set the requester's Direct manager or the department Manager to unblock it`
+  await prisma.requestAuditLog.create({
+    data: {
+      RequestID: requestId,
+      FromStatus: fromStatus,
+      ToStatus: toStatus,
+      Action: 'STEP_UNASSIGNED',
+      ChangedByUserID: actorId,
+      Note: note.slice(0, 400),
+    },
+  })
+  await notifyUsers(await superAdminIds(), {
+    title: `Approval step has no approver — ${requestId.slice(0, 8)}`,
+    message: note,
+    type: 'REQUEST_SUBMITTED',
+    requestId,
+  })
+  return true
+}
+
 // Writes RULE_APPLIED audit entries returned by the automation executor
 async function auditRuleResults(requestId: string, from: string, to: string, userId: string, res: RuleRunResult): Promise<void> {
   for (const note of res.applied) {
@@ -386,7 +434,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const newRound = request.SubmittedAt ? (request.Round ?? 1) + 1 : (request.Round ?? 1)
     const condCtx = await conditionContext(params.id, request.Priority)
     const skipped: { StepName: string }[] = []
-    let firstStep: (StepTargetInput & { WFStepID: string; DueDays: number | null }) | null = null
+    let firstStep: (StepTargetInput & { WFStepID: string; StepName: string; DueDays: number | null }) | null = null
     for (const s of steps) {
       if (stepApplies(s, condCtx)) {
         firstStep = s
@@ -422,12 +470,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const firstTargets = firstStep
       ? await stepTargetUserIds(firstStep, request.RequesterID, stepLookups())
       : []
+    // no manager anywhere in the org data -> the step stays open and the admins
+    // are told, instead of the request quietly rolling past it
+    const unassigned = await alertUnassignableStep(
+      params.id, firstStep, request.RequesterID, request.Status, updated.Status, payload.userId
+    )
     const approvers = (
       firstTargets.length > 0 ? firstTargets : await usersWithPermission('REQUEST_APPROVE')
     ).filter((id) => id !== payload.userId)
     await notifyUsers(approvers, {
-      title: 'New request needs approval',
-      message: `${request.Requester.Name} submitted ${request.TrackingNumber} (${request.FormTemplate.Name})${dueSuffix(firstDueAt)}`,
+      title: unassigned ? 'New request — no approver assigned yet' : 'New request needs approval',
+      message: unassigned
+        ? `${request.Requester.Name} submitted ${request.TrackingNumber} (${request.FormTemplate.Name}) but "${firstStep?.StepName}" has no approver — set the requester's direct manager or their department manager.`
+        : `${request.Requester.Name} submitted ${request.TrackingNumber} (${request.FormTemplate.Name})${dueSuffix(firstDueAt)}`,
       type: 'REQUEST_SUBMITTED',
       requestId: params.id,
     })
@@ -592,7 +647,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         currentStepId = null
         newDueAt = null
       }
-    } else if (approvalMode === 'ALL' && !targets.every((t) => approvedIds.has(t))) {
+    } else if (
+      approvalMode === 'ALL' &&
+      (targets.length === 0
+        // [].every() is true — without this guard a step whose approvers vanished
+        // would auto-complete and the request would roll straight past it
+        ? approvedIds.size === 0
+        : !targets.every((t: string) => approvedIds.has(t)))
+    ) {
       // waiting on the remaining approvers — the step stays open
       stepCompleted = false
     } else {
@@ -711,10 +773,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
     }
     if (nextStep && newStatus === 'PENDING_APPROVAL') {
-      const nextTargets = (
-        await stepTargetUserIds(nextStep, request.RequesterID, stepLookups())
-      ).filter((id: string) => id !== payload.userId)
+      const allNextTargets = await stepTargetUserIds(nextStep, request.RequesterID, stepLookups())
+      const nextTargets = allNextTargets.filter((id: string) => id !== payload.userId)
       const visibleNext = await filterVisibleUserIds(nextTargets, request.FormTemplateID)
+      // the step is open but nobody owns it -> park it visibly (audit + admin alert)
+      if (allNextTargets.length === 0) {
+        await alertUnassignableStep(
+          params.id, nextStep, request.RequesterID, request.Status, newStatus, payload.userId
+        )
+      }
       if (visibleNext.length > 0) {
         await notifyUsers(visibleNext, {
           title: 'Request needs your approval',

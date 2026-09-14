@@ -443,17 +443,27 @@ export default function ApprovalsPage() {
                             Review
                           </Link>
                         ) : (
-                          <Link
-                            href={`/requests/${item.id}`}
-                            title={
-                              !item.canDecide && !awaiting
-                                ? (item.decideReason ?? "You cannot decide this step")
-                                : undefined
-                            }
-                            className="text-xs font-semibold text-primary hover:underline"
-                          >
-                            View
-                          </Link>
+                          <>
+                            <Link
+                              href={`/requests/${item.id}`}
+                              title={
+                                !item.canDecide && !awaiting
+                                  ? (item.decideReason ?? "You cannot decide this step")
+                                  : undefined
+                              }
+                              className="text-xs font-semibold text-primary hover:underline"
+                            >
+                              View
+                            </Link>
+                            {!item.canDecide && !awaiting && (
+                              <span
+                                className="mt-1 block text-[11px] text-ink-faint"
+                                title={item.decideReason ?? undefined}
+                              >
+                                view only
+                              </span>
+                            )}
+                          </>
                         )}
                       </td>
                     </tr>

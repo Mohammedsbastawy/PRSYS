@@ -98,6 +98,27 @@ npm run db:check-access -- requester@prsys.local --grant REQUEST_CREATE   # writ
 Note: there is no UI/API to edit role permissions (`/api/roles` is read-only), and permissions are read at
 login/page-load (from `GET /api/auth/me`), so after granting one the employee must **reload the page**.
 
+### Approval routing rules (who decides a step)
+
+`src/lib/workflow-targets.ts` resolves a step's approvers at read time, so fixing the org data unblocks
+parked requests without touching the request:
+
+| Step type | Resolves to | Fallback when empty |
+| --- | --- | --- |
+| Requester's direct manager (`REQUESTER_MANAGER`) | `Users.DirectManagerID` | the requester's department manager (`DEP.ManagerID`) |
+| Requester's department manager (`DEPARTMENT_MANAGER`) | `DEP.ManagerID` of the requester's department | the requester's `DirectManagerID` |
+| Role / Group / Specific user | members of that role (active users), group members, the user | none |
+| Any approver (`ANY_APPROVER`) | everyone holding `REQUEST_APPROVE` | none |
+
+Two invariants:
+
+- **Super Admins never decide a step.** They see everything (queue is read-only, labelled *view only*) and fix
+  routing, but Approve/Reject appear only for the user the step actually resolves to — including when an admin
+  is that user in their capacity as a department manager. `ASSIGN`, publishing, workflow editing etc. are unaffected.
+- **A step with no resolvable approver is never auto-passed.** It stays `PENDING_APPROVAL`, writes a
+  `STEP_UNASSIGNED` audit entry and notifies the Super Admins. (`ALL`-approval steps used to complete vacuously
+  when their target list was empty, silently skipping a whole approval level.)
+
 ### Access model (ticket-system style)
 
 Three roles only — **Super Admin**, **Agent** (professional workspace: review/approve/assign/fulfill), **Self User** (portal: own requests). *Department Manager* is an **assignment** (`DEP.ManagerID`), not a role: any Self User assigned as manager sees their department's requests and approves steps routed with the **DEPARTMENT_MANAGER** approver type — seeded workflow migrates legacy role-based steps automatically, and legacy roles (REQUESTER, DEPT_MANAGER, …) are reassigned to USER/AGENT on `npm run db:seed`.

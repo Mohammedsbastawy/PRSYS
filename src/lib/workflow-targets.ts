@@ -29,9 +29,9 @@ export function describeStepTarget(step: StepTargetInput): string {
     case "USER":
       return step.TargetUser?.Name ?? "The assigned user";
     case "REQUESTER_MANAGER":
-      return "Requester's direct manager";
+      return "Requester's manager (direct, or department manager as fallback)";
     case "DEPARTMENT_MANAGER":
-      return "Requester's department manager";
+      return "Requester's department manager (or direct manager as fallback)";
     case "ANY_APPROVER":
     default:
       return "Any approver";
@@ -51,8 +51,14 @@ export async function stepTargetUserIds(
     case "GROUP":
       return step.TargetGroupID ? lookups.groupMembers(step.TargetGroupID) : [];
     case "REQUESTER_MANAGER": {
-      const m = await lookups.requesterManager(requesterId);
-      return m ? [m] : [];
+      // Primary source is Users.DirectManagerID. Most organisations in PRSYS
+      // carry the manager on the department instead (DEP.ManagerID), so fall
+      // back to it — otherwise a requester without DirectManagerID parks every
+      // request they file (this is the "Nobody is assigned to this step" case).
+      const direct = await lookups.requesterManager(requesterId);
+      if (direct) return [direct];
+      const byDep = await lookups.departmentManager(requesterId);
+      return byDep ? [byDep] : [];
     }
     case "DEPARTMENT_MANAGER": {
       // Department manager is an ASSIGNMENT (DEP.ManagerID), not a role —
@@ -82,25 +88,42 @@ export async function canUserDecideStep(opts: {
   if (opts.decidedUserIds?.includes(opts.userId)) {
     return { canDecide: false, reason: 'You have already decided on this step' };
   }
-  if (opts.isSuperAdmin) return { canDecide: true, reason: null };
   if (!opts.step) return { canDecide: false, reason: "No active approval step" };
   const ids = await stepTargetUserIds(opts.step, opts.requesterId, opts.lookups);
+  const routedToMe = ids.includes(opts.userId);
+
   if (ids.length === 0) {
     return {
       canDecide: false,
-      reason: `Nobody is assigned to this step (${describeStepTarget(opts.step)}) — contact your administrator`,
+      reason:
+        `Nobody is assigned to this step (${describeStepTarget(opts.step)}) — ` +
+        `set the requester's Direct manager (Users) or their department's Manager (Departments).`,
     };
   }
+
+  // Super Admins administer users, departments and workflows — they do NOT
+  // decide approval steps. A decision is only valid when the flow routes the
+  // step to that person (as a target user, a targeted role/group member, or the
+  // resolved manager). ANY_APPROVER never counts for them because their
+  // REQUEST_APPROVE is implicit to the role, not a real assignment.
+  if (opts.isSuperAdmin && !(routedToMe && opts.step.ApproverType !== 'ANY_APPROVER')) {
+    return {
+      canDecide: false,
+      reason:
+        `Administrators don't decide approval steps — this one belongs to ${describeStepTarget(opts.step)}.`,
+    };
+  }
+
   // A directly-targeted approver may decide even without the blanket REQUEST_APPROVE
   // permission — e.g. a Self User who manages a department and receives approvals
   // through the normal workflow. ANY_APPROVER stays permission-driven.
-  if (ids.includes(opts.userId) && opts.step.ApproverType !== 'ANY_APPROVER') {
+  if (routedToMe && opts.step.ApproverType !== 'ANY_APPROVER') {
     return { canDecide: true, reason: null };
   }
   if (!opts.hasApprovePerm) {
     return { canDecide: false, reason: "You do not have approval permission" };
   }
-  if (ids.includes(opts.userId)) return { canDecide: true, reason: null };
+  if (routedToMe) return { canDecide: true, reason: null };
   return {
     canDecide: false,
     reason: `Only ${describeStepTarget(opts.step)} can decide this step`,
