@@ -4,7 +4,17 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { Icon, PageHeader } from "@/components/ui";
-import { PRIORITIES, fmtMinutes } from "@/lib/sla";
+import {
+  MAX_SLA_MINUTES,
+  PRIORITIES,
+  SLA_UNITS,
+  UNIT_LABEL,
+  fmtMinutes,
+  fromMinutes,
+  parseUnitValue,
+  toMinutes,
+  type SlaUnit,
+} from "@/lib/sla";
 
 interface SlaTargetRow {
   priority: string;
@@ -23,7 +33,9 @@ interface SlaPolicy {
 
 interface TargetDraft {
   response: string;
+  responseUnit: SlaUnit;
   resolve: string;
+  resolveUnit: SlaUnit;
 }
 
 interface EditorDraft {
@@ -36,12 +48,63 @@ interface EditorDraft {
 }
 
 function emptyTargets(): Record<string, TargetDraft> {
-  return Object.fromEntries(PRIORITIES.map((p) => [p, { response: "", resolve: "" }]));
+  // hours is the unit admins reach for most; the picker switches to min/days freely
+  return Object.fromEntries(
+    PRIORITIES.map((p) => [p, { response: "", responseUnit: "HOURS" as SlaUnit, resolve: "", resolveUnit: "HOURS" as SlaUnit }])
+  );
+}
+
+/** live "= 4h" echo under a field so there is never a unit misunderstanding */
+function unitPreview(raw: string, unit: SlaUnit): string | null {
+  const v = parseUnitValue(raw);
+  if (v === null) return null;
+  const mins = toMinutes(v, unit);
+  if (mins === null || mins <= 0) return "not a whole minute";
+  return `= ${fmtMinutes(mins)} (${mins} min)`;
 }
 
 let keySeq = 0;
 function nextKey() {
   return `k${++keySeq}`;
+}
+
+function UnitField({
+  value,
+  unit,
+  placeholder,
+  onChange,
+  onUnit,
+}: {
+  value: string;
+  unit: SlaUnit;
+  placeholder: string;
+  onChange: (v: string) => void;
+  onUnit: (u: SlaUnit) => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        className="input !w-24"
+        inputMode="decimal"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={`${placeholder} value`}
+      />
+      <select
+        className="input !w-auto !py-2 text-xs"
+        value={unit}
+        onChange={(e) => onUnit(e.target.value as SlaUnit)}
+        aria-label="Unit"
+      >
+        {SLA_UNITS.map((u) => (
+          <option key={u} value={u}>
+            {UNIT_LABEL[u]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
 }
 
 export default function SlaPage() {
@@ -83,7 +146,14 @@ export default function SlaPage() {
     const t = emptyTargets();
     for (const row of p.targets) {
       if (t[row.priority]) {
-        t[row.priority] = { response: String(row.responseMins), resolve: String(row.resolveMins) };
+        const r = fromMinutes(row.responseMins);
+        const s2 = fromMinutes(row.resolveMins);
+        t[row.priority] = {
+          response: r.value,
+          responseUnit: r.unit,
+          resolve: s2.value,
+          resolveUnit: s2.unit,
+        };
       }
     }
     setEditor({
@@ -114,10 +184,24 @@ export default function SlaPage() {
     for (const p of PRIORITIES) {
       const t = editor.targets[p];
       if (!t.response.trim() && !t.resolve.trim()) continue;
-      const responseMins = Number(t.response);
-      const resolveMins = Number(t.resolve);
-      if (!Number.isInteger(responseMins) || responseMins < 1 || !Number.isInteger(resolveMins) || resolveMins < 1) {
-        setError(`${p}: targets must be whole minutes ≥ 1`);
+      const rv = parseUnitValue(t.response);
+      const sv = parseUnitValue(t.resolve);
+      if (rv === null || sv === null) {
+        setError(`${p}: enter a number for both targets (e.g. 90 minutes, 4 hours, 2 days)`);
+        return;
+      }
+      const responseMins = toMinutes(rv, t.responseUnit);
+      const resolveMins = toMinutes(sv, t.resolveUnit);
+      if (responseMins === null || resolveMins === null) {
+        setError(`${p}: the value must land on a whole minute — 1.5 hours is fine, 0.2 minutes is not`);
+        return;
+      }
+      if (responseMins < 1 || resolveMins < 1) {
+        setError(`${p}: targets must be at least 1 minute`);
+        return;
+      }
+      if (responseMins > MAX_SLA_MINUTES || resolveMins > MAX_SLA_MINUTES) {
+        setError(`${p}: targets are capped at 365 days (${MAX_SLA_MINUTES} minutes)`);
         return;
       }
       targets.push({ priority: p, responseMins, resolveMins });
@@ -235,31 +319,41 @@ export default function SlaPage() {
               <thead>
                 <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-ink-faint">
                   <th className="py-2 pr-4 font-semibold">Priority</th>
-                  <th className="py-2 pr-4 font-semibold">Response within (TTA, minutes)</th>
-                  <th className="py-2 font-semibold">Resolve within (TTR, minutes)</th>
+                  <th className="py-2 pr-6 font-semibold">Response within (TTA)</th>
+                  <th className="py-2 font-semibold">Resolve within (TTR)</th>
                 </tr>
               </thead>
               <tbody>
                 {PRIORITIES.map((p) => (
                   <tr key={p} className="border-b border-surface-border/60">
                     <td className="py-2 pr-4 font-medium text-ink">{p}</td>
-                    <td className="py-2 pr-4">
-                      <input
-                        className="input !w-40"
-                        inputMode="numeric"
-                        placeholder="e.g. 480"
+                    <td className="py-2 pr-6 align-top">
+                      <UnitField
                         value={editor.targets[p].response}
-                        onChange={(e) => patchTarget(p, { response: e.target.value })}
+                        unit={editor.targets[p].responseUnit}
+                        placeholder="e.g. 4"
+                        onChange={(v) => patchTarget(p, { response: v })}
+                        onUnit={(u) => patchTarget(p, { responseUnit: u })}
                       />
+                      {unitPreview(editor.targets[p].response, editor.targets[p].responseUnit) && (
+                        <span className="mt-1 block text-[11px] text-ink-faint">
+                          {unitPreview(editor.targets[p].response, editor.targets[p].responseUnit)}
+                        </span>
+                      )}
                     </td>
-                    <td className="py-2">
-                      <input
-                        className="input !w-40"
-                        inputMode="numeric"
-                        placeholder="e.g. 2880"
+                    <td className="py-2 align-top">
+                      <UnitField
                         value={editor.targets[p].resolve}
-                        onChange={(e) => patchTarget(p, { resolve: e.target.value })}
+                        unit={editor.targets[p].resolveUnit}
+                        placeholder="e.g. 24"
+                        onChange={(v) => patchTarget(p, { resolve: v })}
+                        onUnit={(u) => patchTarget(p, { resolveUnit: u })}
                       />
+                      {unitPreview(editor.targets[p].resolve, editor.targets[p].resolveUnit) && (
+                        <span className="mt-1 block text-[11px] text-ink-faint">
+                          {unitPreview(editor.targets[p].resolve, editor.targets[p].resolveUnit)}
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -267,6 +361,8 @@ export default function SlaPage() {
             </table>
             <p className="mt-2 text-[11px] text-ink-faint">
               Leave a row empty to skip that priority (its requests fall back to MEDIUM, then any defined row).
+              Targets are stored as minutes (max 365 days), so 2 days = 2880 min and existing policies reopen in
+              the largest unit that fits them exactly.
             </p>
           </div>
 
