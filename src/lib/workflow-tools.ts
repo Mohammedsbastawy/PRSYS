@@ -4,7 +4,7 @@
 // canvas automatically. Categorized like n8n / ServiceNow Flow Designer:
 // a searchable list of nodes, grouped, each with an icon and a one-line blurb.
 
-import type { ToolId, WhenId } from "./workflow-builder";
+import type { ToolId, WhenChoice, WhenId } from "./workflow-builder";
 
 export interface Tool {
   id: ToolId;
@@ -150,6 +150,11 @@ export function statusMeta(v: string) {
   return SETTABLE_STATUSES.find((s) => s.value === v);
 }
 
+/** an unset trigger is a real state here: the node cannot be saved until it is chosen */
+export function whenMeta(w: WhenChoice): { label: string; short: string; icon: string } {
+  return w ? WHEN_META[w] : { label: "not chosen yet", short: "when?", icon: "help" };
+}
+
 /** minutes → "2d", "8h", "45m" — same vocabulary the SLA screens use */
 export function fmtMins(mins: number | null | undefined): string {
   if (mins == null) return "—";
@@ -158,52 +163,57 @@ export function fmtMins(mins: number | null | undefined): string {
   return `${mins}m`;
 }
 
+export interface RecipeSpec {
+  tool: ToolId;
+  when?: WhenId;
+}
+
 export interface Recipe {
   id: string;
   label: string;
   blurb: string;
   icon: string;
-  build: () => { tool: ToolId; name: string; patch?: Record<string, unknown> }[];
+  /**
+   * A preset only decides which tools to insert and which port they belong to.
+   * Names, approvers, priorities and policies stay for the admin to choose.
+   */
+  build: () => RecipeSpec[];
 }
 
 /**
- * Optional starting points. Nothing is ever applied without the admin picking it,
- * and every inserted node stays fully editable / deletable afterwards.
+ * Optional starting points: they wire ports for you, never values.
+ * Nothing is applied unless the admin clicks one, and every node stays editable.
  */
 export const RECIPES: Recipe[] = [
   {
     id: "urgent-sla",
     label: "Approve → set URGENT → apply SLA",
-    blurb: "The manager approves, the ticket becomes urgent and gets the matching response/resolve clock.",
+    blurb: "an approval, then two actions on its approve port — values still yours to pick",
     icon: "bolt",
-    build: () => [
-      { tool: "APPROVAL", name: "Manager approval" },
-      { tool: "SET_PRIORITY", name: "Mark URGENT", patch: { priority: "URGENT" } },
-      { tool: "SET_SLA", name: "Apply urgent SLA" },
-    ],
+    build: () => [{ tool: "APPROVAL" }, { tool: "SET_PRIORITY", when: "AFTER_APPROVE" }, { tool: "SET_SLA", when: "AFTER_APPROVE" }],
   },
   {
     id: "triage",
     label: "Triage on submit",
-    blurb: "As soon as the request is in: route the priority, tell the requester, put an SLA clock on it.",
+    blurb: "a submit marker with three actions hanging on it, nothing filled in",
     icon: "layers",
     build: () => [
-      { tool: "START", name: "Requester submits" },
-      { tool: "SET_PRIORITY", name: "Set priority" },
-      { tool: "SET_SLA", name: "Apply SLA" },
-      { tool: "NOTIFY", name: "Tell the requester", patch: { notifyTargetType: "REQUESTER" } },
+      { tool: "START" },
+      { tool: "SET_PRIORITY", when: "ON_SUBMIT" },
+      { tool: "SET_SLA", when: "ON_SUBMIT" },
+      { tool: "NOTIFY", when: "ON_SUBMIT" },
     ],
   },
   {
     id: "reject-path",
     label: "Approval with a reject path",
-    blurb: "One approver; if they approve the flow continues, if they reject the requester is told and the ticket is cancelled.",
+    blurb: "one approval with actions on both of its ports",
     icon: "split_scene",
     build: () => [
-      { tool: "APPROVAL", name: "Supervisor sign-off" },
-      { tool: "NOTIFY", name: "Heads up, approved", patch: { when: "AFTER_APPROVE", notifyTargetType: "REQUESTER" } },
-      { tool: "NOTIFY", name: "Rejected — why", patch: { when: "AFTER_REJECT", notifyTargetType: "REQUESTER" } },
-      { tool: "SET_STATUS", name: "Cancel it", patch: { when: "AFTER_REJECT", status: "CANCELLED" } },
+      { tool: "APPROVAL" },
+      { tool: "NOTIFY", when: "AFTER_APPROVE" },
+      { tool: "NOTIFY", when: "AFTER_REJECT" },
+      { tool: "SET_STATUS", when: "AFTER_REJECT" },
     ],
   },
 ];

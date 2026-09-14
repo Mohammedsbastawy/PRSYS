@@ -61,6 +61,7 @@ import {
   statusMeta,
   TOOLS,
   toolCategories,
+  whenMeta,
   toolMeta,
   WHEN_META,
   WHEN_ORDER,
@@ -162,6 +163,7 @@ const APPROVE_ACTIONS = [
 const ACTION_TOOLS: ToolId[] = TOOLS.filter((t) => t.kind === "action").map((t) => t.id);
 
 function whenText(n: FlowNode, nodes: FlowNode[]): string {
+  if (!n.when) return "when? pick it, or drop the node on a port";
   const meta = WHEN_META[n.when];
   if (n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION") {
     const label = approvalLabel(nodes, n.attachKey);
@@ -533,11 +535,11 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
 
         {!isApproval && !isStart && (
           <span className="hidden shrink-0 items-center gap-1 text-[10px] text-ink-faint md:flex">
-            <Icon name={WHEN_META[n.when].icon} className="text-[13px]" />
+            <Icon name={whenMeta(n.when).icon} className="text-[13px]" />
             {whenText(n, ctx.nodes)}
           </span>
         )}
-        {sla && (
+        {sla && n.priority && (
           <span className="hidden shrink-0 rounded bg-cyan-50 px-1.5 py-0.5 text-[10px] text-cyan-700 lg:block">
             TTA {fmtMins(sla.targets?.find((t) => t.priority === n.priority)?.responseMins ?? sla.targets?.[0]?.responseMins)} · TTR{" "}
             {fmtMins(sla.targets?.find((t) => t.priority === n.priority)?.resolveMins ?? sla.targets?.[0]?.resolveMins)}
@@ -647,6 +649,9 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
             options={APPROVER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
             size="xs"
           />
+          {!n.approverType && (
+            <span className="text-[11px] font-medium text-amber-700">pick who decides — nothing is selected</span>
+          )}
           {(n.approverType === "USER" || n.approverType === "GROUP" || n.approverType === "ROLE") && (
             <select
               className="input !w-52 !py-1 text-xs"
@@ -695,6 +700,7 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
             value={n.approvalMode}
             onChange={(e) => ctx.patch(n.key, { approvalMode: e.target.value })}
           >
+            <option value="">not set — any one of them</option>
             {APPROVAL_MODES.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
@@ -709,6 +715,7 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
             value={n.commentPolicy}
             onChange={(e) => ctx.patch(n.key, { commentPolicy: e.target.value })}
           >
+            <option value="">not set — comment optional</option>
             {COMMENT_POLICIES.map((m) => (
               <option key={m.value} value={m.value}>
                 {m.label}
@@ -733,13 +740,24 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label="On approve">
-          <Segmented
+          <select
+            className="input !py-1 text-xs"
             disabled={ctx.ro}
-            size="xs"
             value={n.approveAction}
-            onChange={(v) => ctx.patch(n.key, { approveAction: v })}
-            options={APPROVE_ACTIONS.map((a) => ({ value: a.value, label: a.label }))}
-          />
+            onChange={(e) =>
+              ctx.patch(n.key, {
+                approveAction: e.target.value,
+                approveTargetKey: e.target.value === "JUMP_TO_STEP" ? n.approveTargetKey : "",
+              })
+            }
+          >
+            <option value="">not set — go to the next node</option>
+            {APPROVE_ACTIONS.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
           {n.approveAction === "JUMP_TO_STEP" && (
             <select
               className="input mt-1 !py-1 text-xs"
@@ -757,18 +775,24 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
           )}
         </Field>
         <Field label="On reject">
-          <Segmented
+          <select
+            className="input !py-1 text-xs"
             disabled={ctx.ro}
-            size="xs"
             value={n.rejectAction}
-            onChange={(v) => ctx.patch(n.key, { rejectAction: v })}
-            options={REJECT_ACTIONS.map((a) => ({ value: a.value, label: a.label }))}
-          />
+            onChange={(e) => ctx.patch(n.key, { rejectAction: e.target.value })}
+          >
+            <option value="">not set — reject the request</option>
+            {REJECT_ACTIONS.map((a) => (
+              <option key={a.value} value={a.value}>
+                {a.label}
+              </option>
+            ))}
+          </select>
         </Field>
       </div>
       <p className="text-[10px] leading-relaxed text-ink-faint">
-        The ports under this node are optional: drop a tool on “if approved” / “if rejected” to attach it to this
-        decision. Nothing runs there until you put something there.
+        Nothing here is preset: “not set” means the engine default shown in that box is what happens. The two ports
+        are optional too — drop a tool on them only if something should run after this decision.
       </p>
     </>
   );
@@ -785,8 +809,14 @@ function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
             className="input !py-1 text-xs"
             disabled={ctx.ro}
             value={n.when}
-            onChange={(e) => ctx.patch(n.key, { when: e.target.value as WhenId, attachKey: e.target.value.startsWith("AFTER_") ? n.attachKey || approvals[0]?.key || "" : "" })}
+            onChange={(e) =>
+              ctx.patch(n.key, {
+                when: e.target.value as WhenId,
+                attachKey: e.target.value.startsWith("AFTER_") ? n.attachKey || approvals[0]?.key || "" : "",
+              })
+            }
           >
+            <option value="">— when should this run? —</option>
             {WHEN_ORDER.map((w) => (
               <option key={w} value={w}>
                 {WHEN_META[w].label}
@@ -827,13 +857,16 @@ function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
       </div>
 
       {n.tool === "SET_PRIORITY" && (
-        <Segmented
-          disabled={ctx.ro}
-          size="xs"
-          value={n.priority}
-          onChange={(v) => ctx.patch(n.key, { priority: v })}
-          options={PRIORITY_VALUES.map((p) => ({ value: p, label: p }))}
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <Segmented
+            disabled={ctx.ro}
+            size="xs"
+            value={n.priority}
+            onChange={(v) => ctx.patch(n.key, { priority: v })}
+            options={PRIORITY_VALUES.map((p) => ({ value: p, label: p }))}
+          />
+          {!n.priority && <span className="text-[11px] font-medium text-amber-700">pick a priority</span>}
+        </div>
       )}
 
       {n.tool === "SET_STATUS" && (
@@ -844,13 +877,16 @@ function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
             value={n.status}
             onChange={(e) => ctx.patch(n.key, { status: e.target.value })}
           >
+            <option value="">— which status? —</option>
             {SETTABLE_STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
                 {s.label}
               </option>
             ))}
           </select>
-          <span className="text-[11px] text-ink-faint">{statusMeta(n.status)?.note}</span>
+          <span className="text-[11px] text-ink-faint">
+            {n.status ? statusMeta(n.status)?.note : "nothing chosen yet"}
+          </span>
         </div>
       )}
 
@@ -901,6 +937,7 @@ function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
             value={n.notifyTargetType}
             onChange={(e) => ctx.patch(n.key, { notifyTargetType: e.target.value })}
           >
+            <option value="">— who to notify? —</option>
             {NOTIFY_TARGET_TYPES.map((t) => (
               <option key={t.value} value={t.value}>
                 {t.label}
@@ -1225,15 +1262,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     return parent ? list.indexOf(parent) + 1 : list.length;
   };
 
-  /** a new node dropped on the bare line inherits the nearest decision above it */
-  const whenForLine = (before: FlowNode | null): { when: WhenId; attachKey: string } => {
-    const upto = before ? mainLine.slice(0, mainLine.indexOf(before)) : mainLine;
-    const lastApproval = [...upto].reverse().find((x) => x.tool === "APPROVAL");
-    if (lastApproval) return { when: "AFTER_APPROVE", attachKey: lastApproval.key };
-    if (upto.some((x) => x.tool === "START")) return { when: "ON_SUBMIT", attachKey: "" };
-    return { when: "ANY_APPROVE", attachKey: "" };
-  };
-
   const insertAt = (list: FlowNode[], index: number, n: FlowNode) => {
     const next = [...list];
     next.splice(Math.max(0, Math.min(index, next.length)), 0, n);
@@ -1251,9 +1279,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       setError("There is already a submit marker on the canvas — drop your actions on it.");
       return;
     }
-    const w = whenForLine(null);
-    // no name is filled in: an unnamed node stays unnamed (the API label is derived at save)
-    insertAt(nodes, nodes.length, newNode(tool, tool === "START" || tool === "APPROVAL" ? {} : { when: w.when, attachKey: w.attachKey }));
+    // nothing is chosen for you: no name, no trigger, no payload
+    insertAt(nodes, nodes.length, newNode(tool));
   };
 
   const addToSlot = (parentKey: string, slot: SlotId, tool: ToolId) => {
@@ -1266,9 +1293,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     if (drag?.kind === "new") {
       const tool = drag.tool;
       if (tool === "START" && startNode(nodes)) return endDrag();
-      const w = whenForLine(before);
-      const n = newNode(tool, tool === "START" || tool === "APPROVAL" ? {} : { when: w.when, attachKey: w.attachKey });
-      insertAt(nodes, lineInsertIndex(nodes, before), n);
+      insertAt(nodes, lineInsertIndex(nodes, before), newNode(tool));
       endDrag();
       return;
     }
@@ -1392,11 +1417,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     const built: FlowNode[] = [];
     let lastApproval = "";
     for (const spec of r.build()) {
-      const n = newNode(spec.tool, { name: spec.name, ...(spec.patch as unknown as Partial<FlowNode>) });
+      // only the tool and which port it belongs to — names, priorities and policies stay unset
+      const n = newNode(spec.tool, spec.when ? { when: spec.when } : {});
       if (n.tool === "APPROVAL") lastApproval = n.key;
       if (isActionTool(n.tool) && n.when.startsWith("AFTER_") && !n.attachKey) n.attachKey = lastApproval;
-      if (n.tool === "SET_PRIORITY" && n.when === "AFTER_APPROVE") n.attachKey = n.attachKey || lastApproval;
-      if (n.tool === "SET_SLA" && n.when === "AFTER_APPROVE") n.attachKey = n.attachKey || lastApproval;
       built.push(n);
     }
     // approval nodes anchor the chain; anything attached in the recipe follows its node
@@ -1432,6 +1456,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         if (cErr) push(n.key, cErr);
       }
       if (n.tool === "APPROVAL") {
+        if (!n.approverType) push(n.key, "pick who decides for this node");
         if (n.approverType === "ROLE" && !n.targetRoleId) push(n.key, "choose a role");
         if (n.approverType === "GROUP" && !n.targetGroupId) push(n.key, "choose a group");
         if (n.approverType === "USER" && !n.targetUserId) push(n.key, "choose who approves");
@@ -1444,13 +1469,16 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           else if (n.approveTargetKey === n.key) push(n.key, "cannot jump to itself");
         }
       } else if (isActionTool(n.tool)) {
+        if (!n.when) push(n.key, "nothing is picked for when it runs — choose it, or drop the node on a port");
         const needsParent = n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION";
         if (needsParent && !approvalNodes(nodes).some((a) => a.key === n.attachKey))
           push(n.key, "pick the approval node this runs after");
+        if (n.tool === "SET_PRIORITY" && !n.priority) push(n.key, "pick a priority");
         if (n.tool === "SET_SLA" && !n.slaPolicyId) push(n.key, "choose an SLA policy");
         if (n.tool === "ASSIGN_TO_USER" && !n.userId) push(n.key, "choose the user to assign");
         if (n.tool === "JUMP_TO_STEP" && !n.jumpToStepKey) push(n.key, "choose the node to land on");
         if (n.tool === "SET_STATUS" && !SETTABLE_STATUSES.some((s) => s.value === n.status)) push(n.key, "choose a status");
+        if (n.tool === "NOTIFY" && !n.notifyTargetType) push(n.key, "choose who to notify");
         if (n.tool === "NOTIFY") {
           if (n.notifyTargetType === "USER" && !n.notifyUserId) push(n.key, "choose the user to notify");
           if (n.notifyTargetType === "GROUP" && !n.notifyGroupId) push(n.key, "choose the group to notify");
@@ -1713,8 +1741,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                 <Icon name="account_tree" className="text-[30px] text-ink-faint" />
                 <p className="text-sm font-semibold text-ink">Empty canvas</p>
                 <p className="max-w-sm text-xs leading-relaxed text-ink-soft">
-                  Drag any tool from the left. A flow can be one approval node, or a submit marker, an SLA, two
-                  approvers and a notification — whatever the process needs.
+                  Drag any tool from the left, in any order. A flow does not have to start with an approver: it can
+                  be only automations on submit, one decision, or nothing that approves at all.
                 </p>
                 <div className="mt-1 flex flex-wrap justify-center gap-1.5">
                   {TOOLS.map((t) => (
@@ -1801,7 +1829,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                             >
                               <Icon name={toolMeta(k.tool).icon} className="text-[13px]" />
                               <span className="min-w-0 flex-1 truncate">{k.name || toolMeta(k.tool).label}</span>
-                              <span className="shrink-0 text-[9px] text-ink-faint">{WHEN_META[k.when].short}</span>
+                              <span className="shrink-0 text-[9px] text-ink-faint">{k.when ? WHEN_META[k.when].short : "when?"}</span>
                             </button>
                           ))}
                         </div>
@@ -1826,7 +1854,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             {issueList.length === 0 ? (
               <p className="text-xs text-green-700">
                 {approvalNodes(nodes).length === 0
-                  ? "No approval node: requests are approved the moment they are submitted. Intentional?"
+                  ? "No approval node in this flow — requests skip straight to approved, and your submit / end-of-request automations still run."
                   : "Ready. Save to publish."}
               </p>
             ) : (

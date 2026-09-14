@@ -32,6 +32,9 @@ export type ToolId =
   | "NOTIFY"
   | "JUMP_TO_STEP";
 
+/** "" = the admin has not chosen yet — the node cannot be saved until they do */
+export type WhenChoice = WhenId | "";
+
 export type WhenId =
   | "ON_SUBMIT"
   | "AFTER_APPROVE"
@@ -55,7 +58,7 @@ export interface FlowNode {
   /** action nodes: paused nodes are stored inactive instead of being deleted */
   enabled: boolean;
 
-  when: WhenId;
+  when: WhenChoice;
   /** approval node this action hangs on (AFTER_* only) */
   attachKey: string;
 
@@ -144,26 +147,27 @@ export function newNode(tool: ToolId, over: Partial<FlowNode> = {}): FlowNode {
     name: "",
     open: true,
     enabled: true,
-    when: tool === "APPROVAL" || tool === "START" ? "ON_SUBMIT" : "AFTER_APPROVE",
+    // the canvas starts empty in every sense: no trigger, no approver, no payload
+    when: "",
     attachKey: "",
-    approverType: "DEPARTMENT_MANAGER",
+    approverType: "",
     targetUserId: "",
     targetGroupId: "",
     targetRoleId: "",
-    approvalMode: "ANY_ONE",
-    commentPolicy: "OPTIONAL",
+    approvalMode: "",
+    commentPolicy: "",
     dueDays: "",
-    rejectAction: "RETURN_TO_REQUESTER",
-    approveAction: "CONTINUE",
+    rejectAction: "",
+    approveAction: "",
     approveTargetKey: "",
     condField: "none",
     condOp: ">=",
     condValue: "",
-    priority: "URGENT",
-    status: "COMPLETED",
+    priority: "",
+    status: "",
     slaPolicyId: "",
     userId: "",
-    notifyTargetType: "REQUESTER",
+    notifyTargetType: "",
     notifyUserId: "",
     notifyGroupId: "",
     notifyRoleId: "",
@@ -191,6 +195,7 @@ export function startNode(nodes: FlowNode[]): FlowNode | null {
 }
 
 export function slotOf(n: FlowNode): SlotId {
+  if (!n.when) return "flow";
   if (n.tool === "APPROVAL") return "flow";
   if (n.tool === "START") return "flow";
   switch (n.when) {
@@ -215,7 +220,7 @@ export const END_KEY = "__end__";
 
 /** where a node renders: attached to an approval/START node, or on the main line */
 export function attachment(nodes: FlowNode[], n: FlowNode): { parentId: string; slot: SlotId } | null {
-  if (!isActionTool(n.tool)) return null;
+  if (!isActionTool(n.tool) || !n.when) return null;
   if (n.when === "ON_SUBMIT" && startNode(nodes)) return { parentId: startNode(nodes)!.key, slot: "submit" };
   if (n.when === "FINAL_APPROVE") return { parentId: END_KEY, slot: "approve" };
   if (n.when === "FINAL_REJECT") return { parentId: END_KEY, slot: "reject" };
@@ -260,16 +265,16 @@ function actionPayload(n: FlowNode, nodes: FlowNode[]): RuleActionValue {
   const out: RuleActionValue = {};
   switch (n.tool) {
     case "SET_PRIORITY":
-      out.priority = n.priority;
+      if (n.priority) out.priority = n.priority;
       break;
     case "SET_STATUS":
-      out.status = n.status;
+      if (n.status) out.status = n.status;
       break;
     case "SET_SLA":
-      out.slaPolicyId = n.slaPolicyId;
+      if (n.slaPolicyId) out.slaPolicyId = n.slaPolicyId;
       break;
     case "ASSIGN_TO_USER":
-      out.userId = n.userId;
+      if (n.userId) out.userId = n.userId;
       break;
     case "NOTIFY":
       out.notifyTargetType = n.notifyTargetType as NonNullable<RuleActionValue["notifyTargetType"]>;
@@ -307,6 +312,11 @@ const APPROVER_FALLBACK_NAMES: Record<string, string> = {
  * node the admin left unnamed still needs something to store. This is derived at
  * save time only — the canvas keeps the field empty, it is never shown as a name.
  */
+/** a stored value equal to the API default was never chosen by the admin */
+function blankIf(value: string | null | undefined, apiDefault: string): string {
+  return !value || value === apiDefault ? "" : value;
+}
+
 export function derivedStepName(n: Pick<FlowNode, "name" | "approverType">): string {
   const own = n.name.trim();
   if (own) return own.slice(0, 120);
@@ -314,21 +324,36 @@ export function derivedStepName(n: Pick<FlowNode, "name" | "approverType">): str
 }
 
 /** audit-trail label for the rule — the admin's own text wins, otherwise derived */
+const TOOL_LABELS: Partial<Record<ToolId, string>> = {
+  SET_PRIORITY: "Set priority",
+  SET_STATUS: "Set ticket status",
+  SET_SLA: "Apply SLA policy",
+  ASSIGN_TO_USER: "Assign an owner",
+  NOTIFY: "Notify people",
+  JUMP_TO_STEP: "Jump to a node",
+};
+
 export function derivedNodeName(
   n: FlowNode,
   nodes: FlowNode[],
   opts: { slas?: SlaOption[]; users?: UserOption[] } = {}
 ): string {
   if (n.name.trim()) return n.name.trim().slice(0, 150);
+  // a field the admin left unset must not produce a half-empty audit label
+  const label = (own: string, filled: string) => (own ? filled : TOOL_LABELS[n.tool] ?? "Workflow node");
   switch (n.tool) {
     case "SET_PRIORITY":
-      return `Priority → ${n.priority}`;
+      return n.priority ? `Priority → ${n.priority}` : label("priority", "Set priority");
     case "SET_STATUS":
-      return `Status → ${n.status.replace(/_/g, " ").toLowerCase()}`;
+      return n.status ? `Status → ${n.status.replace(/_/g, " ").toLowerCase()}` : label("status", "Set status");
     case "SET_SLA":
-      return `SLA → ${opts.slas?.find((s) => s.id === n.slaPolicyId)?.name ?? "policy"}`;
+      return n.slaPolicyId
+        ? `SLA → ${opts.slas?.find((sl) => sl.id === n.slaPolicyId)?.name ?? "policy"}`
+        : label("policy", "Apply SLA");
     case "ASSIGN_TO_USER":
-      return `Assign → ${opts.users?.find((u) => u.UserID === n.userId)?.Name ?? "user"}`;
+      return n.userId
+        ? `Assign → ${opts.users?.find((u) => u.UserID === n.userId)?.Name ?? "user"}`
+        : label("user", "Assign an owner");
     case "NOTIFY":
       return n.notifyTitle.trim() || "Notify people";
     case "JUMP_TO_STEP":
@@ -352,6 +377,11 @@ export function nodesToApi(
   const approvals = approvalNodes(nodes);
   const problems: { key: string; reason: string }[] = [];
 
+  // an approval with nobody assigned would park every request on it — say so here
+  for (const a of approvals) {
+    if (!a.approverType) problems.push({ key: a.key, reason: "no approver chosen for this node" });
+  }
+
   const steps = approvals.map((s, i) => ({
     ...(s.id ? { id: s.id } : {}),
     stepName: derivedStepName(s),
@@ -360,14 +390,17 @@ export function nodesToApi(
     targetUserId: s.approverType === "USER" ? s.targetUserId || null : null,
     targetGroupId: s.approverType === "GROUP" ? s.targetGroupId || null : null,
     targetRoleId: s.approverType === "ROLE" ? s.targetRoleId || null : null,
-    approvalMode: s.approvalMode,
-    rejectAction: s.rejectAction,
-    approveAction: s.approveAction,
-    approveTargetIndex:
-      s.approveAction === "JUMP_TO_STEP" ? approvals.findIndex((x) => x.key === s.approveTargetKey) + 1 : null,
+    // unset choices are omitted, so the API applies its own documented default
+    // instead of this editor inventing one
+    ...(s.approvalMode ? { approvalMode: s.approvalMode } : {}),
+    ...(s.rejectAction ? { rejectAction: s.rejectAction } : {}),
+    ...(s.approveAction ? { approveAction: s.approveAction } : {}),
+    ...(s.approveAction === "JUMP_TO_STEP"
+      ? { approveTargetIndex: approvals.findIndex((x) => x.key === s.approveTargetKey) + 1 }
+      : {}),
     condition: conditionOf(s),
     dueDays: s.dueDays.trim() === "" ? null : Number(s.dueDays),
-    commentPolicy: s.commentPolicy,
+    ...(s.commentPolicy ? { commentPolicy: s.commentPolicy } : {}),
   }));
 
   const rules: Record<string, unknown>[] = [];
@@ -388,6 +421,10 @@ export function nodesToApi(
 
   for (const n of nodes) {
     if (!isActionTool(n.tool)) continue;
+    if (!n.when) {
+      problems.push({ key: n.key, reason: "nothing is chosen for when it runs" });
+      continue;
+    }
     const needsParent =
       n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION";
     const idx = needsParent ? approvalNodes(nodes).findIndex((a) => a.key === n.attachKey) : -1;
@@ -471,10 +508,10 @@ export function apiToNodes(nodes0: BuilderStep[], rules: BuilderRule[], opts: { 
       targetUserId: s.TargetUserID ?? "",
       targetGroupId: s.TargetGroupID ?? "",
       targetRoleId: s.TargetRoleID ?? "",
-      approvalMode: s.ApprovalMode ?? "ANY_ONE",
-      rejectAction: s.RejectAction ?? "REJECT_COMPLETELY",
-      approveAction: s.ApproveAction ?? "CONTINUE",
-      commentPolicy: s.CommentPolicy ?? "OPTIONAL",
+      approvalMode: blankIf(s.ApprovalMode, "ANY_ONE"),
+      rejectAction: blankIf(s.RejectAction, "REJECT_COMPLETELY"),
+      approveAction: blankIf(s.ApproveAction, "CONTINUE"),
+      commentPolicy: blankIf(s.CommentPolicy, "OPTIONAL"),
       dueDays: s.DueDays != null ? String(s.DueDays) : "",
       condField: cond?.field ?? "none",
       condOp: cond?.op ?? ">=",
