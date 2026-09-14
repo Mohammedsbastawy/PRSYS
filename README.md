@@ -78,6 +78,9 @@ A three-panel canvas built the way n8n / ServiceNow Flow Designer lay it out, an
 Tools available on the palette (`src/lib/workflow-tools.ts`):
 
 * **Requester submits** — a marker node with no settings; drop actions on its port to run them at submit time.
+* Nodes arrive **unnamed**: nothing is written into the name box for you. `WFSteps.StepName` cannot be empty, so an
+  unnamed approval gets a label derived from who decides (`Department manager approval`) at save time — and it loads
+  back as an empty box, because that text was never yours.
 * **Approval / decision** — who decides (requester's dept manager, direct manager, one person, group, role, any
   approver), quorum, comment policy, due days, an *only if* gate, what happens on approve / on reject. It exposes
   two drop ports — **if approved** and **if rejected** — and nothing runs there until you drop a tool on them.

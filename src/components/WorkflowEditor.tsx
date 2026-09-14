@@ -487,6 +487,7 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
   const approvals = approvalNodes(ctx.nodes);
   const approvalIdx = isApproval ? approvals.findIndex((a) => a.key === n.key) : -1;
   const attached = Boolean(attachment(ctx.nodes, n));
+  void approvalIdx;
   const nested = depth > 0;
 
   const p = (patch: Partial<FlowNode>) => ctx.patch(n.key, patch);
@@ -516,7 +517,7 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
           <Icon name={meta.icon} className="text-[14px]" />
         </button>
         <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-wider text-ink-faint sm:block">
-          {isStart ? "start" : isApproval ? `approval ${approvalIdx + 1}` : meta.label}
+          {isStart ? "start" : isApproval ? "decision" : meta.label}
         </span>
         {isStart ? (
           <span className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-ink">Requester submits</span>
@@ -525,7 +526,7 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
             className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink outline-none hover:border-surface-border focus:border-primary focus:bg-white"
             value={n.name}
             disabled={ctx.ro}
-            placeholder={isApproval ? "Name this approval node" : "Label (optional)"}
+            placeholder={isApproval ? "unnamed — click to name it" : "label (optional)"}
             onChange={(e) => p({ name: e.target.value })}
           />
         )}
@@ -1251,13 +1252,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       return;
     }
     const w = whenForLine(null);
-    const n = newNode(
-      tool,
-      tool === "START" || tool === "APPROVAL"
-        ? { name: tool === "APPROVAL" ? `Approval ${approvalNodes(nodes).length + 1}` : "" }
-        : { when: w.when, attachKey: w.attachKey }
-    );
-    insertAt(nodes, nodes.length, n);
+    // no name is filled in: an unnamed node stays unnamed (the API label is derived at save)
+    insertAt(nodes, nodes.length, newNode(tool, tool === "START" || tool === "APPROVAL" ? {} : { when: w.when, attachKey: w.attachKey }));
   };
 
   const addToSlot = (parentKey: string, slot: SlotId, tool: ToolId) => {
@@ -1271,12 +1267,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       const tool = drag.tool;
       if (tool === "START" && startNode(nodes)) return endDrag();
       const w = whenForLine(before);
-      const n = newNode(
-        tool,
-        tool === "START" || tool === "APPROVAL"
-          ? { name: tool === "APPROVAL" ? `Approval ${approvalNodes(nodes).length + 1}` : "" }
-          : { when: w.when, attachKey: w.attachKey }
-      );
+      const n = newNode(tool, tool === "START" || tool === "APPROVAL" ? {} : { when: w.when, attachKey: w.attachKey });
       insertAt(nodes, lineInsertIndex(nodes, before), n);
       endDrag();
       return;
@@ -1441,7 +1432,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         if (cErr) push(n.key, cErr);
       }
       if (n.tool === "APPROVAL") {
-        if (!n.name.trim()) push(n.key, "needs a name");
         if (n.approverType === "ROLE" && !n.targetRoleId) push(n.key, "choose a role");
         if (n.approverType === "GROUP" && !n.targetGroupId) push(n.key, "choose a group");
         if (n.approverType === "USER" && !n.targetUserId) push(n.key, "choose who approves");
@@ -1761,8 +1751,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
               {drag ? "drop it here" : mainLine.length > 0 ? "drop a tool here to add it at the end" : ""}
             </div>
 
-            {/* end-of-request ports */}
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {/* end-of-request ports — pointless until there is a decision to end on */}
+            <div className={`mt-3 grid gap-2 sm:grid-cols-2 ${approvalNodes(nodes).length === 0 ? "hidden" : ""}`}>
               <Port title="If the request ends approved" tone="approve" icon="verified" parentKey={END_KEY} slot="approve" ctx={ctx} depth={0} />
               <Port title="If the request ends rejected" tone="reject" icon="block" parentKey={END_KEY} slot="reject" ctx={ctx} depth={0} />
             </div>

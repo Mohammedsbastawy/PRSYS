@@ -293,6 +293,26 @@ function actionPayload(n: FlowNode, nodes: FlowNode[]): RuleActionValue {
   return out;
 }
 
+const APPROVER_FALLBACK_NAMES: Record<string, string> = {
+  DEPARTMENT_MANAGER: "Department manager approval",
+  REQUESTER_MANAGER: "Direct manager approval",
+  USER: "Named approver",
+  GROUP: "Group approval",
+  ROLE: "Role approval",
+  ANY_APPROVER: "Any approver",
+};
+
+/**
+ * WFSteps.StepName is NOT NULL and the API requires at least one character, so a
+ * node the admin left unnamed still needs something to store. This is derived at
+ * save time only — the canvas keeps the field empty, it is never shown as a name.
+ */
+export function derivedStepName(n: Pick<FlowNode, "name" | "approverType">): string {
+  const own = n.name.trim();
+  if (own) return own.slice(0, 120);
+  return APPROVER_FALLBACK_NAMES[n.approverType] ?? "Approval";
+}
+
 /** audit-trail label for the rule — the admin's own text wins, otherwise derived */
 export function derivedNodeName(
   n: FlowNode,
@@ -334,7 +354,7 @@ export function nodesToApi(
 
   const steps = approvals.map((s, i) => ({
     ...(s.id ? { id: s.id } : {}),
-    stepName: s.name.trim(),
+    stepName: derivedStepName(s),
     stepOrder: i,
     approverType: s.approverType,
     targetUserId: s.approverType === "USER" ? s.targetUserId || null : null,
@@ -438,9 +458,14 @@ export function apiToNodes(nodes0: BuilderStep[], rules: BuilderRule[], opts: { 
   const sorted = [...nodes0].sort((a, b) => a.StepOrder - b.StepOrder);
   const approvals = sorted.map((s) => {
     const cond = parseStepCondition(s.Condition);
+    const fresh: Pick<FlowNode, "name" | "approverType"> = {
+      name: "",
+      approverType: s.ApproverType,
+    };
     return newNode("APPROVAL", {
       id: s.WFStepID,
-      name: s.StepName,
+      // a name equal to the save-time fallback was never typed by the admin — keep the box empty
+      name: derivedStepName(fresh) === s.StepName ? "" : s.StepName,
       open: opts.openAll ?? sorted.length <= 2,
       approverType: s.ApproverType,
       targetUserId: s.TargetUserID ?? "",
