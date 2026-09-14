@@ -68,7 +68,7 @@ const ruleSchema = z.object({
   name: z.string().min(1).max(150),
   trigger: z.enum(['ON_SUBMIT', 'ON_STEP_APPROVED', 'ON_STEP_REJECTED', 'ON_REQUEST_APPROVED', 'ON_REQUEST_REJECTED']),
   condition: conditionSchema,
-  action: z.enum(['SET_PRIORITY', 'SET_SLA', 'ASSIGN_TO_USER', 'NOTIFY', 'JUMP_TO_STEP']),
+  action: z.enum(['SET_PRIORITY', 'SET_SLA', 'SET_STATUS', 'ASSIGN_TO_USER', 'NOTIFY', 'JUMP_TO_STEP']),
   actionValue: z.object({
     priority: z.string().optional(),
     userId: z.string().optional(),
@@ -78,6 +78,7 @@ const ruleSchema = z.object({
     notifyMessage: z.string().max(500).optional(),
     jumpToStepOrder: z.number().int().min(0).max(100).optional(),
     slaPolicyId: z.string().optional().nullable(),
+    status: z.string().optional(),
     fireOnStepOrder: z.number().int().min(0).max(100).optional(),
   }).default({}),
   sortOrder: z.number().int().default(0),
@@ -111,7 +112,7 @@ type RuleInput = {
   name: string
   trigger: 'ON_SUBMIT' | 'ON_STEP_APPROVED' | 'ON_STEP_REJECTED' | 'ON_REQUEST_APPROVED' | 'ON_REQUEST_REJECTED'
   condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
-  action: 'SET_PRIORITY' | 'SET_SLA' | 'ASSIGN_TO_USER' | 'NOTIFY' | 'JUMP_TO_STEP'
+  action: 'SET_PRIORITY' | 'SET_SLA' | 'SET_STATUS' | 'ASSIGN_TO_USER' | 'NOTIFY' | 'JUMP_TO_STEP'
   actionValue?: {
     priority?: string
     userId?: string
@@ -121,6 +122,7 @@ type RuleInput = {
     notifyMessage?: string
     jumpToStepOrder?: number
     slaPolicyId?: string | null
+    status?: string
     fireOnStepOrder?: number
   }
   sortOrder?: number
@@ -139,6 +141,8 @@ function validateRules(rules: RuleInput[], stepCount: number): string | null {
       return `Rule "${r.name}": choose a priority`
     if (r.action === 'ASSIGN_TO_USER' && !v.userId) return `Rule "${r.name}": choose a user`
     if (r.action === 'SET_SLA' && !v.slaPolicyId) return `Rule "${r.name}": choose an SLA policy`
+    if (r.action === 'SET_STATUS' && !['COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED'].includes(v.status ?? ''))
+      return `Rule "${r.name}": choose a status the flow may set (approval statuses are owned by the engine)`
     if (
       typeof v.fireOnStepOrder === 'number' &&
       (v.fireOnStepOrder < 0 || v.fireOnStepOrder >= stepCount)

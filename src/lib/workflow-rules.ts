@@ -13,6 +13,7 @@ export type RuleTrigger = (typeof RULE_TRIGGERS)[number]['value']
 export const RULE_ACTIONS = [
   { value: 'SET_PRIORITY', label: 'Set priority' },
   { value: 'SET_SLA', label: 'Apply an SLA policy' },
+  { value: 'SET_STATUS', label: 'Set ticket status' },
   { value: 'ASSIGN_TO_USER', label: 'Assign to a user' },
   { value: 'NOTIFY', label: 'Notify people' },
   { value: 'JUMP_TO_STEP', label: 'Jump to a step' },
@@ -41,6 +42,8 @@ export interface RuleActionValue {
   jumpToStepOrder?: number
   /** SET_SLA — policy whose target matches the request's priority */
   slaPolicyId?: string
+  /** SET_STATUS — ticket status automation is allowed to write (see SETTABLE_STATUSES) */
+  status?: string
   /**
    * Step binding: when set, the rule only runs for the step with this StepOrder
    * (its index in the workflow). Rules without it are flow-wide and fire after
@@ -116,6 +119,9 @@ export function describeRule(
     }
     case 'SET_SLA':
       then = `apply SLA → ${v.slaPolicyId ? look?.slaName?.(v.slaPolicyId) ?? 'policy' : 'policy'}`
+      break
+    case 'SET_STATUS':
+      then = `set status → ${String(v.status ?? '?').replace(/_/g, ' ').toLowerCase()}`
       break
     case 'JUMP_TO_STEP':
       then = `jump to step #${(v.jumpToStepOrder ?? 0) + 1}`

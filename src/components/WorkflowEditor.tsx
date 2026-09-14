@@ -1,22 +1,25 @@
 "use client";
 
 /**
- * Workflow builder — a blank canvas of blocks you add yourself.
+ * Workflow builder — a canvas you fill yourself.
  *
- * There are no pre-baked sections and no fixed "submit → approvals → close"
- * shape: every block is created here, in the order you want, and each block
- * declares for itself when it runs and what it does.
+ * Three panels, the way n8n / ServiceNow Flow Designer lay it out:
+ *   left   tools palette (searchable, grouped, draggable)
+ *   middle the canvas: nodes in the order you drop them
+ *   right  flow map, readiness list, attached forms
  *
- *   APPROVAL block   who decides, quorum, due, comment policy, where the flow
- *                    goes on approve / on reject, and when it applies at all
- *   AUTOMATION block one action (priority / SLA / assign / notify / jump) plus
- *                    its own "runs after …" binding and its own condition
+ * Nothing is pre-created. There is no hidden "start" step, no fixed lanes with
+ * settings in them. Every node — including the submit marker — comes from the
+ * palette and every node can be deleted.
  *
- * Persistence reuses what already exists (no migration):
- *   APPROVAL   → WFSteps (StepOrder = position among approval blocks)
- *   AUTOMATION → WFRules { Trigger, ActionValue: { …action, fireOnStepOrder } }
- * where the bound step is the nearest APPROVAL block above it, so dragging a
- * block between two approvals re-targets it automatically.
+ * How a node is wired:
+ *   START      marker for the moment the request is submitted (no settings)
+ *   APPROVAL   a real approval step; exposes two drop ports: "if approved" and "if rejected"
+ *   actions    set priority / set ticket status / apply SLA / assign / notify / jump
+ *
+ * Dropping an action into a port (or picking "Runs when" in the node) is what binds
+ * it. The binding is stored in WFRules.ActionValue.fireOnStepOrder, so the schema
+ * does not change.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -32,93 +35,38 @@ import {
   PRIORITY_VALUES,
   validateConditionInput,
 } from "@/lib/workflow-conditions";
-import { RULE_ACTIONS } from "@/lib/workflow-rules";
+import { NOTIFY_TARGET_TYPES } from "@/lib/workflow-rules";
 import {
-  apiToBlocks,
-  blocksToApi,
-  boundApprovalIndex,
-  approvalNameAt,
-  cloneBlock,
-  newBlock,
-  patchBy,
-  type ActionKind,
-  type Block,
-  type BlockType,
-  type Decision,
-  type RunScope,
+  apiToNodes,
+  approvalLabel,
+  attachment,
+  approvalNodes,
+  cloneNode,
+  END_KEY,
+  isActionTool,
+  nodesToApi,
+  newNode,
+  patchNode,
+  slotChildren,
+  startNode,
+  type FlowNode,
+  type SlotId,
+  type ToolId,
+  type WhenId,
 } from "@/lib/workflow-builder";
+import {
+  fmtMins,
+  RECIPES,
+  SETTABLE_STATUSES,
+  statusMeta,
+  TOOLS,
+  toolCategories,
+  toolMeta,
+  WHEN_META,
+  WHEN_ORDER,
+} from "@/lib/workflow-tools";
 
-/* ------------------------------------------------------------------ model -- */
-
-/* --------------------------------------------------------------- options -- */
-
-const APPROVER_TYPES: { value: string; label: string; icon: string; hint: string }[] = [
-  {
-    value: "DEPARTMENT_MANAGER",
-    label: "Department manager",
-    icon: "apartment",
-    hint: "Per request: the requester's department Manager, else their direct manager.",
-  },
-  {
-    value: "REQUESTER_MANAGER",
-    label: "Direct manager",
-    icon: "account_balance",
-    hint: "Per request: Users → Direct manager, else the department manager.",
-  },
-  { value: "GROUP", label: "Group", icon: "groups", hint: "Every member of the group can decide." },
-  { value: "ROLE", label: "Role", icon: "admin_panel_settings", hint: "Every active user holding the role." },
-  { value: "USER", label: "One person", icon: "person", hint: "A single named approver." },
-  {
-    value: "ANY_APPROVER",
-    label: "Any approver",
-    icon: "how_to_reg",
-    hint: "Anyone with the approve permission. Super Admins are excluded on purpose.",
-  },
-];
-
-const QUORUMS = [
-  { value: "ANY_ONE", label: "First answer wins" },
-  { value: "ALL", label: "Everyone must approve" },
-];
-
-const REJECT_ACTIONS = [
-  { value: "REJECT_COMPLETELY", label: "Reject the request" },
-  { value: "RETURN_TO_REQUESTER", label: "Return to requester" },
-  { value: "RETURN_TO_PREVIOUS_STEP", label: "Send back a step" },
-];
-
-const APPROVE_ACTIONS = [
-  { value: "CONTINUE", label: "Go to the next block" },
-  { value: "APPROVE_COMPLETELY", label: "Approve and stop" },
-  { value: "JUMP_TO_STEP", label: "Jump to another block" },
-];
-
-const COMMENT_POLICIES = [
-  { value: "OPTIONAL", label: "Comment optional" },
-  { value: "ON_REJECT", label: "Required to reject" },
-  { value: "ON_APPROVE", label: "Required to approve" },
-  { value: "ALWAYS", label: "Always required" },
-];
-
-const ACTION_META: Record<ActionKind, { label: string; icon: string; ring: string; text: string }> = {
-  SET_PRIORITY: { label: "Set priority", icon: "priority_high", ring: "border-amber-200", text: "text-amber-700" },
-  SET_SLA: { label: "Apply SLA", icon: "timer", ring: "border-violet-200", text: "text-violet-700" },
-  ASSIGN_TO_USER: { label: "Assign owner", icon: "assignment_ind", ring: "border-sky-200", text: "text-sky-700" },
-  NOTIFY: { label: "Notify", icon: "notifications_active", ring: "border-blue-200", text: "text-blue-700" },
-  JUMP_TO_STEP: { label: "Jump to block", icon: "subdirectory_arrow_right", ring: "border-rose-200", text: "text-rose-700" },
-};
-
-const SCOPE_LABELS: Record<RunScope, string> = {
-  AFTER_STEP: "After a block's decision",
-  ANY_STEP: "After any approval block",
-  SUBMIT: "Right after submit",
-  FINAL_APPROVED: "After the whole request is approved",
-  FINAL_REJECTED: "After the whole request is rejected",
-};
-
-/* ----------------------------------------------------------------- utils --- */
-
-/* ------------------------------------------------------------ data shapes -- */
+/* ------------------------------------------------------------- data shapes -- */
 
 interface RoleRow {
   id: string;
@@ -137,6 +85,7 @@ interface SlaRow {
   id: string;
   name: string;
   isDefault: boolean;
+  targets?: { priority: string; responseMins: number; resolveMins: number }[];
 }
 interface TemplateRow {
   FormTemplateID: string;
@@ -179,34 +128,62 @@ interface LoadedWorkflow {
   usage?: { templates: number; liveRequests: number; decisions: number };
 }
 
-/* ----------------------------------------------------------- small pieces -- */
+/* --------------------------------------------------------------- options -- */
 
-function whenSummary(b: Block, blocks: Block[]): string {
-  if (b.type !== "ACTION") return "";
-  const dec = b.decision === "BOTH" ? "approve or reject" : b.decision === "REJECTED" ? "reject" : "approve";
-  if (b.scope === "AFTER_STEP") {
-    const i = boundApprovalIndex(blocks, blocks.indexOf(b));
-    return i < 0 ? "no approval block above it yet" : `after “${approvalNameAt(blocks, i)}” ${dec}`;
+const APPROVER_TYPES = [
+  { value: "DEPARTMENT_MANAGER", label: "Requester's dept manager" },
+  { value: "REQUESTER_MANAGER", label: "Requester's direct manager" },
+  { value: "USER", label: "One person" },
+  { value: "GROUP", label: "A group" },
+  { value: "ROLE", label: "A role" },
+  { value: "ANY_APPROVER", label: "Anyone who may approve" },
+];
+const APPROVAL_MODES = [
+  { value: "ANY_ONE", label: "Any one of them" },
+  { value: "ALL", label: "All of them must approve" },
+];
+const COMMENT_POLICIES = [
+  { value: "OPTIONAL", label: "Comment optional" },
+  { value: "ON_APPROVE", label: "Comment on approve" },
+  { value: "ON_REJECT", label: "Comment on reject" },
+  { value: "ALWAYS", label: "Comment always" },
+];
+const REJECT_ACTIONS = [
+  { value: "RETURN_TO_REQUESTER", label: "Return it to the requester" },
+  { value: "REJECT_COMPLETELY", label: "Reject the request" },
+  { value: "RETURN_TO_PREVIOUS_STEP", label: "Send back one step" },
+];
+const APPROVE_ACTIONS = [
+  { value: "CONTINUE", label: "Go to the next node" },
+  { value: "APPROVE_COMPLETELY", label: "Approve & finish" },
+  { value: "JUMP_TO_STEP", label: "Jump to another node" },
+];
+
+const ACTION_TOOLS: ToolId[] = TOOLS.filter((t) => t.kind === "action").map((t) => t.id);
+
+function whenText(n: FlowNode, nodes: FlowNode[]): string {
+  const meta = WHEN_META[n.when];
+  if (n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION") {
+    const label = approvalLabel(nodes, n.attachKey);
+    return label ? `${meta.short} · ${label}` : `${meta.short} · ⚠ pick the node`;
   }
-  if (b.scope === "ANY_STEP") return `after any block ${dec}`;
-  return SCOPE_LABELS[b.scope].toLowerCase();
+  return meta.short;
 }
 
-function condText(b: Block): string | null {
-  if (b.condField === "none") return null;
-  return `${b.condField} ${b.condOp} ${b.condValue}`;
-}
+/* ------------------------------------------------------------- UI atoms -- */
 
 function Segmented({
   options,
   value,
   onChange,
   disabled,
+  size = "sm",
 }: {
   options: { value: string; label: string }[];
   value: string;
   onChange: (v: string) => void;
   disabled?: boolean;
+  size?: "sm" | "xs";
 }) {
   return (
     <div className="flex flex-wrap gap-1">
@@ -216,7 +193,9 @@ function Segmented({
           type="button"
           disabled={disabled}
           onClick={() => onChange(o.value)}
-          className={`rounded border px-2.5 py-1 text-xs font-medium transition-colors ${
+          className={`rounded border font-medium transition-colors ${
+            size === "xs" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs"
+          } ${
             value === o.value
               ? "border-primary bg-blue-50 text-primary-dark"
               : "border-surface-border bg-white text-ink-soft hover:bg-surface-muted"
@@ -229,31 +208,43 @@ function Segmented({
   );
 }
 
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
+  return (
+    <div>
+      <div className="label !mb-1 flex items-center gap-1.5">
+        {label}
+        {hint && (
+          <span className="font-normal normal-case tracking-normal text-ink-faint" title={hint}>
+            <Icon name="help" className="text-[13px]" />
+          </span>
+        )}
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function ConditionRow({
-  field,
-  op,
-  value,
-  onChange,
+  n,
   disabled,
+  onPatch,
 }: {
-  field: string;
-  op: string;
-  value: string;
-  onChange: (p: { condField: string; condOp: string; condValue: string }) => void;
+  n: FlowNode;
   disabled?: boolean;
+  onPatch: (p: Partial<FlowNode>) => void;
 }) {
-  const isPriority = field === "priority";
+  const isPriority = n.condField === "priority";
   return (
     <div className="flex flex-wrap items-center gap-2">
       <select
         className="input w-auto !py-1.5 text-xs"
         disabled={disabled}
-        value={field}
+        value={n.condField}
         onChange={(e) =>
-          onChange({
+          onPatch({
             condField: e.target.value,
             condOp: e.target.value === "priority" ? "in" : ">=",
-            condValue: e.target.value === "none" ? "" : value,
+            condValue: e.target.value === "none" ? "" : n.condValue,
           })
         }
       >
@@ -263,13 +254,13 @@ function ConditionRow({
           </option>
         ))}
       </select>
-      {field !== "none" && (
+      {n.condField !== "none" && (
         <>
           <select
             className="input w-auto !py-1.5 text-xs"
             disabled={disabled}
-            value={op}
-            onChange={(e) => onChange({ condField: field, condOp: e.target.value, condValue: value })}
+            value={n.condOp}
+            onChange={(e) => onPatch({ condOp: e.target.value })}
           >
             {(isPriority ? PRIORITY_OPS : NUMERIC_OPS).map((o) => (
               <option key={o.value} value={o.value}>
@@ -281,8 +272,8 @@ function ConditionRow({
             <select
               className="input w-auto !py-1.5 text-xs"
               disabled={disabled}
-              value={value}
-              onChange={(e) => onChange({ condField: field, condOp: op, condValue: e.target.value })}
+              value={n.condValue}
+              onChange={(e) => onPatch({ condValue: e.target.value })}
             >
               {PRIORITY_VALUES.map((p) => (
                 <option key={p} value={p}>
@@ -293,12 +284,12 @@ function ConditionRow({
             </select>
           ) : (
             <input
-              className="input !w-28 !py-1.5 text-xs"
+              className="input !w-24 !py-1.5 text-xs"
               disabled={disabled}
               inputMode="numeric"
               placeholder="value"
-              value={value}
-              onChange={(e) => onChange({ condField: field, condOp: op, condValue: e.target.value })}
+              value={n.condValue}
+              onChange={(e) => onPatch({ condValue: e.target.value })}
             />
           )}
         </>
@@ -307,47 +298,789 @@ function ConditionRow({
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="label">{label}</label>
-      {children}
-    </div>
-  );
-}
-
-function Palette({
+/** the popover used to add a tool into a port without dragging */
+function AddMenu({
+  open,
   onPick,
   onClose,
+  tools = ACTION_TOOLS,
 }: {
-  onPick: (t: BlockType) => void;
+  open: boolean;
+  onPick: (t: ToolId) => void;
   onClose: () => void;
+  tools?: ToolId[];
 }) {
+  if (!open) return null;
   return (
-    <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-surface-border bg-white p-2 shadow-sm">
-      <span className="px-1 text-[11px] font-bold uppercase tracking-wider text-ink-faint">Add block</span>
+    <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-lg border border-surface-border bg-white p-1 shadow-pop">
+      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-faint">Add a tool</div>
+      {tools.map((id) => {
+        const t = toolMeta(id);
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => {
+              onPick(id);
+              onClose();
+            }}
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-ink hover:bg-surface-muted"
+          >
+            <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border ${t.accent}`}>
+              <Icon name={t.icon} className="text-[14px]" />
+            </span>
+            {t.label}
+          </button>
+        );
+      })}
+      <div className="border-t border-surface-border/60 px-2 py-1 text-[10px] text-ink-faint">
+        or drag from the tools panel
+      </div>
       <button
         type="button"
-        onClick={() => onPick("APPROVAL")}
-        className="flex items-center gap-1.5 rounded border border-surface-border px-2.5 py-1.5 text-xs font-semibold text-ink hover:border-primary hover:bg-blue-50"
+        onClick={onClose}
+        className="absolute right-1 top-1 rounded p-1 text-ink-faint hover:text-ink"
+        title="Close"
       >
-        <Icon name="verified_user" className="text-[16px]" /> Approval
-      </button>
-      <button
-        type="button"
-        onClick={() => onPick("ACTION")}
-        className="flex items-center gap-1.5 rounded border border-surface-border px-2.5 py-1.5 text-xs font-semibold text-ink hover:border-primary hover:bg-blue-50"
-      >
-        <Icon name="bolt" className="text-[16px]" /> Automation
-      </button>
-      <button type="button" onClick={onClose} className="icon-btn !h-7 !w-7 ml-auto" title="Cancel">
-        <Icon name="close" className="text-[16px]" />
+        <Icon name="close" className="text-[14px]" />
       </button>
     </div>
   );
 }
 
-/* -------------------------------------------------------------------- app -- */
+/* ------------------------------------------------------------------- ctx -- */
+
+type Drag = { kind: "new"; tool: ToolId } | { kind: "move"; key: string } | null;
+
+interface ZoneHandlers {
+  drag: Drag;
+  hover: string | null;
+  enter: (id: string) => void;
+  leave: () => void;
+  dropOnLine: (before: FlowNode | null) => void;
+  dropInSlot: (parentKey: string, slot: SlotId, before: FlowNode | null) => void;
+  addToSlot: (parentKey: string, slot: SlotId, tool: ToolId) => void;
+  startToolDrag: (t: ToolId) => void;
+  startNodeDrag: (k: string) => void;
+  endDrag: () => void;
+}
+
+interface NodeCtx extends ZoneHandlers {
+  nodes: FlowNode[];
+  roles: RoleRow[];
+  groups: GroupRow[];
+  users: UserRow[];
+  slas: SlaRow[];
+  ro: boolean;
+  selected: string | null;
+  select: (k: string | null) => void;
+  patch: (k: string, p: Partial<FlowNode>) => void;
+  remove: (k: string) => void;
+  duplicate: (k: string) => void;
+  moveWithin: (k: string, dir: -1 | 1) => void;
+  detach: (k: string) => void;
+  issues: Record<string, string[]>;
+}
+
+/** props for a div that accepts a drop; `zoneId` marks it as the active target */
+function zoneProps(ctx: NodeCtx, zoneId: string, onDrop: () => void) {
+  return {
+    onDragOver: (e: React.DragEvent) => {
+      if (!ctx.drag) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      ctx.enter(zoneId);
+    },
+    onDragLeave: () => ctx.leave(),
+    onDrop: (e: React.DragEvent) => {
+      e.preventDefault();
+      onDrop();
+    },
+  };
+}
+
+/* ------------------------------------------------------------- slot (port) -- */
+
+function Port({
+  title,
+  tone,
+  icon,
+  parentKey,
+  slot,
+  ctx,
+  depth,
+}: {
+  title: string;
+  tone: "approve" | "reject" | "submit" | "decision";
+  icon: string;
+  parentKey: string;
+  slot: SlotId;
+  ctx: NodeCtx;
+  depth: number;
+}) {
+  const [menu, setMenu] = useState(false);
+  const kids = slotChildren(ctx.nodes, parentKey, slot);
+  const toneCls =
+    tone === "approve"
+      ? "text-green-700 border-green-200 bg-green-50/50"
+      : tone === "reject"
+        ? "text-rose-700 border-rose-200 bg-rose-50/50"
+        : tone === "submit"
+          ? "text-emerald-700 border-emerald-200 bg-emerald-50/40"
+          : "text-indigo-700 border-indigo-200 bg-indigo-50/40";
+  const zoneId = `${parentKey}:${slot}`;
+  return (
+    <div className={`relative rounded-lg border ${toneCls} p-2`}>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
+          <Icon name={icon} className="text-[14px]" />
+          {title}
+          {kids.length > 0 && <span className="rounded-full bg-white/70 px-1.5 text-[10px]">{kids.length}</span>}
+        </span>
+        {!ctx.ro && (
+          <button
+            type="button"
+            onClick={() => setMenu((m) => !m)}
+            className="rounded px-1 text-[11px] underline decoration-dotted hover:bg-white/60"
+          >
+            add
+          </button>
+        )}
+      </div>
+
+      {kids.map((k, ki) => (
+        <div
+          key={k.key}
+          {...zoneProps(ctx, `${zoneId}@${ki}`, () => ctx.dropInSlot(parentKey, slot, k))}
+          className="rounded"
+        >
+          <NodeCard n={k} ctx={ctx} depth={depth + 1} />
+        </div>
+      ))}
+
+      <div
+        {...zoneProps(ctx, `${zoneId}@end`, () => ctx.dropInSlot(parentKey, slot, null))}
+        className={`mt-1 flex min-h-[30px] items-center justify-center rounded border border-dashed px-2 text-[11px] ${
+          ctx.hover === `${zoneId}@end` ? "border-primary bg-white" : "border-black/10"
+        } ${kids.length === 0 ? "text-ink-faint" : "text-transparent"}`}
+      >
+        {kids.length === 0 ? (ctx.drag ? "drop here" : "empty — drag a tool here or press add") : "·"}
+      </div>
+
+      <AddMenu
+        open={menu}
+        onClose={() => setMenu(false)}
+        onPick={(t) => ctx.addToSlot(parentKey, slot, t)}
+        tools={ACTION_TOOLS}
+      />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------- node card -- */
+
+function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: number }) {
+  const meta = toolMeta(n.tool);
+  const issues = ctx.issues[n.key] ?? [];
+  const isApproval = n.tool === "APPROVAL";
+  const isStart = n.tool === "START";
+  const approvals = approvalNodes(ctx.nodes);
+  const approvalIdx = isApproval ? approvals.findIndex((a) => a.key === n.key) : -1;
+  const attached = Boolean(attachment(ctx.nodes, n));
+  const nested = depth > 0;
+
+  const p = (patch: Partial<FlowNode>) => ctx.patch(n.key, patch);
+  const approveKids = slotChildren(ctx.nodes, n.key, "approve");
+  const rejectKids = slotChildren(ctx.nodes, n.key, "reject");
+  const sla = !isApproval && !isStart ? ctx.slas.find((s) => s.id === n.slaPolicyId) : undefined;
+
+  return (
+    <div
+      id={`node-${n.key}`}
+      onClick={() => ctx.select(n.key)}
+      className={`${nested ? "" : "card"} ${nested ? "mb-1 rounded-lg border bg-white" : "mb-2 overflow-hidden"} ${
+        ctx.selected === n.key ? "ring-2 ring-primary/30" : ""
+      } ${issues.length > 0 ? "border-amber-300" : ""} ${!n.enabled && !isStart ? "opacity-70" : ""}`}
+    >
+      <div className="flex items-center gap-1.5 px-2 py-1.5">
+        <button
+          type="button"
+          disabled={ctx.ro}
+          draggable={!ctx.ro}
+          onDragStart={() => ctx.startNodeDrag(n.key)}
+          onDragEnd={ctx.endDrag}
+          onClick={() => p({ open: !n.open })}
+          title={ctx.ro ? meta.label : "Drag to move · click to open or close"}
+          className={`flex h-6 shrink-0 cursor-grab items-center justify-center rounded border px-1 ${meta.accent}`}
+        >
+          <Icon name={meta.icon} className="text-[14px]" />
+        </button>
+        <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-wider text-ink-faint sm:block">
+          {isStart ? "start" : isApproval ? `approval ${approvalIdx + 1}` : meta.label}
+        </span>
+        {isStart ? (
+          <span className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-ink">Requester submits</span>
+        ) : (
+          <input
+            className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink outline-none hover:border-surface-border focus:border-primary focus:bg-white"
+            value={n.name}
+            disabled={ctx.ro}
+            placeholder={isApproval ? "Name this approval node" : "Label (optional)"}
+            onChange={(e) => p({ name: e.target.value })}
+          />
+        )}
+
+        {!isApproval && !isStart && (
+          <span className="hidden shrink-0 items-center gap-1 text-[10px] text-ink-faint md:flex">
+            <Icon name={WHEN_META[n.when].icon} className="text-[13px]" />
+            {whenText(n, ctx.nodes)}
+          </span>
+        )}
+        {sla && (
+          <span className="hidden shrink-0 rounded bg-cyan-50 px-1.5 py-0.5 text-[10px] text-cyan-700 lg:block">
+            TTA {fmtMins(sla.targets?.find((t) => t.priority === n.priority)?.responseMins ?? sla.targets?.[0]?.responseMins)} · TTR{" "}
+            {fmtMins(sla.targets?.find((t) => t.priority === n.priority)?.resolveMins ?? sla.targets?.[0]?.resolveMins)}
+          </span>
+        )}
+        {isStart && <span className="shrink-0 text-[10px] text-ink-faint">no settings — it is just the hook</span>}
+        {!n.enabled && !isStart && <span className="shrink-0 rounded bg-gray-100 px-1.5 text-[10px] text-ink-faint">paused</span>}
+        {issues.length > 0 && (
+          <span className="shrink-0 rounded bg-amber-100 px-1.5 text-[10px] font-semibold text-amber-800" title={issues[0]}>
+            {issues.length}
+          </span>
+        )}
+
+        <div className="flex shrink-0 items-center">
+          {issues[0] && <span className="mr-1 hidden max-w-[220px] truncate text-[10px] text-amber-700 xl:block">{issues[0]}</span>}
+          {!isStart && (
+            <>
+              <button type="button" className="icon-btn !h-6 !w-6" title="Move up" onClick={() => ctx.moveWithin(n.key, -1)}>
+                <Icon name="keyboard_arrow_up" className="text-[16px]" />
+              </button>
+              <button type="button" className="icon-btn !h-6 !w-6" title="Move down" onClick={() => ctx.moveWithin(n.key, 1)}>
+                <Icon name="keyboard_arrow_down" className="text-[16px]" />
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            className="icon-btn !h-6 !w-6"
+            title={n.open ? "Collapse" : "Open"}
+            onClick={() => p({ open: !n.open })}
+          >
+            <Icon name={n.open ? "expand_less" : "expand_more"} className="text-[16px]" />
+          </button>
+        </div>
+      </div>
+
+      {n.open && (
+        <div className="space-y-3 border-t border-surface-border/70 px-3 py-2.5">
+          {isStart ? (
+            <p className="text-[11px] leading-relaxed text-ink-soft">
+              Everything you drop in the port below runs the moment the request is submitted — before anybody
+              approves anything. Delete this node if you do not need a submit hook.
+            </p>
+          ) : isApproval ? (
+            <ApprovalBody n={n} ctx={ctx} />
+          ) : (
+            <ActionBody n={n} ctx={ctx} />
+          )}
+
+          {isApproval && (
+            <div className="grid gap-2 sm:grid-cols-2">
+              <Port title="If approved" tone="approve" icon="thumb_up" parentKey={n.key} slot="approve" ctx={ctx} depth={depth} />
+              <Port title="If rejected" tone="reject" icon="thumb_down" parentKey={n.key} slot="reject" ctx={ctx} depth={depth} />
+            </div>
+          )}
+          {isStart && <Port title="Then run" tone="submit" icon="bolt" parentKey={n.key} slot="submit" ctx={ctx} depth={depth} />}
+
+          {n.condField !== "none" && !n.open && (
+            <div className="px-3 pb-2 text-[10px] text-ink-faint">
+              only if {n.condField} {n.condOp} {n.condValue}
+            </div>
+          )}
+
+          {!ctx.ro && (
+            <div className="flex flex-wrap items-center gap-3 border-t border-surface-border/60 pt-2 text-[11px]">
+              <button type="button" onClick={() => ctx.duplicate(n.key)} className="text-ink-soft hover:text-primary">
+                Duplicate
+              </button>
+              {attached && (
+                <button type="button" onClick={() => ctx.detach(n.key)} className="text-ink-soft hover:text-primary">
+                  Move to the main line
+                </button>
+              )}
+              {!isStart && !isApproval && (
+                <button type="button" onClick={() => p({ enabled: !n.enabled })} className="text-ink-soft hover:text-primary">
+                  {n.enabled ? "Pause" : "Resume"}
+                </button>
+              )}
+              <button type="button" onClick={() => ctx.remove(n.key)} className="text-ink-soft hover:text-danger">
+                Delete
+              </button>
+              {!isStart && (
+                <span className="ml-auto text-ink-faint">
+                  {isApproval
+                    ? `approvals run in canvas order · ${approveKids.length} on approve · ${rejectKids.length} on reject`
+                    : `rule order ${ctx.nodes.filter((x) => isActionTool(x.tool)).findIndex((x) => x.key === n.key) + 1}`}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
+  const approvals = approvalNodes(ctx.nodes);
+  return (
+    <>
+      <Field label="Who decides">
+        <div className="flex flex-wrap items-center gap-2">
+          <Segmented
+            disabled={ctx.ro}
+            value={n.approverType}
+            onChange={(v) => ctx.patch(n.key, { approverType: v })}
+            options={APPROVER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
+            size="xs"
+          />
+          {(n.approverType === "USER" || n.approverType === "GROUP" || n.approverType === "ROLE") && (
+            <select
+              className="input !w-52 !py-1 text-xs"
+              disabled={ctx.ro}
+              value={n.approverType === "USER" ? n.targetUserId : n.approverType === "GROUP" ? n.targetGroupId : n.targetRoleId}
+              onChange={(e) =>
+                ctx.patch(
+                  n.key,
+                  n.approverType === "USER"
+                    ? { targetUserId: e.target.value }
+                    : n.approverType === "GROUP"
+                      ? { targetGroupId: e.target.value }
+                      : { targetRoleId: e.target.value }
+                )
+              }
+            >
+              <option value="">— choose —</option>
+              {n.approverType === "USER" &&
+                ctx.users.map((u) => (
+                  <option key={u.UserID} value={u.UserID}>
+                    {u.Name} · {u.Email}
+                  </option>
+                ))}
+              {n.approverType === "GROUP" &&
+                ctx.groups.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              {n.approverType === "ROLE" &&
+                ctx.roles.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+            </select>
+          )}
+        </div>
+      </Field>
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Field label="Quorum">
+          <select
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            value={n.approvalMode}
+            onChange={(e) => ctx.patch(n.key, { approvalMode: e.target.value })}
+          >
+            {APPROVAL_MODES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Comments">
+          <select
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            value={n.commentPolicy}
+            onChange={(e) => ctx.patch(n.key, { commentPolicy: e.target.value })}
+          >
+            {COMMENT_POLICIES.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Due in (days)" hint="Leave empty for no due date on this step">
+          <input
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            inputMode="numeric"
+            placeholder="—"
+            value={n.dueDays}
+            onChange={(e) => ctx.patch(n.key, { dueDays: e.target.value.replace(/[^0-9]/g, "") })}
+          />
+        </Field>
+        <Field label="Only if" hint="The whole node is skipped when this is false">
+          <ConditionRow n={n} disabled={ctx.ro} onPatch={(patch) => ctx.patch(n.key, patch)} />
+        </Field>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="On approve">
+          <Segmented
+            disabled={ctx.ro}
+            size="xs"
+            value={n.approveAction}
+            onChange={(v) => ctx.patch(n.key, { approveAction: v })}
+            options={APPROVE_ACTIONS.map((a) => ({ value: a.value, label: a.label }))}
+          />
+          {n.approveAction === "JUMP_TO_STEP" && (
+            <select
+              className="input mt-1 !py-1 text-xs"
+              disabled={ctx.ro}
+              value={n.approveTargetKey}
+              onChange={(e) => ctx.patch(n.key, { approveTargetKey: e.target.value })}
+            >
+              <option value="">— jump to which node? —</option>
+              {approvals.map((a, ai) => (
+                <option key={a.key} value={a.key} disabled={a.key === n.key}>
+                  {ai + 1}. {a.name || "Untitled approval"}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+        <Field label="On reject">
+          <Segmented
+            disabled={ctx.ro}
+            size="xs"
+            value={n.rejectAction}
+            onChange={(v) => ctx.patch(n.key, { rejectAction: v })}
+            options={REJECT_ACTIONS.map((a) => ({ value: a.value, label: a.label }))}
+          />
+        </Field>
+      </div>
+      <p className="text-[10px] leading-relaxed text-ink-faint">
+        The ports under this node are optional: drop a tool on “if approved” / “if rejected” to attach it to this
+        decision. Nothing runs there until you put something there.
+      </p>
+    </>
+  );
+}
+
+function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
+  const approvals = approvalNodes(ctx.nodes);
+  const needsPick = n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION";
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Runs when">
+          <select
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            value={n.when}
+            onChange={(e) => ctx.patch(n.key, { when: e.target.value as WhenId, attachKey: e.target.value.startsWith("AFTER_") ? n.attachKey || approvals[0]?.key || "" : "" })}
+          >
+            {WHEN_ORDER.map((w) => (
+              <option key={w} value={w}>
+                {WHEN_META[w].label}
+              </option>
+            ))}
+          </select>
+        </Field>
+        <Field label={needsPick ? "Attached to" : "This node does"}>
+          {needsPick ? (
+            <select
+              className="input !py-1 text-xs"
+              disabled={ctx.ro}
+              value={n.attachKey}
+              onChange={(e) => ctx.patch(n.key, { attachKey: e.target.value })}
+            >
+              <option value="">— choose an approval node —</option>
+              {approvals.map((a, ai) => (
+                <option key={a.key} value={a.key}>
+                  {ai + 1}. {a.name || "Untitled approval"}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <select
+              className="input !py-1 text-xs"
+              disabled={ctx.ro}
+              value={n.tool}
+              onChange={(e) => ctx.patch(n.key, { tool: e.target.value as ToolId })}
+            >
+              {TOOLS.filter((t) => t.kind === "action").map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+      </div>
+
+      {n.tool === "SET_PRIORITY" && (
+        <Segmented
+          disabled={ctx.ro}
+          size="xs"
+          value={n.priority}
+          onChange={(v) => ctx.patch(n.key, { priority: v })}
+          options={PRIORITY_VALUES.map((p) => ({ value: p, label: p }))}
+        />
+      )}
+
+      {n.tool === "SET_STATUS" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            value={n.status}
+            onChange={(e) => ctx.patch(n.key, { status: e.target.value })}
+          >
+            {SETTABLE_STATUSES.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <span className="text-[11px] text-ink-faint">{statusMeta(n.status)?.note}</span>
+        </div>
+      )}
+
+      {n.tool === "SET_SLA" && (
+        <Field label="Policy" hint="The target matching the request's priority at that moment is applied">
+          <select
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            value={n.slaPolicyId}
+            onChange={(e) => ctx.patch(n.key, { slaPolicyId: e.target.value })}
+          >
+            <option value="">— choose a policy —</option>
+            {ctx.slas.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+                {s.isDefault ? " (default)" : ""}
+              </option>
+            ))}
+          </select>
+          {ctx.slas.find((s) => s.id === n.slaPolicyId)?.targets && (
+            <div className="mt-1 flex flex-wrap gap-1">
+              {(ctx.slas.find((s) => s.id === n.slaPolicyId)?.targets ?? []).map((t) => (
+                <span key={t.priority} className="rounded bg-surface-muted px-1.5 py-0.5 text-[10px] text-ink-soft">
+                  {t.priority}: TTA {fmtMins(t.responseMins)} · TTR {fmtMins(t.resolveMins)}
+                </span>
+              ))}
+            </div>
+          )}
+        </Field>
+      )}
+
+      {n.tool === "ASSIGN_TO_USER" && (
+        <select className="input !py-1 text-xs" disabled={ctx.ro} value={n.userId} onChange={(e) => ctx.patch(n.key, { userId: e.target.value })}>
+          <option value="">— assign to whom? —</option>
+          {ctx.users.map((u) => (
+            <option key={u.UserID} value={u.UserID}>
+              {u.Name} · {u.Email}
+            </option>
+          ))}
+        </select>
+      )}
+
+      {n.tool === "NOTIFY" && (
+        <div className="grid gap-2 sm:grid-cols-2">
+          <select
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            value={n.notifyTargetType}
+            onChange={(e) => ctx.patch(n.key, { notifyTargetType: e.target.value })}
+          >
+            {NOTIFY_TARGET_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>
+                {t.label}
+              </option>
+            ))}
+          </select>
+          {n.notifyTargetType === "USER" && (
+            <select className="input !py-1 text-xs" disabled={ctx.ro} value={n.notifyUserId} onChange={(e) => ctx.patch(n.key, { notifyUserId: e.target.value })}>
+              <option value="">— which user? —</option>
+              {ctx.users.map((u) => (
+                <option key={u.UserID} value={u.UserID}>
+                  {u.Name}
+                </option>
+              ))}
+            </select>
+          )}
+          {n.notifyTargetType === "GROUP" && (
+            <select className="input !py-1 text-xs" disabled={ctx.ro} value={n.notifyGroupId} onChange={(e) => ctx.patch(n.key, { notifyGroupId: e.target.value })}>
+              <option value="">— which group? —</option>
+              {ctx.groups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {n.notifyTargetType === "ROLE" && (
+            <select className="input !py-1 text-xs" disabled={ctx.ro} value={n.notifyRoleId} onChange={(e) => ctx.patch(n.key, { notifyRoleId: e.target.value })}>
+              <option value="">— which role? —</option>
+              {ctx.roles.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <input
+            className="input !py-1 text-xs"
+            disabled={ctx.ro}
+            placeholder="Title (optional)"
+            value={n.notifyTitle}
+            onChange={(e) => ctx.patch(n.key, { notifyTitle: e.target.value })}
+          />
+          <input
+            className="input !py-1 text-xs sm:col-span-2"
+            disabled={ctx.ro}
+            placeholder="Message (optional)"
+            value={n.notifyMessage}
+            onChange={(e) => ctx.patch(n.key, { notifyMessage: e.target.value })}
+          />
+        </div>
+      )}
+
+      {n.tool === "JUMP_TO_STEP" && (
+        <select className="input !py-1 text-xs" disabled={ctx.ro} value={n.jumpToStepKey} onChange={(e) => ctx.patch(n.key, { jumpToStepKey: e.target.value })}>
+          <option value="">— land on which approval node? —</option>
+          {approvals.map((a, ai) => (
+            <option key={a.key} value={a.key}>
+              {ai + 1}. {a.name || "Untitled approval"}
+            </option>
+          ))}
+        </select>
+      )}
+
+      <Field label="Only if" hint="The action is skipped when this is false">
+        <ConditionRow n={n} disabled={ctx.ro} onPatch={(patch) => ctx.patch(n.key, patch)} />
+      </Field>
+    </>
+  );
+}
+
+/* ---------------------------------------------------------------- palette -- */
+
+function Palette({
+  ro,
+  onAppend,
+  drag,
+  startToolDrag,
+  endDrag,
+  onRecipe,
+}: {
+  ro: boolean;
+  onAppend: (t: ToolId) => void;
+  drag: Drag;
+  startToolDrag: (t: ToolId) => void;
+  endDrag: () => void;
+  onRecipe: (id: string) => void;
+}) {
+  const [q, setQ] = useState("");
+  const cats = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    return toolCategories()
+      .map((c) => ({
+        ...c,
+        tools: needle ? c.tools.filter((t) => (t.label + t.blurb + t.category).toLowerCase().includes(needle)) : c.tools,
+      }))
+      .filter((c) => c.tools.length > 0);
+  }, [q]);
+
+  return (
+    <div className="card sticky top-4 p-3">
+      <div className="mb-2 flex items-center gap-2">
+        <Icon name="construction" className="text-[16px] text-ink-faint" />
+        <h3 className="text-xs font-bold uppercase tracking-wider text-ink-faint">Tools</h3>
+        <span className="ml-auto text-[10px] text-ink-faint">drag onto the canvas</span>
+      </div>
+      <input
+        id="wf-tool-search"
+        className="input mb-2 !py-1 text-xs"
+        placeholder="Search tools —  /"
+        value={q}
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            setQ("");
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+      />
+
+      {cats.map((c) => (
+        <div key={c.name} className="mb-2">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{c.name}</div>
+          <div className="space-y-1">
+            {c.tools.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                disabled={ro}
+                draggable={!ro}
+                onDragStart={(e) => {
+                  e.dataTransfer.setData("text/plain", t.id);
+                  e.dataTransfer.effectAllowed = "copy";
+                  startToolDrag(t.id);
+                }}
+                onDragEnd={endDrag}
+                onClick={() => onAppend(t.id)}
+                title={ro ? t.blurb : `${t.blurb}\n\nDrag it anywhere on the canvas, or click to add at the end.`}
+                className={`flex w-full cursor-grab items-start gap-2 rounded-lg border p-1.5 text-left transition-colors hover:bg-surface-muted ${
+                  drag?.kind === "new" && drag.tool === t.id ? "border-primary bg-blue-50" : "border-surface-border"
+                } ${ro ? "cursor-default" : ""}`}
+              >
+                <span className={`mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded border ${t.accent}`}>
+                  <Icon name={t.icon} className="text-[14px]" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-xs font-semibold text-ink">{t.label}</span>
+                  <span className="block text-[10px] leading-snug text-ink-faint">{t.blurb}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      {cats.length === 0 && <p className="py-2 text-center text-[11px] text-ink-faint">No tool matches “{q}”.</p>}
+
+      {!ro && (
+        <div className="mt-3 border-t border-surface-border/70 pt-2">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-ink-faint">Start from a preset (optional)</div>
+          {RECIPES.map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => onRecipe(r.id)}
+              className="mb-1 flex w-full items-start gap-2 rounded-lg px-1.5 py-1 text-left hover:bg-surface-muted"
+              title={r.blurb}
+            >
+              <Icon name={r.icon} className="mt-0.5 text-[15px] text-ink-faint" />
+              <span className="min-w-0">
+                <span className="block text-[11px] font-semibold text-ink">{r.label}</span>
+                <span className="block text-[10px] leading-snug text-ink-faint">inserts editable nodes</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------ the editor -- */
 
 export default function WorkflowEditor({ workflowId }: { workflowId: string | null }) {
   const { user, token } = useAuth();
@@ -363,7 +1096,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("ACTIVE");
-  const [blocks, setBlocks] = useState<Block[]>([]);
+  const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [usage, setUsage] = useState<LoadedWorkflow["usage"] | null>(null);
 
   const [roles, setRoles] = useState<RoleRow[]>([]);
@@ -374,17 +1107,22 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const [assigned, setAssigned] = useState<Set<string>>(new Set());
   const [initialAssigned, setInitialAssigned] = useState<Set<string>>(new Set());
 
-  const [paletteAt, setPaletteAt] = useState<number | null>(null);
-  const [dragKey, setDragKey] = useState<string | null>(null);
-  const [dragOver, setDragOver] = useState<number | null>(null);
+  const [drag, setDrag] = useState<Drag>(null);
+  const [hover, setHover] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const baseline = useRef("");
-  const refs = useRef<Record<string, HTMLDivElement | null>>({});
-
-  const approvals = useMemo(() => blocks.filter((b) => b.type === "APPROVAL"), [blocks]);
+  const past = useRef<FlowNode[][]>([]);
+  const future = useRef<FlowNode[][]>([]);
+  const [histTick, setHistTick] = useState(0);
 
   const dirty = useMemo(
-    () => JSON.stringify({ name, description, status, blocks }) !== baseline.current,
-    [name, description, status, blocks]
+    () => JSON.stringify({ name, description, status, nodes }) !== baseline.current,
+    [name, description, status, nodes]
+  );
+  const history = useMemo(
+    () => ({ canUndo: past.current.length > 0, canRedo: future.current.length > 0 }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [histTick]
   );
 
   /* ------------------------------------------------------------- loaders -- */
@@ -424,18 +1162,15 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   }, [token]);
 
   const applyLoaded = useCallback((w: LoadedWorkflow) => {
-    const next = apiToBlocks(w.Steps || [], w.Rules || []);
+    const next = apiToNodes(w.Steps || [], w.Rules || []);
     setName(w.Name);
     setDescription(w.Description ?? "");
     setStatus(w.Status);
     setUsage(w.usage ?? null);
-    setBlocks(next);
-    baseline.current = JSON.stringify({
-      name: w.Name,
-      description: w.Description ?? "",
-      status: w.Status,
-      blocks: next,
-    });
+    setNodes(next);
+    past.current = [];
+    future.current = [];
+    baseline.current = JSON.stringify({ name: w.Name, description: w.Description ?? "", status: w.Status, nodes: next });
   }, []);
 
   useEffect(() => {
@@ -452,137 +1187,327 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, workflowId, isNew]);
 
-  /* ---------------------------------------------------------- block edits -- */
+  /* -------------------------------------------------------- node editing -- */
 
-  const patchBlock = (key: string, p: Partial<Block>) => setBlocks((prev) => patchBy(prev, key, p));
-
-  const insertAt = (index: number, type: BlockType) => {
-    setBlocks((prev) => {
-      const next = [...prev];
-      next.splice(index, 0, newBlock(type, type === "APPROVAL" ? { name: `Approval ${countApprovals(next) + 1}` } : {}));
+  const commit = useCallback((next: FlowNode[]) => {
+    setNodes((prev) => {
+      past.current = [...past.current.slice(-49), prev];
+      future.current = [];
       return next;
     });
-    setPaletteAt(null);
+    setHistTick((t) => t + 1);
+  }, []);
+
+  const patch = useCallback(
+    (key: string, p: Partial<FlowNode>) => setNodes((prev) => patchNode(prev, key, p)),
+    []
+  );
+
+  const mainLine = useMemo(() => nodes.filter((n) => !attachment(nodes, n)), [nodes]);
+
+  const whenForSlot = (parentKey: string, slot: SlotId): { when: WhenId; attachKey: string } => {
+    if (slot === "submit") return { when: "ON_SUBMIT", attachKey: "" };
+    if (slot === "decision") return { when: "AFTER_DECISION", attachKey: parentKey };
+    if (slot === "approve") return { when: parentKey === END_KEY ? "FINAL_APPROVE" : "AFTER_APPROVE", attachKey: parentKey === END_KEY ? "" : parentKey };
+    if (slot === "reject") return { when: parentKey === END_KEY ? "FINAL_REJECT" : "AFTER_REJECT", attachKey: parentKey === END_KEY ? "" : parentKey };
+    return { when: "ANY_APPROVE", attachKey: "" };
   };
 
-  const moveBlock = (key: string, dir: -1 | 1) =>
-    setBlocks((prev) => {
-      const i = prev.findIndex((b) => b.key === key);
-      const j = i + dir;
-      if (i < 0 || j < 0 || j >= prev.length) return prev;
-      const next = [...prev];
-      [next[i], next[j]] = [next[j], next[i]];
-      return next;
-    });
+  const lineInsertIndex = (list: FlowNode[], before: FlowNode | null) => (before ? list.indexOf(before) : list.length);
 
-  const removeBlock = (key: string) => setBlocks((prev) => prev.filter((b) => b.key !== key));
+  const slotInsertIndex = (list: FlowNode[], parentKey: string, slot: SlotId, before: FlowNode | null) => {
+    if (before) return list.indexOf(before);
+    const kids = slotChildren(list, parentKey, slot);
+    if (kids.length > 0) return list.indexOf(kids[kids.length - 1]) + 1;
+    if (parentKey === END_KEY) return list.length;
+    const parent = list.find((x) => x.key === parentKey);
+    return parent ? list.indexOf(parent) + 1 : list.length;
+  };
 
-  const duplicateBlock = (key: string) =>
-    setBlocks((prev) => {
-      const i = prev.findIndex((b) => b.key === key);
-      if (i < 0) return prev;
-      const next = [...prev];
-      next.splice(i + 1, 0, cloneBlock(prev[i], { name: `${prev[i].name || "Block"} (copy)` }));
-      return next;
-    });
+  /** a new node dropped on the bare line inherits the nearest decision above it */
+  const whenForLine = (before: FlowNode | null): { when: WhenId; attachKey: string } => {
+    const upto = before ? mainLine.slice(0, mainLine.indexOf(before)) : mainLine;
+    const lastApproval = [...upto].reverse().find((x) => x.tool === "APPROVAL");
+    if (lastApproval) return { when: "AFTER_APPROVE", attachKey: lastApproval.key };
+    if (upto.some((x) => x.tool === "START")) return { when: "ON_SUBMIT", attachKey: "" };
+    return { when: "ANY_APPROVE", attachKey: "" };
+  };
 
-  const onDrop = (targetIndex: number) => {
-    if (!dragKey) return;
-    setBlocks((prev) => {
-      const from = prev.findIndex((b) => b.key === dragKey);
-      if (from < 0) return prev;
-      const next = [...prev];
+  const insertAt = (list: FlowNode[], index: number, n: FlowNode) => {
+    const next = [...list];
+    next.splice(Math.max(0, Math.min(index, next.length)), 0, n);
+    commit(next);
+    setSelected(n.key);
+  };
+
+  const endDrag = () => {
+    setDrag(null);
+    setHover(null);
+  };
+
+  const appendTool = (tool: ToolId) => {
+    if (tool === "START" && startNode(nodes)) {
+      setError("There is already a submit marker on the canvas — drop your actions on it.");
+      return;
+    }
+    const w = whenForLine(null);
+    const n = newNode(
+      tool,
+      tool === "START" || tool === "APPROVAL"
+        ? { name: tool === "APPROVAL" ? `Approval ${approvalNodes(nodes).length + 1}` : "" }
+        : { when: w.when, attachKey: w.attachKey }
+    );
+    insertAt(nodes, nodes.length, n);
+  };
+
+  const addToSlot = (parentKey: string, slot: SlotId, tool: ToolId) => {
+    const w = whenForSlot(parentKey, slot);
+    const n = newNode(tool, { when: w.when, attachKey: w.attachKey });
+    insertAt(nodes, slotInsertIndex(nodes, parentKey, slot, null), n);
+  };
+
+  const dropOnLine = (before: FlowNode | null) => {
+    if (drag?.kind === "new") {
+      const tool = drag.tool;
+      if (tool === "START" && startNode(nodes)) return endDrag();
+      const w = whenForLine(before);
+      const n = newNode(
+        tool,
+        tool === "START" || tool === "APPROVAL"
+          ? { name: tool === "APPROVAL" ? `Approval ${approvalNodes(nodes).length + 1}` : "" }
+          : { when: w.when, attachKey: w.attachKey }
+      );
+      insertAt(nodes, lineInsertIndex(nodes, before), n);
+      endDrag();
+      return;
+    }
+    if (drag?.kind === "move") {
+      const from = nodes.findIndex((x) => x.key === drag.key);
+      if (from < 0) return endDrag();
+      const next = [...nodes];
       const [moved] = next.splice(from, 1);
-      const to = targetIndex > from ? targetIndex - 1 : targetIndex;
-      next.splice(Math.max(0, Math.min(to, next.length)), 0, moved);
-      return next;
-    });
-    setDragKey(null);
-    setDragOver(null);
+      const target = lineInsertIndex(next, before);
+      // moving onto the bare line detaches it: it runs after any approval instead
+      const patched =
+        moved.tool === "APPROVAL" || moved.tool === "START" ? moved : { ...moved, when: "ANY_APPROVE" as WhenId, attachKey: "" };
+      next.splice(Math.max(0, Math.min(target, next.length)), 0, patched);
+      commit(next);
+    }
+    endDrag();
   };
 
-  function countApprovals(list: Block[]): number {
-    return list.filter((b) => b.type === "APPROVAL").length;
-  }
+  const dropInSlot = (parentKey: string, slot: SlotId, before: FlowNode | null) => {
+    const w = whenForSlot(parentKey, slot);
+    if (drag?.kind === "new") {
+      const tool = drag.tool;
+      if (tool === "START" || tool === "APPROVAL") {
+        // approvals and the submit marker always live on the main line — never lose the drop
+        dropOnLine(null);
+        return;
+      }
+      insertAt(nodes, slotInsertIndex(nodes, parentKey, slot, before), newNode(tool, { when: w.when, attachKey: w.attachKey }));
+      endDrag();
+      return;
+    }
+    if (drag?.kind === "move") {
+      const from = nodes.findIndex((x) => x.key === drag.key);
+      if (from < 0) return endDrag();
+      const next = [...nodes];
+      const [moved] = next.splice(from, 1);
+      const target = slotInsertIndex(next, parentKey, slot, before);
+      next.splice(Math.max(0, Math.min(target, next.length)), 0, {
+        ...moved,
+        when: moved.tool === "APPROVAL" || moved.tool === "START" ? moved.when : w.when,
+        attachKey: moved.tool === "APPROVAL" || moved.tool === "START" ? "" : w.attachKey,
+      });
+      commit(next);
+    }
+    endDrag();
+  };
+
+  const removeNode = (key: string) => {
+    const gone = nodes.find((n) => n.key === key);
+    let next = nodes.filter((n) => n.key !== key);
+    if (gone && gone.tool === "APPROVAL") {
+      // actions that hung on it become flow-wide instead of pointing at nothing
+      next = next.map((n) =>
+        n.attachKey === key
+          ? { ...n, attachKey: "", when: n.when === "AFTER_REJECT" ? ("ANY_REJECT" as WhenId) : ("ANY_APPROVE" as WhenId) }
+          : n
+      );
+    }
+    if (gone && gone.tool === "START") {
+      next = next.map((n) => (n.when === "ON_SUBMIT" ? { ...n, when: "ANY_APPROVE" as WhenId } : n));
+    }
+    if (selected === key) setSelected(null);
+    commit(next);
+  };
+
+  const duplicateNode = (key: string) => {
+    const i = nodes.findIndex((n) => n.key === key);
+    if (i < 0) return;
+    if (nodes[i].tool === "START") return;
+    const copy = cloneNode(nodes[i], { name: `${nodes[i].name || toolMeta(nodes[i].tool).label} (copy)` });
+    const next = [...nodes];
+    next.splice(i + 1, 0, copy);
+    commit(next);
+    setSelected(copy.key);
+  };
+
+  const moveWithin = (key: string, dir: -1 | 1) => {
+    const n = nodes.find((x) => x.key === key);
+    if (!n) return;
+    const att = attachment(nodes, n);
+    const siblings = att ? slotChildren(nodes, att.parentId, att.slot) : mainLine;
+    const si = siblings.indexOf(n);
+    const ti = si + dir;
+    if (ti < 0 || ti >= siblings.length) return;
+    const target = siblings[ti];
+    const next = [...nodes];
+    const a = next.indexOf(n);
+    const b = next.indexOf(target);
+    next[a] = target;
+    next[b] = n;
+    commit(next);
+  };
+
+  const detach = (key: string) =>
+    commit(nodes.map((n) => (n.key === key ? { ...n, when: n.when === "AFTER_REJECT" ? ("ANY_REJECT" as WhenId) : ("ANY_APPROVE" as WhenId), attachKey: "" } : n)));
+
+  const undo = useCallback(() => {
+    const prev = past.current.pop();
+    if (!prev) return;
+    setNodes((cur) => {
+      future.current = [cur, ...future.current.slice(0, 49)];
+      return prev;
+    });
+    setHistTick((t) => t + 1);
+  }, []);
+
+  const redo = useCallback(() => {
+    const [next, ...rest] = future.current;
+    if (!next) return;
+    future.current = rest;
+    setNodes((cur) => {
+      past.current = [...past.current.slice(-49), cur];
+      return next;
+    });
+    setHistTick((t) => t + 1);
+  }, []);
+
+  const applyRecipe = (id: string) => {
+    const r = RECIPES.find((x) => x.id === id);
+    if (!r) return;
+    const built: FlowNode[] = [];
+    let lastApproval = "";
+    for (const spec of r.build()) {
+      const n = newNode(spec.tool, { name: spec.name, ...(spec.patch as unknown as Partial<FlowNode>) });
+      if (n.tool === "APPROVAL") lastApproval = n.key;
+      if (isActionTool(n.tool) && n.when.startsWith("AFTER_") && !n.attachKey) n.attachKey = lastApproval;
+      if (n.tool === "SET_PRIORITY" && n.when === "AFTER_APPROVE") n.attachKey = n.attachKey || lastApproval;
+      if (n.tool === "SET_SLA" && n.when === "AFTER_APPROVE") n.attachKey = n.attachKey || lastApproval;
+      built.push(n);
+    }
+    // approval nodes anchor the chain; anything attached in the recipe follows its node
+    const ordered: FlowNode[] = [];
+    for (const n of built) {
+      if (isActionTool(n.tool) && n.attachKey && n.when !== "AFTER_DECISION") {
+        const i = ordered.findIndex((x) => x.key === n.attachKey);
+        if (i >= 0) {
+          const isReject = n.when === "AFTER_REJECT";
+          const lastIdx = ordered.reduce((acc, x, xi) => (x.attachKey === n.attachKey && (x.when === "AFTER_REJECT") === isReject ? xi : acc), i);
+          ordered.splice(lastIdx + 1, 0, n);
+          continue;
+        }
+      }
+      ordered.push(n);
+    }
+    commit([...nodes, ...ordered]);
+    setError("");
+  };
 
   /* ------------------------------------------------------------ validation -- */
 
-  interface Issue {
-    text: string;
-    key?: string;
-  }
-  const issues = useMemo<Issue[]>(() => {
-    const out: Issue[] = [];
-    if (!name.trim()) out.push({ text: "Give the workflow a name" });
-    blocks.forEach((b, i) => {
-      const label = b.name.trim() || (b.type === "APPROVAL" ? `Approval ${i + 1}` : `Automation ${i + 1}`);
-      const at = (t: string) => out.push({ text: `“${label}”: ${t}`, key: b.key });
-      const cErr = validateConditionInput(b.condField === "none" ? null : b.condField, b.condOp, b.condValue);
-      if (cErr) at(cErr);
-
-      if (b.type === "APPROVAL") {
-        if (!b.name.trim()) at("needs a name");
-        if (b.approverType === "ROLE" && !b.targetRoleId) at("choose a role");
-        if (b.approverType === "GROUP" && !b.targetGroupId) at("choose a group");
-        if (b.approverType === "USER" && !b.targetUserId) at("choose an approver");
-        if (b.dueDays.trim() !== "") {
-          const n = Number(b.dueDays);
-          if (!Number.isInteger(n) || n < 1 || n > 365) at("due days must be a whole number from 1 to 365");
+  const issues = useMemo<Record<string, string[]>>(() => {
+    const out: Record<string, string[]> = {};
+    const push = (key: string | null, text: string) => {
+      if (!key) return;
+      out[key] = [...(out[key] ?? []), text];
+    };
+    if (!name.trim()) push(null, "name");
+    nodes.forEach((n) => {
+      if (n.condField !== "none") {
+        const cErr = validateConditionInput(n.condField, n.condOp, n.condValue);
+        if (cErr) push(n.key, cErr);
+      }
+      if (n.tool === "APPROVAL") {
+        if (!n.name.trim()) push(n.key, "needs a name");
+        if (n.approverType === "ROLE" && !n.targetRoleId) push(n.key, "choose a role");
+        if (n.approverType === "GROUP" && !n.targetGroupId) push(n.key, "choose a group");
+        if (n.approverType === "USER" && !n.targetUserId) push(n.key, "choose who approves");
+        if (n.dueDays.trim() !== "") {
+          const v = Number(n.dueDays);
+          if (!Number.isInteger(v) || v < 1 || v > 365) push(n.key, "due days must be 1–365");
         }
-        if (b.approveAction === "JUMP_TO_STEP") {
-          if (!b.approveTargetKey) at("choose the block to jump to");
-          else if (b.approveTargetKey === b.key) at("cannot jump to itself");
+        if (n.approveAction === "JUMP_TO_STEP") {
+          if (!n.approveTargetKey) push(n.key, "choose where to jump");
+          else if (n.approveTargetKey === n.key) push(n.key, "cannot jump to itself");
         }
-      } else {
-        if (!b.enabled) return;
-        if (b.scope === "AFTER_STEP" && boundApprovalIndex(blocks, i) < 0)
-          at("it is set to run after a block's decision but there is no approval block above it — move it below one, or change “runs after”");
-        if (b.actionKind === "SET_SLA" && !b.slaPolicyId) at("choose an SLA policy");
-        if (b.actionKind === "ASSIGN_TO_USER" && !b.userId) at("choose the user to assign");
-        if (b.actionKind === "JUMP_TO_STEP" && !b.jumpToStepKey) at("choose the block to land on");
-        if (b.actionKind === "NOTIFY") {
-          if (b.notifyTargetType === "USER" && !b.notifyUserId) at("choose the user to notify");
-          if (b.notifyTargetType === "GROUP" && !b.notifyGroupId) at("choose the group to notify");
-          if (b.notifyTargetType === "ROLE" && !b.notifyRoleId) at("choose the role to notify");
+      } else if (isActionTool(n.tool)) {
+        const needsParent = n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION";
+        if (needsParent && !approvalNodes(nodes).some((a) => a.key === n.attachKey))
+          push(n.key, "pick the approval node this runs after");
+        if (n.tool === "SET_SLA" && !n.slaPolicyId) push(n.key, "choose an SLA policy");
+        if (n.tool === "ASSIGN_TO_USER" && !n.userId) push(n.key, "choose the user to assign");
+        if (n.tool === "JUMP_TO_STEP" && !n.jumpToStepKey) push(n.key, "choose the node to land on");
+        if (n.tool === "SET_STATUS" && !SETTABLE_STATUSES.some((s) => s.value === n.status)) push(n.key, "choose a status");
+        if (n.tool === "NOTIFY") {
+          if (n.notifyTargetType === "USER" && !n.notifyUserId) push(n.key, "choose the user to notify");
+          if (n.notifyTargetType === "GROUP" && !n.notifyGroupId) push(n.key, "choose the group to notify");
+          if (n.notifyTargetType === "ROLE" && !n.notifyRoleId) push(n.key, "choose the role to notify");
         }
       }
     });
-    if (approvals.length === 0 && blocks.some((b) => b.type === "ACTION" && b.scope === "AFTER_STEP"))
-      out.push({ text: "There are no approval blocks, so nothing can trigger a step-level action" });
     return out;
-  }, [name, blocks, approvals]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, name]);
 
-  const focus = (key?: string) => {
+  const issueList = useMemo(
+    () =>
+      Object.entries(issues).flatMap(([key, texts]) => texts.map((text) => ({ key, text }))).concat(
+        !name.trim() ? [{ key: "", text: "Give the workflow a name" }] : []
+      ),
+    [issues, name]
+  );
+
+  const focusNode = (key?: string) => {
     if (!key) return;
-    setBlocks((prev) => prev.map((b) => (b.key === key ? { ...b, open: true } : b)));
-    refs.current[key]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setNodes((prev) => prev.map((n) => (n.key === key ? { ...n, open: true } : n)));
+    setSelected(key);
+    document.getElementById(`node-${key}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
   /* ----------------------------------------------------------------- save -- */
 
   async function save() {
     setError("");
-    if (issues.length > 0) {
-      setError(issues[0].text);
-      focus(issues[0].key);
+    if (!name.trim()) {
+      setError("Give the workflow a name first.");
       return;
     }
-    const built = blocksToApi(blocks, { slas, users });
-    if (built.skipped.length > 0) {
-      const first = built.skipped[0];
-      setError(`An automation block is set to run after a decision but sits above every approval block — move it below one.`);
-      focus(first.key);
+    if (issueList.length > 0) {
+      setError(issueList[0].text);
+      focusNode(issueList[0].key);
       return;
     }
-    const { steps, rules } = built;
+    const built = nodesToApi(nodes, { slas, users });
+    if (built.problems.length > 0) {
+      setError(`“${built.problems[0].reason}” — fix the node before saving.`);
+      focusNode(built.problems[0].key);
+      return;
+    }
 
-    const body = {
-      name: name.trim(),
-      description: description.trim() || null,
-      status,
-      steps,
-      rules,
-    };
+    const body = { name: name.trim(), description: description.trim() || null, status, steps: built.steps, rules: built.rules };
 
     setSaving(true);
     try {
@@ -600,21 +1525,13 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
       for (const tid of Array.from(assigned)) {
         if (!initialAssigned.has(tid))
-          await fetch(`/api/form-templates/${tid}`, {
-            method: "PATCH",
-            headers: h,
-            body: JSON.stringify({ wfDefinitionId: savedId }),
-          });
+          await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: savedId }) });
       }
       for (const tid of Array.from(initialAssigned)) {
         if (!assigned.has(tid))
-          await fetch(`/api/form-templates/${tid}`, {
-            method: "PATCH",
-            headers: h,
-            body: JSON.stringify({ wfDefinitionId: null }),
-          });
+          await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: null }) });
       }
-      baseline.current = JSON.stringify({ name, description, status, blocks });
+      baseline.current = JSON.stringify({ name, description, status, nodes });
       setInitialAssigned(new Set(assigned));
       setSavedAt(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
       if (isNew && savedId) router.replace(`/workflows/${savedId}`);
@@ -626,17 +1543,44 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     }
   }
 
+  /* ----------------------------------------------------------- shortcuts -- */
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      const typing = ["INPUT", "TEXTAREA", "SELECT"].includes((e.target as HTMLElement)?.tagName ?? "");
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
         if (!ro && dirty) save();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redo();
+        else undo();
+        return;
+      }
+      if (typing) return;
+      if (e.key === "/") {
+        e.preventDefault();
+        document.getElementById("wf-tool-search")?.focus();
+        return;
+      }
+      if (e.key === "Escape") {
+        setSelected(null);
+        setHover(null);
+        setDrag(null);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selected && !ro) {
+        e.preventDefault();
+        removeNode(selected);
+        setSelected(null);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ro, dirty, issues, blocks, name, description, status]);
+  }, [ro, dirty, issueList, nodes, name, description, status, selected]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -650,7 +1594,34 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
 
   /* ------------------------------------------------------------ rendering -- */
 
-  if (!canManage) {
+  const ctx: NodeCtx = {
+    nodes,
+    roles,
+    groups,
+    users,
+    slas,
+    ro,
+    selected,
+    select: setSelected,
+    patch,
+    remove: removeNode,
+    duplicate: duplicateNode,
+    moveWithin,
+    detach,
+    issues,
+    drag,
+    hover,
+    enter: setHover,
+    leave: () => setHover(null),
+    dropOnLine,
+    dropInSlot,
+    addToSlot,
+    startToolDrag: (t) => setDrag({ kind: "new", tool: t }),
+    startNodeDrag: (k) => setDrag({ kind: "move", key: k }),
+    endDrag,
+  };
+
+  if (!canManage)
     return (
       <AppShell>
         <div className="card mx-auto mt-10 max-w-md p-6 text-center text-sm text-ink-soft">
@@ -658,28 +1629,27 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         </div>
       </AppShell>
     );
-  }
 
-  if (loading) {
+  if (loading)
     return (
       <AppShell>
         <div className="py-16 text-center text-sm text-ink-soft">Loading workflow…</div>
       </AppShell>
     );
-  }
 
-  const actionCount = blocks.filter((b) => b.type === "ACTION" && b.enabled).length;
+  const endApprove = slotChildren(nodes, END_KEY, "approve");
+  const endReject = slotChildren(nodes, END_KEY, "reject");
 
   return (
     <AppShell>
-      <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <Link href="/workflows" className="icon-btn !h-7 !w-7" title="Back to workflows">
               <Icon name="arrow_back" className="text-[18px]" />
             </Link>
             <input
-              className="min-w-0 flex-1 border-b border-transparent bg-transparent text-2xl font-bold tracking-tight text-ink outline-none hover:border-surface-border focus:border-primary"
+              className="min-w-0 flex-1 border-b border-transparent bg-transparent text-xl font-bold tracking-tight text-ink outline-none hover:border-surface-border focus:border-primary"
               value={name}
               disabled={ro}
               placeholder="Untitled workflow"
@@ -687,24 +1657,36 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             />
             <StatusBadge status={status} />
           </div>
-          <input
-            className="mt-1 w-full border-none bg-transparent pl-9 text-sm text-ink-soft outline-none placeholder:text-ink-faint"
-            value={description}
-            disabled={ro}
-            placeholder="What is this flow for? (optional)"
-            onChange={(e) => setDescription(e.target.value)}
-          />
           <div className="mt-1 flex flex-wrap items-center gap-3 pl-9 text-[11px] text-ink-faint">
-            <span>{approvals.length} approval block{approvals.length === 1 ? "" : "s"}</span>
-            <span>{actionCount} automation{actionCount === 1 ? "" : "s"}</span>
-            {usage && <span>{usage.templates} form(s) · {usage.liveRequests} live · {usage.decisions} decisions</span>}
-            <select className="input w-auto !py-0.5 text-[11px]" disabled={ro} value={status} onChange={(e) => setStatus(e.target.value)}>
+            <input
+              className="min-w-0 flex-1 border-none bg-transparent text-xs text-ink-soft outline-none placeholder:text-ink-faint"
+              value={description}
+              disabled={ro}
+              placeholder="What is this flow for? (optional)"
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <span>{approvalNodes(nodes).length} approval node(s)</span>
+            <span>{nodes.filter((n) => isActionTool(n.tool) && n.enabled).length} action(s)</span>
+            {usage && (
+              <span>
+                {usage.templates} form(s) · {usage.liveRequests} live
+              </span>
+            )}
+            <select className="input w-auto !py-0 text-[11px]" disabled={ro} value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="ACTIVE">Active</option>
               <option value="DRAFT">Draft</option>
             </select>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2 lg:pt-6">
+        <div className="flex shrink-0 items-center gap-2 lg:pt-4">
+          <div className="flex items-center gap-0.5">
+            <button type="button" onClick={undo} disabled={!history.canUndo || ro} className="icon-btn !h-7 !w-7" title="Undo structure (Ctrl+Z)">
+              <Icon name="undo" className="text-[18px]" />
+            </button>
+            <button type="button" onClick={redo} disabled={!history.canRedo || ro} className="icon-btn !h-7 !w-7" title="Redo (Ctrl+Shift+Z)">
+              <Icon name="redo" className="text-[18px]" />
+            </button>
+          </div>
           {savedAt && !dirty && <span className="text-[11px] text-ink-faint">saved {savedAt}</span>}
           {dirty && <span className="badge bg-amber-100 text-amber-800">unsaved changes</span>}
           <button onClick={save} disabled={saving || ro || (!dirty && !isNew)} className="btn-primary">
@@ -721,576 +1703,149 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         </div>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-12">
+      <div className="grid gap-4 xl:grid-cols-12">
+        <div className="xl:col-span-3">
+          <Palette
+            ro={ro}
+            drag={drag}
+            onAppend={appendTool}
+            startToolDrag={ctx.startToolDrag}
+            endDrag={ctx.endDrag}
+            onRecipe={applyRecipe}
+          />
+        </div>
+
         {/* canvas */}
-        <div className="xl:col-span-8">
-          <div className="mx-auto max-w-3xl space-y-2">
-            {blocks.length === 0 && (
-              <div className="card flex flex-col items-center gap-3 p-10 text-center">
-                <Icon name="account_tree" className="text-[34px] text-ink-faint" />
-                <p className="text-sm font-semibold text-ink">Your canvas is empty — build the flow block by block</p>
-                <p className="max-w-md text-xs text-ink-soft">
-                  Add an approval block when someone has to decide, an automation block when something should
-                  happen, and chain them in whatever order the process needs.
+        <div className="xl:col-span-6" onClick={() => ctx.select(null)}>
+          <div className="mx-auto max-w-2xl">
+            {mainLine.length === 0 && !drag && (
+              <div className="card flex flex-col items-center gap-2 border-2 border-dashed border-surface-border p-8 text-center">
+                <Icon name="account_tree" className="text-[30px] text-ink-faint" />
+                <p className="text-sm font-semibold text-ink">Empty canvas</p>
+                <p className="max-w-sm text-xs leading-relaxed text-ink-soft">
+                  Drag any tool from the left. A flow can be one approval node, or a submit marker, an SLA, two
+                  approvers and a notification — whatever the process needs.
                 </p>
-                {paletteAt === 0 ? (
-                  <Palette onPick={(t) => insertAt(0, t)} onClose={() => setPaletteAt(null)} />
-                ) : (
-                  !ro && (
-                    <button type="button" onClick={() => setPaletteAt(0)} className="btn-primary">
-                      <Icon name="add" className="text-[18px]" /> Add your first block
+                <div className="mt-1 flex flex-wrap justify-center gap-1.5">
+                  {TOOLS.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      disabled={ro}
+                      onClick={() => appendTool(t.id)}
+                      className="rounded-full border border-surface-border px-2 py-1 text-[11px] text-ink-soft hover:border-primary hover:text-primary"
+                    >
+                      + {t.label}
                     </button>
-                  )
-                )}
+                  ))}
+                </div>
               </div>
             )}
 
-            {blocks.map((b, i) => {
-              const isApproval = b.type === "APPROVAL";
-              const meta = isApproval
-                ? { icon: "verified_user", label: "Approval", ring: "border-surface-border", text: "text-primary-dark" }
-                : ACTION_META[b.actionKind];
-              const stepIssues = issues.filter((x) => x.key === b.key).length;
-              const approvalIdx = isApproval ? approvals.findIndex((a) => a.key === b.key) : -1;
-              return (
-                <div key={b.key}>
-                  <div
-                    onDragOver={(e) => {
-                      if (ro) return;
-                      e.preventDefault();
-                      setDragOver(i);
-                    }}
-                    onDrop={() => !ro && onDrop(i)}
-                    className={`card overflow-hidden ${dragOver === i ? "ring-2 ring-primary/40" : ""} ${
-                      stepIssues > 0 ? "border-amber-300" : ""
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 px-3 py-2.5">
-                      <button
-                        type="button"
-                        draggable={!ro}
-                        disabled={ro}
-                        onDragStart={() => setDragKey(b.key)}
-                        onDragEnd={() => {
-                          setDragKey(null);
-                          setDragOver(null);
-                        }}
-                        onClick={() => patchBlock(b.key, { open: !b.open })}
-                        title="Drag to reorder · click to open"
-                        className="flex h-7 w-7 shrink-0 cursor-grab items-center justify-center rounded-full bg-surface-muted"
-                      >
-                        <Icon
-                          name={meta.icon}
-                          className={`text-[16px] ${
-                            stepIssues > 0 ? "text-amber-600" : !b.enabled ? "text-ink-faint" : isApproval ? "text-primary-dark" : meta.text
-                          }`}
-                        />
-                      </button>
-                      <input
-                        className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink outline-none hover:border-surface-border focus:border-primary focus:bg-white"
-                        value={b.name}
-                        disabled={ro}
-                        placeholder={isApproval ? "Approval block name" : "Automation label (optional)"}
-                        onChange={(e) => patchBlock(b.key, { name: e.target.value })}
-                      />
-                      <span className="hidden shrink-0 text-[11px] text-ink-soft sm:block">
-                        {isApproval ? (
-                          <>
-                            <span className="badge mr-1 bg-surface-muted">
-                              approval {approvalIdx + 1} · {APPROVER_TYPES.find((t) => t.value === b.approverType)?.label ?? b.approverType}
-                            </span>
-                            {b.approvalMode === "ALL" && <span className="badge bg-indigo-50 text-indigo-700">all must approve</span>}
-                          </>
-                        ) : (
-                          <>
-                            <span className={`badge mr-1 ${meta.ring} bg-white`}>{meta.label}</span>
-                            <span className="text-ink-faint">{whenSummary(b, blocks)}</span>
-                          </>
-                        )}
-                      </span>
-                      {!b.enabled && <span className="badge shrink-0 bg-gray-100 text-ink-faint">off</span>}
-                      {stepIssues > 0 && (
-                        <span className="badge shrink-0 bg-amber-100 text-amber-800" title="Needs attention">
-                          {stepIssues}
-                        </span>
-                      )}
-                      <div className="flex shrink-0 items-center">
-                        <button type="button" className="icon-btn !h-7 !w-7" title="Move up" onClick={() => moveBlock(b.key, -1)}>
-                          <Icon name="keyboard_arrow_up" className="text-[18px]" />
-                        </button>
-                        <button type="button" className="icon-btn !h-7 !w-7" title="Move down" onClick={() => moveBlock(b.key, 1)}>
-                          <Icon name="keyboard_arrow_down" className="text-[18px]" />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-btn !h-7 !w-7"
-                          title={b.open ? "Collapse" : "Open"}
-                          onClick={() => patchBlock(b.key, { open: !b.open })}
-                        >
-                          <Icon name={b.open ? "expand_less" : "expand_more"} className="text-[18px]" />
-                        </button>
-                      </div>
-                    </div>
+            {mainLine.map((n, i) => (
+              <div
+                key={n.key}
+                {...zoneProps(ctx, `line@${i}`, () => dropOnLine(n))}
+                className={ctx.hover === `line@${i}` ? "rounded-lg ring-2 ring-primary/30" : ""}
+              >
+                <NodeCard n={n} ctx={ctx} depth={0} />
+              </div>
+            ))}
 
-                    {b.open && (
-                      <div className="border-t border-surface-border/70">
-                        {isApproval ? (
-                          <>
-                            <div className="px-4 py-3">
-                              <label className="label">Who decides</label>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <Segmented
-                                  disabled={ro}
-                                  value={b.approverType}
-                                  onChange={(v) => patchBlock(b.key, { approverType: v })}
-                                  options={APPROVER_TYPES.map((t) => ({ value: t.value, label: t.label }))}
-                                />
-                                {(b.approverType === "USER" || b.approverType === "GROUP" || b.approverType === "ROLE") && (
-                                  <select
-                                    className="input !w-56 !py-1.5 text-xs"
-                                    disabled={ro}
-                                    value={b.approverType === "USER" ? b.targetUserId : b.approverType === "GROUP" ? b.targetGroupId : b.targetRoleId}
-                                    onChange={(e) =>
-                                      patchBlock(
-                                        b.key,
-                                        b.approverType === "USER"
-                                          ? { targetUserId: e.target.value }
-                                          : b.approverType === "GROUP"
-                                            ? { targetGroupId: e.target.value }
-                                            : { targetRoleId: e.target.value }
-                                      )
-                                    }
-                                  >
-                                    <option value="">— choose —</option>
-                                    {b.approverType === "USER" &&
-                                      users.map((u) => (
-                                        <option key={u.UserID} value={u.UserID}>
-                                          {u.Name} · {u.Email}
-                                        </option>
-                                      ))}
-                                    {b.approverType === "GROUP" &&
-                                      groups.map((g) => (
-                                        <option key={g.id} value={g.id}>
-                                          {g.name}
-                                        </option>
-                                      ))}
-                                    {b.approverType === "ROLE" &&
-                                      roles.map((r) => (
-                                        <option key={r.id} value={r.id}>
-                                          {r.name}
-                                        </option>
-                                      ))}
-                                  </select>
-                                )}
-                              </div>
-                              <p className="mt-1 text-[11px] text-ink-faint">
-                                {APPROVER_TYPES.find((t) => t.value === b.approverType)?.hint}
-                              </p>
-                            </div>
+            <div
+              {...zoneProps(ctx, "line@end", () => dropOnLine(null))}
+              className={`flex min-h-[42px] items-center justify-center rounded-lg border border-dashed px-3 text-[11px] ${
+                ctx.hover === "line@end" ? "border-primary bg-blue-50/60 text-primary" : "border-surface-border text-ink-faint"
+              }`}
+            >
+              {drag ? "drop it here" : mainLine.length > 0 ? "drop a tool here to add it at the end" : ""}
+            </div>
 
-                            <div className="grid gap-3 border-t border-surface-border/70 px-4 py-3 sm:grid-cols-4">
-                              <Field label="Quorum">
-                                <Segmented
-                                  disabled={ro}
-                                  value={b.approvalMode}
-                                  onChange={(v) => patchBlock(b.key, { approvalMode: v })}
-                                  options={QUORUMS}
-                                />
-                              </Field>
-                              <Field label="Comments">
-                                <select
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  value={b.commentPolicy}
-                                  onChange={(e) => patchBlock(b.key, { commentPolicy: e.target.value })}
-                                >
-                                  {COMMENT_POLICIES.map((c) => (
-                                    <option key={c.value} value={c.value}>
-                                      {c.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                              <Field label="Due (days)">
-                                <input
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  inputMode="numeric"
-                                  placeholder="none"
-                                  value={b.dueDays}
-                                  onChange={(e) => patchBlock(b.key, { dueDays: e.target.value })}
-                                />
-                              </Field>
-                              <Field label="On reject">
-                                <select
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  value={b.rejectAction}
-                                  onChange={(e) => patchBlock(b.key, { rejectAction: e.target.value })}
-                                >
-                                  {REJECT_ACTIONS.map((r) => (
-                                    <option key={r.value} value={r.value}>
-                                      {r.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                            </div>
-
-                            <div className="grid gap-3 border-t border-surface-border/70 px-4 py-3 sm:grid-cols-2">
-                              <Field label="On approve">
-                                <select
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  value={b.approveAction}
-                                  onChange={(e) => patchBlock(b.key, { approveAction: e.target.value })}
-                                >
-                                  {APPROVE_ACTIONS.map((a) => (
-                                    <option key={a.value} value={a.value}>
-                                      {a.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                              {b.approveAction === "JUMP_TO_STEP" && (
-                                <Field label="Jump to block">
-                                  <select
-                                    className="input !py-1.5 text-xs"
-                                    disabled={ro}
-                                    value={b.approveTargetKey}
-                                    onChange={(e) => patchBlock(b.key, { approveTargetKey: e.target.value })}
-                                  >
-                                    <option value="">— choose —</option>
-                                    {approvals.map((a, ai) => (
-                                      <option key={a.key} value={a.key} disabled={a.key === b.key}>
-                                        {ai + 1}. {a.name || "Untitled"}
-                                      </option>
-                                    ))}
-                                  </select>
-                                </Field>
-                              )}
-                            </div>
-                          </>
-                        ) : (
-                          <div className="space-y-3 px-4 py-3">
-                            <div className="grid gap-3 sm:grid-cols-2">
-                              <Field label="This block does">
-                                <select
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  value={b.actionKind}
-                                  onChange={(e) => patchBlock(b.key, { actionKind: e.target.value as ActionKind })}
-                                >
-                                  {RULE_ACTIONS.map((a) => (
-                                    <option key={a.value} value={a.value}>
-                                      {a.label}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                              <Field label="Runs after">
-                                <select
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  value={b.scope}
-                                  onChange={(e) => patchBlock(b.key, { scope: e.target.value as RunScope })}
-                                >
-                                  {(Object.keys(SCOPE_LABELS) as RunScope[]).map((s) => (
-                                    <option key={s} value={s}>
-                                      {SCOPE_LABELS[s]}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                            </div>
-
-                            {(b.scope === "AFTER_STEP" || b.scope === "ANY_STEP") && (
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">On decision</span>
-                                <Segmented
-                                  disabled={ro}
-                                  value={b.decision}
-                                  onChange={(v) => patchBlock(b.key, { decision: v as Decision })}
-                                  options={[
-                                    { value: "APPROVED", label: "Approve" },
-                                    { value: "REJECTED", label: "Reject" },
-                                    { value: "BOTH", label: "Both" },
-                                  ]}
-                                />
-                              </div>
-                            )}
-
-                            {b.scope === "AFTER_STEP" && (
-                              <p className="text-[11px] text-ink-faint">
-                                {boundApprovalIndex(blocks, i) < 0 ? (
-                                  <span className="text-danger">
-                                    Nothing to attach to — drag this block below an approval block, or pick another
-                                    “runs after”.
-                                  </span>
-                                ) : (
-                                  <>
-                                    Attached to “{approvalNameAt(blocks, boundApprovalIndex(blocks, i))}”. Move this
-                                    block between approvals to re-target it.
-                                  </>
-                                )}
-                              </p>
-                            )}
-
-                            {b.actionKind === "SET_PRIORITY" && (
-                              <Segmented
-                                disabled={ro}
-                                value={b.priority}
-                                onChange={(v) => patchBlock(b.key, { priority: v })}
-                                options={PRIORITY_VALUES.map((p) => ({ value: p, label: p }))}
-                              />
-                            )}
-
-                            {b.actionKind === "SET_SLA" && (
-                              <Field label="SLA policy">
-                                <select
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  value={b.slaPolicyId}
-                                  onChange={(e) => patchBlock(b.key, { slaPolicyId: e.target.value })}
-                                >
-                                  <option value="">— choose a policy —</option>
-                                  {slas.map((s) => (
-                                    <option key={s.id} value={s.id}>
-                                      {s.name}
-                                      {s.isDefault ? " (default)" : ""}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                            )}
-
-                            {b.actionKind === "ASSIGN_TO_USER" && (
-                              <Field label="Assign to">
-                                <select className="input !py-1.5 text-xs" disabled={ro} value={b.userId} onChange={(e) => patchBlock(b.key, { userId: e.target.value })}>
-                                  <option value="">— choose a user —</option>
-                                  {users.map((u) => (
-                                    <option key={u.UserID} value={u.UserID}>
-                                      {u.Name} · {u.Email}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                            )}
-
-                            {b.actionKind === "NOTIFY" && (
-                              <div className="grid gap-3 sm:grid-cols-2">
-                                <Field label="Who">
-                                  <select
-                                    className="input !py-1.5 text-xs"
-                                    disabled={ro}
-                                    value={b.notifyTargetType}
-                                    onChange={(e) => patchBlock(b.key, { notifyTargetType: e.target.value })}
-                                  >
-                                    <option value="REQUESTER">The requester</option>
-                                    <option value="DEPARTMENT_MANAGER">Requester&apos;s department manager</option>
-                                    <option value="USER">A specific user</option>
-                                    <option value="GROUP">All members of a group</option>
-                                    <option value="ROLE">All users with a role</option>
-                                  </select>
-                                </Field>
-                                {b.notifyTargetType === "USER" && (
-                                  <Field label="User">
-                                    <select className="input !py-1.5 text-xs" disabled={ro} value={b.notifyUserId} onChange={(e) => patchBlock(b.key, { notifyUserId: e.target.value })}>
-                                      <option value="">— choose —</option>
-                                      {users.map((u) => (
-                                        <option key={u.UserID} value={u.UserID}>
-                                          {u.Name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </Field>
-                                )}
-                                {b.notifyTargetType === "GROUP" && (
-                                  <Field label="Group">
-                                    <select className="input !py-1.5 text-xs" disabled={ro} value={b.notifyGroupId} onChange={(e) => patchBlock(b.key, { notifyGroupId: e.target.value })}>
-                                      <option value="">— choose —</option>
-                                      {groups.map((g) => (
-                                        <option key={g.id} value={g.id}>
-                                          {g.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </Field>
-                                )}
-                                {b.notifyTargetType === "ROLE" && (
-                                  <Field label="Role">
-                                    <select className="input !py-1.5 text-xs" disabled={ro} value={b.notifyRoleId} onChange={(e) => patchBlock(b.key, { notifyRoleId: e.target.value })}>
-                                      <option value="">— choose —</option>
-                                      {roles.map((r) => (
-                                        <option key={r.id} value={r.id}>
-                                          {r.name}
-                                        </option>
-                                      ))}
-                                    </select>
-                                  </Field>
-                                )}
-                                <input
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  placeholder="Title (optional)"
-                                  value={b.notifyTitle}
-                                  onChange={(e) => patchBlock(b.key, { notifyTitle: e.target.value })}
-                                />
-                                <input
-                                  className="input !py-1.5 text-xs"
-                                  disabled={ro}
-                                  placeholder="Message (optional)"
-                                  value={b.notifyMessage}
-                                  onChange={(e) => patchBlock(b.key, { notifyMessage: e.target.value })}
-                                />
-                              </div>
-                            )}
-
-                            {b.actionKind === "JUMP_TO_STEP" && (
-                              <Field label="Land on approval block">
-                                <select className="input !py-1.5 text-xs" disabled={ro} value={b.jumpToStepKey} onChange={(e) => patchBlock(b.key, { jumpToStepKey: e.target.value })}>
-                                  <option value="">— choose —</option>
-                                  {approvals.map((a, ai) => (
-                                    <option key={a.key} value={a.key}>
-                                      {ai + 1}. {a.name || "Untitled"}
-                                    </option>
-                                  ))}
-                                </select>
-                              </Field>
-                            )}
-                          </div>
-                        )}
-
-                        {/* shared: when it applies at all */}
-                        <div className="flex flex-wrap items-center gap-2 border-t border-surface-border/70 px-4 py-3">
-                          <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">
-                            {isApproval ? "This block applies when" : "Only when"}
-                          </span>
-                          <ConditionRow
-                            disabled={ro}
-                            field={b.condField}
-                            op={b.condOp}
-                            value={b.condValue}
-                            onChange={(p) => patchBlock(b.key, p)}
-                          />
-                          {condText(b) && (
-                            <span className="rounded bg-surface-muted px-1.5 py-0.5 text-[10px] text-ink-soft">
-                              {condText(b)}
-                            </span>
-                          )}
-                        </div>
-
-                        {!ro && (
-                          <div className="flex items-center justify-end gap-3 border-t border-surface-border/70 px-3 py-2 text-[11px] font-medium">
-                            {!isApproval && (
-                              <button
-                                type="button"
-                                onClick={() => patchBlock(b.key, { enabled: !b.enabled })}
-                                className="text-ink-soft hover:text-primary"
-                              >
-                                {b.enabled ? "Pause" : "Resume"}
-                              </button>
-                            )}
-                            <button type="button" onClick={() => duplicateBlock(b.key)} className="text-ink-soft hover:text-primary">
-                              Duplicate
-                            </button>
-                            <button type="button" onClick={() => removeBlock(b.key)} className="text-ink-soft hover:text-danger">
-                              Delete
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* insertion point */}
-                  {!ro && (
-                    <div className="py-1">
-                      {paletteAt === i + 1 ? (
-                        <Palette onPick={(t) => insertAt(i + 1, t)} onClose={() => setPaletteAt(null)} />
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setPaletteAt(i + 1)}
-                          className="mx-auto flex h-6 w-full max-w-xs items-center justify-center gap-1 rounded border border-dashed border-surface-border text-[11px] text-ink-faint hover:border-primary hover:text-primary"
-                        >
-                          <Icon name="add" className="text-[14px]" /> block after this
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {blocks.length > 0 &&
-              (paletteAt === -1 ? (
-                <Palette onPick={(t) => insertAt(0, t)} onClose={() => setPaletteAt(null)} />
-              ) : (
-                !ro && (
-                  <button
-                    type="button"
-                    onClick={() => setPaletteAt(-1)}
-                    className="mx-auto flex h-6 w-full max-w-xs items-center justify-center gap-1 rounded border border-dashed border-surface-border text-[11px] text-ink-faint hover:border-primary hover:text-primary"
-                  >
-                    <Icon name="add" className="text-[14px]" /> block before the first one
-                  </button>
-                )
-              ))}
+            {/* end-of-request ports */}
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Port title="If the request ends approved" tone="approve" icon="verified" parentKey={END_KEY} slot="approve" ctx={ctx} depth={0} />
+              <Port title="If the request ends rejected" tone="reject" icon="block" parentKey={END_KEY} slot="reject" ctx={ctx} depth={0} />
+            </div>
+            {(endApprove.length > 0 || endReject.length > 0) && (
+              <p className="mt-1 text-right text-[10px] text-ink-faint">
+                {endApprove.length + endReject.length} node(s) run after the final decision.
+              </p>
+            )}
           </div>
         </div>
 
         {/* rail */}
-        <div className="space-y-4 xl:col-span-4">
-          <div className="card p-4">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Your flow</h3>
-            {blocks.length === 0 ? (
-              <p className="text-xs text-ink-faint">Empty — nothing runs yet.</p>
+        <div className="space-y-3 xl:col-span-3">
+          <div className="card p-3">
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Flow</h3>
+            {nodes.length === 0 ? (
+              <p className="text-xs text-ink-faint">Nothing runs yet.</p>
             ) : (
-              <ol className="space-y-1">
-                {blocks.map((b, i) => (
-                  <li key={b.key}>
-                    <button
-                      type="button"
-                      onClick={() => focus(b.key)}
-                      className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left text-xs hover:bg-surface-muted"
-                    >
-                      <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-surface-muted text-[9px] font-bold text-ink-soft">
-                        {i + 1}
-                      </span>
-                      <Icon
-                        name={b.type === "APPROVAL" ? "verified_user" : ACTION_META[b.actionKind].icon}
-                        className={`text-[14px] ${b.type === "APPROVAL" ? "text-primary" : ACTION_META[b.actionKind].text} ${
-                          b.enabled ? "" : "opacity-40"
-                        }`}
-                      />
-                      <span className="min-w-0 flex-1 truncate text-ink">{b.name || (b.type === "APPROVAL" ? "Untitled approval" : "Untitled automation")}</span>
-                      {b.condField !== "none" && <Icon name="if_while" className="text-[13px] text-ink-faint" />}
-                    </button>
+              <ol className="space-y-0.5">
+                {mainLine.map((n) => {
+                  const kids =
+                    n.tool === "APPROVAL"
+                      ? [...slotChildren(nodes, n.key, "approve"), ...slotChildren(nodes, n.key, "reject")]
+                      : n.tool === "START"
+                        ? slotChildren(nodes, n.key, "submit")
+                        : [];
+                  return (
+                    <li key={n.key}>
+                      <button
+                        type="button"
+                        onClick={() => focusNode(n.key)}
+                        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-xs hover:bg-surface-muted"
+                      >
+                        <Icon name={toolMeta(n.tool).icon} className={`text-[14px] ${n.enabled ? "text-ink-soft" : "text-ink-faint line-through"}`} />
+                        <span className="min-w-0 flex-1 truncate text-ink">{n.name || toolMeta(n.tool).label}</span>
+                        {n.condField !== "none" && <Icon name="if_while" className="text-[12px] text-amber-600" />}
+                      </button>
+                      {kids.length > 0 && (
+                        <div className="ml-4 border-l border-surface-border pl-2">
+                          {kids.map((k) => (
+                            <button
+                              key={k.key}
+                              type="button"
+                              onClick={() => focusNode(k.key)}
+                              className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[11px] text-ink-soft hover:bg-surface-muted"
+                            >
+                              <Icon name={toolMeta(k.tool).icon} className="text-[13px]" />
+                              <span className="min-w-0 flex-1 truncate">{k.name || toolMeta(k.tool).label}</span>
+                              <span className="shrink-0 text-[9px] text-ink-faint">{WHEN_META[k.when].short}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </li>
+                  );
+                })}
+                {(endApprove.length > 0 || endReject.length > 0) && (
+                  <li className="mt-1 border-t border-surface-border/70 pt-1 text-[10px] uppercase tracking-wide text-ink-faint">
+                    on final decision
                   </li>
-                ))}
+                )}
               </ol>
             )}
           </div>
 
-          <div className={`card p-4 ${issues.length > 0 ? "border-amber-300" : ""}`}>
+          <div className={`card p-3 ${issueList.length > 0 ? "border-amber-300" : ""}`}>
             <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-faint">
-              <Icon name={issues.length > 0 ? "fact_check" : "check_circle"} className="text-[15px]" />
+              <Icon name={issueList.length > 0 ? "fact_check" : "check_circle"} className={`text-[15px] ${issueList.length > 0 ? "text-amber-600" : "text-green-600"}`} />
               Readiness
             </h3>
-            {issues.length === 0 ? (
+            {issueList.length === 0 ? (
               <p className="text-xs text-green-700">
-                {approvals.length === 0
-                  ? "No approval blocks: every request is approved the moment it is submitted. Fine for automations, intentional?"
+                {approvalNodes(nodes).length === 0
+                  ? "No approval node: requests are approved the moment they are submitted. Intentional?"
                   : "Ready. Save to publish."}
               </p>
             ) : (
               <ul className="space-y-1">
-                {issues.map((x, i) => (
+                {issueList.map((x, i) => (
                   <li key={i}>
                     <button
                       type="button"
-                      onClick={() => focus(x.key)}
+                      onClick={() => focusNode(x.key)}
                       className="flex w-full items-start gap-1.5 rounded px-1 py-0.5 text-left text-xs text-ink-soft hover:bg-amber-50"
                     >
                       <Icon name="error" className="mt-px shrink-0 text-[14px] text-amber-600" />
@@ -1302,10 +1857,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             )}
           </div>
 
-          <div className="card p-4">
+          <div className="card p-3">
             <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Used by forms</h3>
             {templates.length === 0 && <p className="text-xs text-ink-faint">No form templates yet.</p>}
-            <div className="max-h-56 space-y-1 overflow-y-auto">
+            <div className="max-h-48 space-y-0.5 overflow-y-auto">
               {templates.map((t) => (
                 <label key={t.FormTemplateID} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-surface-muted">
                   <input
@@ -1331,10 +1886,11 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             </div>
           </div>
 
-          <div className="card p-4 text-[11px] leading-relaxed text-ink-faint">
-            Blocks run in the order shown. Automation blocks attached to an approval block fire right after that
-            decision is recorded; a Jump stops the rest of its group. Saving writes steps and automation rules in
-            one transaction — no separate screens, no schema change.
+          <div className="card p-3 text-[11px] leading-relaxed text-ink-faint">
+            Nodes run in canvas order. Actions dropped on an approval&apos;s port fire right after that decision; the
+            end-of-request ports fire once, after the final outcome. A Jump stops the rest of its group. Undo/redo
+            (Ctrl+Z) covers structure, <kbd className="rounded border border-surface-border px-1">/</kbd> searches
+            tools, <kbd className="rounded border border-surface-border px-1">⌘S</kbd> saves.
           </div>
         </div>
       </div>

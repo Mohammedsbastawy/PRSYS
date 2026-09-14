@@ -142,6 +142,29 @@ export async function runWorkflowRules(opts: {
         result.applied.push(`Rule "${rule.Name}": SLA → ${policy.Name}`)
         break
       }
+      case 'SET_STATUS': {
+        // automation may move the ticket, but never fake a decision:
+        // PENDING_APPROVAL / APPROVED / REJECTED belong to the approval engine
+        const ALLOWED = ['COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED']
+        const next = typeof v.status === 'string' ? v.status.toUpperCase() : ''
+        if (!ALLOWED.includes(next) || request.Status === next) break
+        patch.Status = next
+        const now = new Date()
+        if (next === 'COMPLETED' || next === 'FULFILLED') patch.CompletedAt = now
+        if (next === 'CANCELLED') patch.ResolvedAt = now
+        request.Status = next
+        if (next === 'CLARIFICATION_REQUESTED') {
+          // same courtesy the manual "ask for clarification" action gives the requester
+          await notifyUsers([request.RequesterID], {
+            title: `More information needed on ${request.TrackingNumber}`,
+            message: `Workflow rule "${rule.Name}" asked the requester to reply on the request.`,
+            type: 'REQUEST_CLARIFICATION',
+            requestId: request.RequestID,
+          })
+        }
+        result.applied.push(`Rule "${rule.Name}": status → ${next.toLowerCase().replace(/_/g, ' ')}`)
+        break
+      }
       case 'JUMP_TO_STEP': {
         if (typeof v.jumpToStepOrder !== 'number' || request.Status !== 'PENDING_APPROVAL') break
         const step = await prisma.wFSteps.findFirst({
