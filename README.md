@@ -78,9 +78,17 @@ A three-panel canvas built the way n8n / ServiceNow Flow Designer lay it out, an
 Tools available on the palette (`src/lib/workflow-tools.ts`):
 
 * **Requester submits** — a marker node with no settings; drop actions on its port to run them at submit time.
-* Nodes arrive **unnamed**: nothing is written into the name box for you. `WFSteps.StepName` cannot be empty, so an
-  unnamed approval gets a label derived from who decides (`Department manager approval`) at save time — and it loads
-  back as an empty box, because that text was never yours.
+* **Nothing is pre-selected.** A new node has no name, no approver type, no trigger and no payload value: every
+  select opens on `— choose —` / `not set`, and the priority / quorum chips highlight nothing until you pick. A flow
+  does not have to start with an approver at all — automations hanging on the submit marker are a complete workflow
+  (zero `WFSteps` rows).
+* Unchosen optional fields (quorum, comment policy, on approve, on reject) are **omitted** from the payload so the
+  API's documented default applies, and `apiToNodes` maps those defaults back to an empty box instead of showing a
+  value you never picked. Same for the name: `WFSteps.StepName` cannot be empty, so an unnamed approval gets a label
+  derived from who decides (`Department manager approval`) at save time and loads back as an empty box.
+* The only two mandatory picks are **who decides** (an approval node) and **when it runs** (an action node);
+  anything else left unset is reported at save time rather than guessed for you.
+* Presets in the palette wire **ports only** — they never fill in a priority, a policy or a name.
 * **Approval / decision** — who decides (requester's dept manager, direct manager, one person, group, role, any
   approver), quorum, comment policy, due days, an *only if* gate, what happens on approve / on reject. It exposes
   two drop ports — **if approved** and **if rejected** — and nothing runs there until you drop a tool on them.
