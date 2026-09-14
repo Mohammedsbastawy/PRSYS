@@ -1,34 +1,63 @@
-// Workflow canvas → API mapping, kept React-free so it can be unit-tested.
+// Workflow canvas data model + API mapping. React-free so it can be unit-tested.
 //
-// The builder is a flat list of blocks the admin creates. Persisting it reuses
-// the existing tables:
-//   APPROVAL block           → WFSteps (StepOrder = index among approval blocks)
-//   AUTOMATION block         → WFRules, whose ActionValue carries the action
-//                              payload plus `fireOnStepOrder` — the approval block
-//                              it hangs on (the nearest APPROVAL block above it)
-// "Runs after" decides the trigger:
-//   AFTER_STEP + approve     → ON_STEP_APPROVED   (fireOnStepOrder set)
-//   AFTER_STEP + reject      → ON_STEP_REJECTED    (fireOnStepOrder set)
-//   AFTER_STEP + both        → both rows, same payload
-//   ANY_STEP                 → step triggers without a binding (flow-wide)
-//   SUBMIT                   → ON_SUBMIT
-//   FINAL_APPROVED/REJECTED  → ON_REQUEST_APPROVED / ON_REQUEST_REJECTED
+// The canvas is a flat list of nodes the admin drops from the tools palette.
+// Nothing is pre-created: not a start node, not an approval, not a close step.
+// Persistence reuses the existing tables (no migration):
+//
+//   APPROVAL node            → WFSteps  (StepOrder = position among approval nodes)
+//   action node              → WFRules  (ActionValue carries the payload + fireOnStepOrder)
+//   START node               → nothing on its own; it is the drop target for ON_SUBMIT rules
+//
+// A node's `when` decides its trigger, and `attachKey` which approval it hangs on:
+//
+//   ON_SUBMIT       → ON_SUBMIT
+//   AFTER_APPROVE   → ON_STEP_APPROVED   + fireOnStepOrder = index of attachKey
+//   AFTER_REJECT    → ON_STEP_REJECTED   + fireOnStepOrder = index of attachKey
+//   AFTER_DECISION  → both of the above, same payload
+//   ANY_APPROVE     → ON_STEP_APPROVED   (no binding: fires after every approval)
+//   ANY_REJECT      → ON_STEP_REJECTED   (no binding)
+//   FINAL_APPROVE   → ON_REQUEST_APPROVED
+//   FINAL_REJECT    → ON_REQUEST_REJECTED
 
 import { parseStepCondition, buildStepCondition } from "./workflow-conditions";
 import { parseRuleActionValue, RULE_ACTIONS, type RuleActionValue } from "./workflow-rules";
 
-export type ActionKind = "SET_PRIORITY" | "SET_SLA" | "ASSIGN_TO_USER" | "NOTIFY" | "JUMP_TO_STEP";
-export type BlockType = "APPROVAL" | "ACTION";
-export type RunScope = "AFTER_STEP" | "ANY_STEP" | "SUBMIT" | "FINAL_APPROVED" | "FINAL_REJECTED";
-export type Decision = "APPROVED" | "REJECTED" | "BOTH";
+export type ToolId =
+  | "START"
+  | "APPROVAL"
+  | "SET_PRIORITY"
+  | "SET_STATUS"
+  | "SET_SLA"
+  | "ASSIGN_TO_USER"
+  | "NOTIFY"
+  | "JUMP_TO_STEP";
 
-export interface Block {
+export type WhenId =
+  | "ON_SUBMIT"
+  | "AFTER_APPROVE"
+  | "AFTER_REJECT"
+  | "AFTER_DECISION"
+  | "ANY_APPROVE"
+  | "ANY_REJECT"
+  | "FINAL_APPROVE"
+  | "FINAL_REJECT";
+
+/** which drop zone of a parent node a `when` belongs to */
+export type SlotId = "submit" | "approve" | "reject" | "decision" | "end" | "flow";
+
+export interface FlowNode {
   key: string;
-  type: BlockType;
+  tool: ToolId;
   name: string;
   open: boolean;
-  /** WFStepID for approval blocks loaded from the DB */
+  /** WFStepID for approval nodes loaded from the DB */
   id?: string;
+  /** action nodes: paused nodes are stored inactive instead of being deleted */
+  enabled: boolean;
+
+  when: WhenId;
+  /** approval node this action hangs on (AFTER_* only) */
+  attachKey: string;
 
   // APPROVAL
   approverType: string;
@@ -42,17 +71,14 @@ export interface Block {
   approveAction: string;
   approveTargetKey: string;
 
-  // shared "only when"
+  // "only when" gate — available on every node, approval or action
   condField: string;
   condOp: string;
   condValue: string;
 
-  // AUTOMATION
-  enabled: boolean;
-  scope: RunScope;
-  decision: Decision;
-  actionKind: ActionKind;
+  // actions
   priority: string;
+  status: string;
   slaPolicyId: string;
   userId: string;
   notifyTargetType: string;
@@ -64,7 +90,7 @@ export interface Block {
   jumpToStepKey: string;
 }
 
-/** minimal shapes the canvas needs from a saved workflow */
+/** what the API returns for a saved workflow, narrowed to what the canvas needs */
 export interface BuilderStep {
   WFStepID: string;
   StepName: string;
@@ -90,7 +116,6 @@ export interface BuilderRule {
   ActionValue: string | null;
   IsActive: boolean;
 }
-
 export interface SlaOption {
   id: string;
   name: string;
@@ -106,12 +131,21 @@ export function nextKey(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${seq}`;
 }
 
-export function newBlock(type: BlockType, over: Partial<Block> = {}): Block {
+export const ACTION_TOOLS: ToolId[] = ["SET_PRIORITY", "SET_STATUS", "SET_SLA", "ASSIGN_TO_USER", "NOTIFY", "JUMP_TO_STEP"];
+
+export function isActionTool(t: ToolId): boolean {
+  return ACTION_TOOLS.includes(t);
+}
+
+export function newNode(tool: ToolId, over: Partial<FlowNode> = {}): FlowNode {
   return {
-    key: nextKey(type === "APPROVAL" ? "ap" : "ac"),
-    type,
+    key: nextKey(tool.toLowerCase()),
+    tool,
     name: "",
     open: true,
+    enabled: true,
+    when: tool === "APPROVAL" || tool === "START" ? "ON_SUBMIT" : "AFTER_APPROVE",
+    attachKey: "",
     approverType: "DEPARTMENT_MANAGER",
     targetUserId: "",
     targetGroupId: "",
@@ -125,11 +159,8 @@ export function newBlock(type: BlockType, over: Partial<Block> = {}): Block {
     condField: "none",
     condOp: ">=",
     condValue: "",
-    enabled: true,
-    scope: "AFTER_STEP",
-    decision: "APPROVED",
-    actionKind: "SET_PRIORITY",
     priority: "URGENT",
+    status: "COMPLETED",
     slaPolicyId: "",
     userId: "",
     notifyTargetType: "REQUESTER",
@@ -143,93 +174,163 @@ export function newBlock(type: BlockType, over: Partial<Block> = {}): Block {
   };
 }
 
-export function patchBy<T extends { key: string }>(list: T[], key: string, p: Partial<T>): T[] {
+export function patchNode<T extends { key: string }>(list: T[], key: string, p: Partial<T>): T[] {
   return list.map((x) => (x.key === key ? { ...x, ...p } : x));
 }
 
-export function cloneBlock(b: Block, over: Partial<Block> = {}): Block {
-  return { ...b, key: nextKey(b.type === "APPROVAL" ? "ap" : "ac"), id: undefined, ...over };
+export function cloneNode(n: FlowNode, over: Partial<FlowNode> = {}): FlowNode {
+  return { ...n, key: nextKey(n.tool.toLowerCase()), id: undefined, ...over };
 }
 
-export function approvalBlocks(blocks: Block[]): Block[] {
-  return blocks.filter((b) => b.type === "APPROVAL");
+export function approvalNodes(nodes: FlowNode[]): FlowNode[] {
+  return nodes.filter((n) => n.tool === "APPROVAL");
 }
 
-/** index of the approval block this position hangs on (-1 = nothing above it) */
-export function boundApprovalIndex(blocks: Block[], i: number): number {
-  let n = -1;
-  for (let j = 0; j <= i; j++) if (blocks[j].type === "APPROVAL") n++;
-  return n;
+export function startNode(nodes: FlowNode[]): FlowNode | null {
+  return nodes.find((n) => n.tool === "START") ?? null;
 }
 
-export function approvalNameAt(blocks: Block[], idx: number): string | null {
-  if (idx < 0) return null;
-  const b = approvalBlocks(blocks)[idx];
-  return b ? b.name.trim() || `Block ${idx + 1}` : null;
-}
-
-function conditionOf(b: Block): { field: string; op: string; value: string } | null {
-  return b.condField === "none" ? null : { field: b.condField, op: b.condOp, value: b.condValue.trim() };
-}
-
-function actionPayload(b: Block, blocks: Block[]): RuleActionValue {
-  const out: RuleActionValue = {};
-  if (b.actionKind === "SET_PRIORITY") out.priority = b.priority;
-  if (b.actionKind === "SET_SLA") out.slaPolicyId = b.slaPolicyId;
-  if (b.actionKind === "ASSIGN_TO_USER") out.userId = b.userId;
-  if (b.actionKind === "NOTIFY") {
-    out.notifyTargetType = b.notifyTargetType as NonNullable<RuleActionValue["notifyTargetType"]>;
-    out.notifyTargetId =
-      b.notifyTargetType === "USER"
-        ? b.notifyUserId
-        : b.notifyTargetType === "GROUP"
-          ? b.notifyGroupId
-          : b.notifyTargetType === "ROLE"
-            ? b.notifyRoleId
-            : "";
-    if (b.notifyTitle.trim()) out.notifyTitle = b.notifyTitle.trim();
-    if (b.notifyMessage.trim()) out.notifyMessage = b.notifyMessage.trim();
+export function slotOf(n: FlowNode): SlotId {
+  if (n.tool === "APPROVAL") return "flow";
+  if (n.tool === "START") return "flow";
+  switch (n.when) {
+    case "ON_SUBMIT":
+      return "submit";
+    case "AFTER_APPROVE":
+      return "approve";
+    case "AFTER_REJECT":
+      return "reject";
+    case "AFTER_DECISION":
+      return "decision";
+    case "FINAL_APPROVE":
+    case "FINAL_REJECT":
+      return "end";
+    default:
+      return "flow";
   }
-  if (b.actionKind === "JUMP_TO_STEP") {
-    out.jumpToStepOrder = Math.max(0, approvalBlocks(blocks).findIndex((x) => x.key === b.jumpToStepKey));
+}
+
+/** synthetic parent that owns the two "when the request ends" drop ports */
+export const END_KEY = "__end__";
+
+/** where a node renders: attached to an approval/START node, or on the main line */
+export function attachment(nodes: FlowNode[], n: FlowNode): { parentId: string; slot: SlotId } | null {
+  if (!isActionTool(n.tool)) return null;
+  if (n.when === "ON_SUBMIT" && startNode(nodes)) return { parentId: startNode(nodes)!.key, slot: "submit" };
+  if (n.when === "FINAL_APPROVE") return { parentId: END_KEY, slot: "approve" };
+  if (n.when === "FINAL_REJECT") return { parentId: END_KEY, slot: "reject" };
+  if (n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION") {
+    const parent = nodes.find((p) => p.key === n.attachKey && p.tool === "APPROVAL");
+    if (parent) return { parentId: parent.key, slot: slotOf(n) };
+  }
+  return null;
+}
+
+export function slotChildren(nodes: FlowNode[], parentKey: string, slot: SlotId): FlowNode[] {
+  return nodes.filter((n) => {
+    const a = attachment(nodes, n);
+    return a !== null && a.parentId === parentKey && a.slot === slot;
+  });
+}
+
+/** index of the approval node an action is bound to, or -1 */
+export function boundApprovalIndex(nodes: FlowNode[], n: FlowNode): number {
+  if (n.attachKey) {
+    const i = approvalNodes(nodes).findIndex((a) => a.key === n.attachKey);
+    if (i >= 0) return i;
+  }
+  return -1;
+}
+
+export function approvalNameAt(nodes: FlowNode[], idx: number): string | null {
+  if (idx < 0) return null;
+  const a = approvalNodes(nodes)[idx];
+  return a ? a.name.trim() || `Approval ${idx + 1}` : null;
+}
+
+export function approvalLabel(nodes: FlowNode[], key: string): string | null {
+  return approvalNameAt(nodes, approvalNodes(nodes).findIndex((a) => a.key === key));
+}
+
+function conditionOf(n: FlowNode): { field: string; op: string; value: string } | null {
+  return n.condField === "none" ? null : { field: n.condField, op: n.condOp, value: n.condValue.trim() };
+}
+
+function actionPayload(n: FlowNode, nodes: FlowNode[]): RuleActionValue {
+  const out: RuleActionValue = {};
+  switch (n.tool) {
+    case "SET_PRIORITY":
+      out.priority = n.priority;
+      break;
+    case "SET_STATUS":
+      out.status = n.status;
+      break;
+    case "SET_SLA":
+      out.slaPolicyId = n.slaPolicyId;
+      break;
+    case "ASSIGN_TO_USER":
+      out.userId = n.userId;
+      break;
+    case "NOTIFY":
+      out.notifyTargetType = n.notifyTargetType as NonNullable<RuleActionValue["notifyTargetType"]>;
+      out.notifyTargetId =
+        n.notifyTargetType === "USER"
+          ? n.notifyUserId
+          : n.notifyTargetType === "GROUP"
+            ? n.notifyGroupId
+            : n.notifyTargetType === "ROLE"
+              ? n.notifyRoleId
+              : "";
+      if (n.notifyTitle.trim()) out.notifyTitle = n.notifyTitle.trim();
+      if (n.notifyMessage.trim()) out.notifyMessage = n.notifyMessage.trim();
+      break;
+    case "JUMP_TO_STEP":
+      out.jumpToStepOrder = Math.max(0, approvalNodes(nodes).findIndex((a) => a.key === n.jumpToStepKey));
+      break;
+    default:
+      break;
   }
   return out;
 }
 
-/** audit-trail label for the rule — admin override first, derived otherwise */
-export function derivedRuleName(
-  b: Block,
-  blocks: Block[],
+/** audit-trail label for the rule — the admin's own text wins, otherwise derived */
+export function derivedNodeName(
+  n: FlowNode,
+  nodes: FlowNode[],
   opts: { slas?: SlaOption[]; users?: UserOption[] } = {}
 ): string {
-  if (b.name.trim()) return b.name.trim().slice(0, 150);
-  switch (b.actionKind) {
+  if (n.name.trim()) return n.name.trim().slice(0, 150);
+  switch (n.tool) {
     case "SET_PRIORITY":
-      return `Priority → ${b.priority}`;
+      return `Priority → ${n.priority}`;
+    case "SET_STATUS":
+      return `Status → ${n.status.replace(/_/g, " ").toLowerCase()}`;
     case "SET_SLA":
-      return `SLA → ${opts.slas?.find((s) => s.id === b.slaPolicyId)?.name ?? "policy"}`;
+      return `SLA → ${opts.slas?.find((s) => s.id === n.slaPolicyId)?.name ?? "policy"}`;
     case "ASSIGN_TO_USER":
-      return `Assign → ${opts.users?.find((u) => u.UserID === b.userId)?.Name ?? "user"}`;
+      return `Assign → ${opts.users?.find((u) => u.UserID === n.userId)?.Name ?? "user"}`;
     case "NOTIFY":
-      return b.notifyTitle.trim() || "Notify people";
+      return n.notifyTitle.trim() || "Notify people";
     case "JUMP_TO_STEP":
-      return `Jump → ${approvalNameAt(blocks, approvalBlocks(blocks).findIndex((x) => x.key === b.jumpToStepKey)) ?? "block"}`;
+      return `Jump → ${approvalLabel(nodes, n.jumpToStepKey) ?? "block"}`;
+    default:
+      return "Workflow node";
   }
 }
 
 export interface BuiltWorkflow {
   steps: Record<string, unknown>[];
   rules: Record<string, unknown>[];
-  /** blocks that could not be expressed (kept so the UI can warn) */
-  skipped: { key: string; reason: string }[];
+  /** nodes that cannot be expressed against the current schema — surfaced, never silently dropped */
+  problems: { key: string; reason: string }[];
 }
 
-export function blocksToApi(
-  blocks: Block[],
+export function nodesToApi(
+  nodes: FlowNode[],
   opts: { slas?: SlaOption[]; users?: UserOption[] } = {}
 ): BuiltWorkflow {
-  const approvals = approvalBlocks(blocks);
-  const skipped: { key: string; reason: string }[] = [];
+  const approvals = approvalNodes(nodes);
+  const problems: { key: string; reason: string }[] = [];
 
   const steps = approvals.map((s, i) => ({
     ...(s.id ? { id: s.id } : {}),
@@ -251,48 +352,67 @@ export function blocksToApi(
 
   const rules: Record<string, unknown>[] = [];
   let order = 0;
-  const emit = (b: Block, trigger: string, fireOnStepOrder: number | undefined) => {
-    const payload = actionPayload(b, blocks);
+  const emit = (n: FlowNode, trigger: string, fireOnStepOrder: number | undefined) => {
+    const payload = actionPayload(n, nodes);
     if (typeof fireOnStepOrder === "number") payload.fireOnStepOrder = fireOnStepOrder;
     rules.push({
-      name: derivedRuleName(b, blocks, opts),
+      name: derivedNodeName(n, nodes, opts),
       trigger,
-      condition: conditionOf(b),
-      action: b.actionKind,
+      condition: conditionOf(n),
+      action: n.tool,
       actionValue: payload,
       sortOrder: order++,
-      isActive: b.enabled,
+      isActive: n.enabled,
     });
   };
 
-  blocks.forEach((b, i) => {
-    // a paused block is still written (isActive=false) so it survives the save
-    if (b.type !== "ACTION") return;
-    if (b.scope === "SUBMIT") emit(b, "ON_SUBMIT", undefined);
-    else if (b.scope === "FINAL_APPROVED") emit(b, "ON_REQUEST_APPROVED", undefined);
-    else if (b.scope === "FINAL_REJECTED") emit(b, "ON_REQUEST_REJECTED", undefined);
-    else if (b.scope === "ANY_STEP") {
-      if (b.decision !== "REJECTED") emit(b, "ON_STEP_APPROVED", undefined);
-      if (b.decision !== "APPROVED") emit(b, "ON_STEP_REJECTED", undefined);
-    } else {
-      const idx = boundApprovalIndex(blocks, i);
-      if (idx < 0) {
-        skipped.push({ key: b.key, reason: "no approval block above it" });
-        return;
-      }
-      if (b.decision !== "REJECTED") emit(b, "ON_STEP_APPROVED", idx);
-      if (b.decision !== "APPROVED") emit(b, "ON_STEP_REJECTED", idx);
+  for (const n of nodes) {
+    if (!isActionTool(n.tool)) continue;
+    const needsParent =
+      n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION";
+    const idx = needsParent ? approvalNodes(nodes).findIndex((a) => a.key === n.attachKey) : -1;
+    if (needsParent && idx < 0) {
+      problems.push({ key: n.key, reason: "it is set to follow an approval decision, but no approval node is selected" });
+      continue;
     }
-  });
+    switch (n.when) {
+      case "ON_SUBMIT":
+        emit(n, "ON_SUBMIT", undefined);
+        break;
+      case "FINAL_APPROVE":
+        emit(n, "ON_REQUEST_APPROVED", undefined);
+        break;
+      case "FINAL_REJECT":
+        emit(n, "ON_REQUEST_REJECTED", undefined);
+        break;
+      case "ANY_APPROVE":
+        emit(n, "ON_STEP_APPROVED", undefined);
+        break;
+      case "ANY_REJECT":
+        emit(n, "ON_STEP_REJECTED", undefined);
+        break;
+      case "AFTER_DECISION":
+        emit(n, "ON_STEP_APPROVED", idx);
+        emit(n, "ON_STEP_REJECTED", idx);
+        break;
+      case "AFTER_APPROVE":
+        emit(n, "ON_STEP_APPROVED", idx);
+        break;
+      case "AFTER_REJECT":
+        emit(n, "ON_STEP_REJECTED", idx);
+        break;
+    }
+  }
 
-  return { steps, rules, skipped };
+  return { steps, rules, problems };
 }
 
-/** same payload on both decisions = one "Both" block instead of two */
-export function sameAction(a: Block, b: Block): boolean {
+/** two rules written identically on both outcomes = one "decision" node, not two */
+export function sameAction(a: FlowNode, b: FlowNode): boolean {
   return (
-    a.actionKind === b.actionKind &&
+    a.tool === b.tool &&
     a.priority === b.priority &&
+    a.status === b.status &&
     a.slaPolicyId === b.slaPolicyId &&
     a.userId === b.userId &&
     a.notifyTargetType === b.notifyTargetType &&
@@ -308,17 +428,20 @@ export function sameAction(a: Block, b: Block): boolean {
   );
 }
 
-export function apiToBlocks(
-  steps: BuilderStep[],
-  rules: BuilderRule[],
-  opts: { openAll?: boolean } = {}
-): Block[] {
-  const sorted = [...steps].sort((a, b) => a.StepOrder - b.StepOrder);
+const WHEN_FOR_TRIGGER: Record<string, WhenId> = {
+  ON_SUBMIT: "ON_SUBMIT",
+  ON_REQUEST_APPROVED: "FINAL_APPROVE",
+  ON_REQUEST_REJECTED: "FINAL_REJECT",
+};
+
+export function apiToNodes(nodes0: BuilderStep[], rules: BuilderRule[], opts: { openAll?: boolean } = {}): FlowNode[] {
+  const sorted = [...nodes0].sort((a, b) => a.StepOrder - b.StepOrder);
   const approvals = sorted.map((s) => {
     const cond = parseStepCondition(s.Condition);
-    return newBlock("APPROVAL", {
+    return newNode("APPROVAL", {
       id: s.WFStepID,
       name: s.StepName,
+      open: opts.openAll ?? sorted.length <= 2,
       approverType: s.ApproverType,
       targetUserId: s.TargetUserID ?? "",
       targetGroupId: s.TargetGroupID ?? "",
@@ -331,7 +454,6 @@ export function apiToBlocks(
       condField: cond?.field ?? "none",
       condOp: cond?.op ?? ">=",
       condValue: cond?.value ?? "",
-      open: opts.openAll ?? sorted.length <= 3,
     });
   });
   sorted.forEach((s, i) => {
@@ -339,27 +461,16 @@ export function apiToBlocks(
     if (jumpIdx >= 0) approvals[i].approveTargetKey = approvals[jumpIdx].key;
   });
 
-  const atStart: Block[] = []; // ON_SUBMIT — always above every block
-  const atEnd: Block[] = []; // flow-wide + final-decision hooks — below the last approval
-  const perStep = new Map<number, { approve: Block[]; reject: Block[] }>();
-
-  const scopeForTrigger: Record<string, RunScope> = {
-    ON_SUBMIT: "SUBMIT",
-    ON_REQUEST_APPROVED: "FINAL_APPROVED",
-    ON_REQUEST_REJECTED: "FINAL_REJECTED",
-  };
-
-  const toBlock = (r: BuilderRule): Block => {
+  const toNode = (r: BuilderRule): FlowNode => {
     const v = parseRuleActionValue(r.ActionValue ?? null);
     const cond = parseStepCondition(r.Condition);
     const jumpIdx = typeof v.jumpToStepOrder === "number" ? v.jumpToStepOrder : -1;
-    const base: Partial<Block> = {
+    return newNode((RULE_ACTIONS.some((a) => a.value === r.Action) ? r.Action : "NOTIFY") as ToolId, {
       name: r.Name,
-      type: "ACTION",
       open: false,
-      enabled: r.IsActive !== false, // a row we cannot read the flag on stays live
-      actionKind: (RULE_ACTIONS.some((a) => a.value === r.Action) ? r.Action : "NOTIFY") as ActionKind,
+      enabled: r.IsActive !== false,
       priority: v.priority ?? "URGENT",
+      status: v.status ?? "COMPLETED",
       slaPolicyId: v.slaPolicyId ?? "",
       userId: v.userId ?? "",
       notifyTargetType: v.notifyTargetType ?? "REQUESTER",
@@ -372,63 +483,78 @@ export function apiToBlocks(
       condField: cond?.field ?? "none",
       condOp: cond?.op ?? ">=",
       condValue: cond?.value ?? "",
-    };
-    return newBlock("ACTION", base);
+    });
   };
+
+  const loose: FlowNode[] = []; // main-line nodes (submit hook, flow-wide, end-of-request)
+  const perStep = new Map<number, { approve: FlowNode[]; reject: FlowNode[] }>();
+  let hasSubmitRule = false;
 
   for (const r of rules) {
     const v = parseRuleActionValue(r.ActionValue ?? null);
-    const block = toBlock(r);
-    const scoped = scopeForTrigger[r.Trigger];
-    if (scoped) {
-      block.scope = scoped;
-      (scoped === "SUBMIT" ? atStart : atEnd).push(block);
+    const node = toNode(r);
+    const fixed = WHEN_FOR_TRIGGER[r.Trigger];
+    if (fixed) {
+      node.when = fixed;
+      if (fixed === "ON_SUBMIT") hasSubmitRule = true;
+      loose.push(node);
       continue;
     }
     const isReject = r.Trigger === "ON_STEP_REJECTED";
     if (typeof v.fireOnStepOrder !== "number") {
-      block.scope = "ANY_STEP";
-      block.decision = isReject ? "REJECTED" : "APPROVED";
-      atEnd.push(block);
+      node.when = isReject ? "ANY_REJECT" : "ANY_APPROVE";
+      loose.push(node);
     } else {
-      block.scope = "AFTER_STEP";
-      block.decision = isReject ? "REJECTED" : "APPROVED";
+      node.when = isReject ? "AFTER_REJECT" : "AFTER_APPROVE";
+      node.attachKey = approvals[v.fireOnStepOrder]?.key ?? "";
       const bucket = perStep.get(v.fireOnStepOrder) ?? { approve: [], reject: [] };
-      bucket[isReject ? "reject" : "approve"].push(block);
+      bucket[isReject ? "reject" : "approve"].push(node);
       perStep.set(v.fireOnStepOrder, bucket);
     }
   }
 
-  const out: Block[] = [...atStart];
-  sorted.forEach((_s, i) => {
-    out.push(approvals[i]);
+  // rebuild the flat list: an approval node is followed by the nodes hanging on it,
+  // so the array order is both the reading order and the rule execution order
+  const out: FlowNode[] = [];
+  approvals.forEach((a, i) => {
+    out.push(a);
     const bucket = perStep.get(i);
     if (!bucket) return;
-    const pair = bucket.approve.find((a) => bucket.reject.some((x) => sameAction(a, x)));
+    const pair = bucket.approve.find((x) => bucket.reject.some((y) => sameAction(x, y)));
     if (pair) {
-      out.push({ ...pair, decision: "BOTH" });
-      out.push(...bucket.approve.filter((a) => a !== pair), ...bucket.reject.filter((x) => !sameAction(x, pair)));
+      out.push({ ...pair, when: "AFTER_DECISION", attachKey: a.key });
+      const rest = [...bucket.approve.filter((x) => x !== pair), ...bucket.reject.filter((x) => !sameAction(x, pair))];
+      for (const x of rest) out.push({ ...x, attachKey: a.key, when: x.when });
     } else {
-      out.push(...bucket.approve, ...bucket.reject);
+      for (const x of [...bucket.approve, ...bucket.reject]) out.push({ ...x, attachKey: a.key });
     }
   });
-  out.push(...atEnd);
+  for (const n of loose) out.push(n);
+  if (hasSubmitRule) out.unshift(newNode("START", { open: false }));
 
-  // a step-bound block that ended up above every approval cannot be expressed
-  out.forEach((b, i) => {
-    if (b.type === "ACTION" && b.scope === "AFTER_STEP" && boundApprovalIndex(out, i) < 0) b.scope = "ANY_STEP";
-  });
-  return out;
+  // submit-time nodes belong above the approvals in the canvas — note the when field
+  // is meaningless on approval/START nodes, so only action nodes may be collected here
+  const start = out.find((n) => n.tool === "START");
+  const isSubmitHook = (n: FlowNode) => isActionTool(n.tool) && n.when === "ON_SUBMIT";
+  const submits = out.filter(isSubmitHook);
+  const rest = out.filter((n) => n.tool !== "START" && !isSubmitHook(n));
+  const ordered = start ? [start, ...submits, ...rest] : [...submits, ...rest];
+
+  // an action that lost its approval node falls back to flow-wide instead of vanishing
+  const alive = new Set(approvalNodes(ordered).map((a) => a.key));
+  for (const n of ordered) {
+    if (!isActionTool(n.tool)) continue;
+    if ((n.when === "AFTER_APPROVE" || n.when === "AFTER_REJECT" || n.when === "AFTER_DECISION") && !alive.has(n.attachKey)) {
+      n.when = n.when === "AFTER_REJECT" ? "ANY_REJECT" : "ANY_APPROVE";
+      n.attachKey = "";
+    }
+  }
+  return ordered;
 }
 
-/** round-trip guard used by tests: the condition string the API will store */
-export function conditionJsonFor(b: Block): string | null {
-  const c = conditionOf(b);
+export function conditionJsonFor(n: FlowNode): string | null {
+  const c = conditionOf(n);
   return c
-    ? buildStepCondition(
-        c.field as "totalValue" | "itemCount" | "priority",
-        c.op as ">=",
-        c.value
-      )
+    ? buildStepCondition(c.field as "totalValue" | "itemCount" | "priority", c.op as ">=", c.value)
     : null;
 }

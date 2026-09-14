@@ -67,29 +67,41 @@ npm run dev
 
 ### Workflow builder (`/workflows/[id]`)
 
-The editor is a **blank canvas**: nothing is created for you. Every block is yours — you add it, you name it, you
-drag it into position. Two kinds of block:
+A three-panel canvas built the way n8n / ServiceNow Flow Designer lay it out, and **nothing is pre-created**:
 
-| Block | What it is | Stored as |
-| --- | --- | --- |
-| **Approval** | who decides (department manager / direct manager / group / role / one person), quorum, comment policy, due days, what happens on approve and on reject, and when the block applies at all | one `WFSteps` row, `StepOrder` = its position among approval blocks |
-| **Automation** | one action — set priority · apply an SLA policy · assign an owner · notify people · jump to a block — plus its own *Runs after* and its own condition | one `WFRules` row (`ActionValue` carries the payload) |
+| Panel | What it holds |
+| --- | --- |
+| **Tools** (left) | searchable, grouped palette — drag a tool onto the canvas, or click it to append |
+| **Canvas** (middle) | your nodes, in the order you dropped them; drag to reorder, drag into a port to attach |
+| **Flow / Readiness / Forms** (right) | a tree of the flow, the list of open problems (click one to jump to the node), and the attached forms |
 
-* An automation block decides **when it runs** by where it sits and what you pick in *Runs after*:
-  `after the block above it` (bound to that approval, approve / reject / both), `after any approval block`,
-  `when the request is submitted`, `after final approval`, `after final rejection`.
-* Dragging a block between approvals **re-targets** it automatically — the binding is the nearest approval block
-  above it, recomputed on every save. Steps can be duplicated, reordered (drag or ↑/↓), paused, and deleted.
-* `Apply an SLA policy` (`SET_SLA`) re-snapshots `SLAPolicyID`, `ResponseDueAt`, `ResolveDueAt` from the policy
-  target matching the request's *current* priority, so “approve → set URGENT → apply the 1h/8h clock” works as one
-  chain, in the order the blocks are written (the SLA block sees the priority the block above it just set).
-* Mapping lives in `src/lib/workflow-builder.ts` (`blocksToApi` / `apiToBlocks`) — React-free and round-trip
-  stable, so a saved canvas reloads exactly as it was written.
-* The right rail holds the flow map, a **Readiness** checklist (every issue focuses and opens the block that causes
-  it) and the attached-forms picker. `Ctrl/Cmd+S` saves, and an *unsaved changes* badge + unload guard track the diff.
-* No schema change: automation stays in `WFRules`, step bindings ride inside `ActionValue.fireOnStepOrder`, so
-  nothing needs `prisma db push`. Old rules that were never bound to a step keep running flow-wide and load as
-  “after any approval block” instead of disappearing.
+Tools available on the palette (`src/lib/workflow-tools.ts`):
+
+* **Requester submits** — a marker node with no settings; drop actions on its port to run them at submit time.
+* **Approval / decision** — who decides (requester's dept manager, direct manager, one person, group, role, any
+  approver), quorum, comment policy, due days, an *only if* gate, what happens on approve / on reject. It exposes
+  two drop ports — **if approved** and **if rejected** — and nothing runs there until you drop a tool on them.
+* **Set priority**, **Set ticket status**, **Apply SLA policy**, **Assign an owner**, **Notify people** — one action
+  each, with their own *only if* condition.
+* **Jump to a node** — move the approval chain elsewhere (a Jump stops the rest of its group).
+* Optional **presets** at the bottom of the palette insert an editable chain (e.g. *approve → set URGENT → apply
+  SLA*); they are never applied on their own.
+
+How it maps to the database (`src/lib/workflow-builder.ts`, React-free and round-trip stable):
+
+* approval nodes → `WFSteps` in canvas order · action nodes → `WFRules` · the submit marker → nothing on its own.
+* the port a node sits in *is* its trigger: `ON_SUBMIT`, `ON_STEP_APPROVED`/`ON_STEP_REJECTED` bound to that step
+  through `ActionValue.fireOnStepOrder` (so a node follows its approval when you drag it to another one), both
+  ports at once = two rows that merge back into one node, and the two end-of-request ports = `ON_REQUEST_APPROVED`
+  / `ON_REQUEST_REJECTED`. Rules never bound to a step stay flow-wide, which is how pre-existing rules load.
+* `Apply SLA policy` re-snapshots `SLAPolicyID`, `ResponseDueAt`, `ResolveDueAt` from the target matching the
+  request's *current* priority — so “approve → URGENT → 1h/8h clock” works as one chain in order.
+* `Set ticket status` may write `COMPLETED`, `FULFILLED`, `CLARIFICATION_REQUESTED` (the requester is notified) or
+  `CANCELLED`; `PENDING_APPROVAL`/`APPROVED`/`REJECTED` are rejected by the API because the approval engine owns them.
+* **No schema change** — everything rides in existing columns and the `ActionValue` JSON, so no `prisma db push`.
+* Editing aids: undo/redo of structure (Ctrl+Z / Ctrl+Shift+Z), `/` focuses the tool search, Delete removes the
+  selected node, Ctrl/Cmd+S saves, pausing a node keeps it as an inactive rule instead of deleting it, and an
+  unsaved-changes badge + unload guard track the diff against the last save.
 
 ### Lost the admin password?
 

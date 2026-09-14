@@ -1,0 +1,209 @@
+// The tools palette definition for the workflow canvas.
+//
+// Everything here is something the admin can pick — none of it is placed on the
+// canvas automatically. Categorized like n8n / ServiceNow Flow Designer:
+// a searchable list of nodes, grouped, each with an icon and a one-line blurb.
+
+import type { ToolId, WhenId } from "./workflow-builder";
+
+export interface Tool {
+  id: ToolId;
+  label: string;
+  icon: string;
+  category: string;
+  blurb: string;
+  /** actions are WFRules, approvals are WFSteps, START is a marker */
+  kind: "trigger" | "decision" | "action";
+  /** tools that only make sense attached to a decision get a hint in the palette */
+  accent: string;
+}
+
+export const TOOLS: Tool[] = [
+  {
+    id: "START",
+    label: "Requester submits",
+    icon: "play_circle",
+    category: "When it starts",
+    blurb: "A marker for the moment the request is created. Drop actions on it to run them immediately.",
+    kind: "trigger",
+    accent: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  },
+  {
+    id: "APPROVAL",
+    label: "Approval / decision",
+    icon: "verified_user",
+    category: "People",
+    blurb: "Someone has to say yes or no. Choose the person, group, role or manager — then what runs on each answer.",
+    kind: "decision",
+    accent: "bg-blue-50 text-primary-dark border-blue-200",
+  },
+  {
+    id: "NOTIFY",
+    label: "Notify people",
+    icon: "notifications_active",
+    category: "People",
+    blurb: "Send an in-app (and email) notification to the requester, a manager, a group, a role or one person.",
+    kind: "action",
+    accent: "bg-violet-50 text-violet-700 border-violet-200",
+  },
+  {
+    id: "ASSIGN_TO_USER",
+    label: "Assign an owner",
+    icon: "assignment_ind",
+    category: "People",
+    blurb: "Put the request on a specific user's board and notify them.",
+    kind: "action",
+    accent: "bg-violet-50 text-violet-700 border-violet-200",
+  },
+  {
+    id: "SET_PRIORITY",
+    label: "Set priority",
+    icon: "priority_high",
+    category: "Update the request",
+    blurb: "LOW / MEDIUM / HIGH / URGENT. Later nodes in the flow see the new value right away.",
+    kind: "action",
+    accent: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  {
+    id: "SET_STATUS",
+    label: "Set ticket status",
+    icon: "flag",
+    category: "Update the request",
+    blurb: "Move the ticket itself: complete it, fulfil it, ask for clarification or cancel it.",
+    kind: "action",
+    accent: "bg-amber-50 text-amber-700 border-amber-200",
+  },
+  {
+    id: "SET_SLA",
+    label: "Apply SLA policy",
+    icon: "timer",
+    category: "Update the request",
+    blurb: "Re-snapshot the response/resolve clock from a policy — the target matching the request's current priority.",
+    kind: "action",
+    accent: "bg-cyan-50 text-cyan-700 border-cyan-200",
+  },
+  {
+    id: "JUMP_TO_STEP",
+    label: "Jump to a node",
+    icon: "skip_next",
+    category: "Flow control",
+    blurb: "Send the approval chain somewhere else — e.g. straight to a second reviewer when an amount is high.",
+    kind: "action",
+    accent: "bg-rose-50 text-rose-700 border-rose-200",
+  },
+];
+
+export const TOOL_BY_ID: Record<string, Tool> = Object.fromEntries(TOOLS.map((t) => [t.id, t]));
+
+export function toolMeta(t: ToolId): Tool {
+  return TOOL_BY_ID[t] ?? TOOLS[1];
+}
+
+export function toolCategories(): { name: string; tools: Tool[] }[] {
+  const out: { name: string; tools: Tool[] }[] = [];
+  for (const t of TOOLS) {
+    const cat = out.find((c) => c.name === t.category);
+    if (cat) cat.tools.push(t);
+    else out.push({ name: t.category, tools: [t] });
+  }
+  return out;
+}
+
+/** what triggers exist, in the order a human reads them */
+export const WHEN_META: Record<WhenId, { label: string; short: string; icon: string }> = {
+  ON_SUBMIT: { label: "when the request is submitted", short: "on submit", icon: "play_circle" },
+  AFTER_APPROVE: { label: "after a specific node is approved", short: "on approve", icon: "thumb_up" },
+  AFTER_REJECT: { label: "after a specific node is rejected", short: "on reject", icon: "thumb_down" },
+  AFTER_DECISION: { label: "after a specific node decides (either way)", short: "on either", icon: "compare_arrows" },
+  ANY_APPROVE: { label: "after any approval node approves", short: "any approve", icon: "dns" },
+  ANY_REJECT: { label: "if any approval node rejects", short: "any reject", icon: "dns" },
+  FINAL_APPROVE: { label: "when the whole request is approved", short: "request approved", icon: "verified" },
+  FINAL_REJECT: { label: "when the whole request is rejected", short: "request rejected", icon: "block" },
+};
+
+export const WHEN_ORDER: WhenId[] = [
+  "ON_SUBMIT",
+  "AFTER_APPROVE",
+  "AFTER_REJECT",
+  "AFTER_DECISION",
+  "ANY_APPROVE",
+  "ANY_REJECT",
+  "FINAL_APPROVE",
+  "FINAL_REJECT",
+];
+
+/**
+ * Statuses automation is allowed to write. The approval engine owns
+ * PENDING_APPROVAL / APPROVED / REJECTED, so those are deliberately absent:
+ * a rule must not be able to fake a decision.
+ */
+export const SETTABLE_STATUSES = [
+  { value: "COMPLETED", label: "Completed", note: "closes the request and stamps the completion time" },
+  { value: "FULFILLED", label: "Fulfilled", note: "the work is delivered; stamps the fulfilment time" },
+  { value: "CLARIFICATION_REQUESTED", label: "Ask the requester for clarification", note: "the requester gets a reply box on the request" },
+  { value: "CANCELLED", label: "Cancelled", note: "terminal — nobody can approve it afterwards" },
+] as const;
+
+export type SettableStatus = (typeof SETTABLE_STATUSES)[number]["value"];
+
+export function statusMeta(v: string) {
+  return SETTABLE_STATUSES.find((s) => s.value === v);
+}
+
+/** minutes → "2d", "8h", "45m" — same vocabulary the SLA screens use */
+export function fmtMins(mins: number | null | undefined): string {
+  if (mins == null) return "—";
+  if (mins % 1440 === 0 && mins >= 1440) return `${mins / 1440}d`;
+  if (mins % 60 === 0 && mins >= 60) return `${mins / 60}h`;
+  return `${mins}m`;
+}
+
+export interface Recipe {
+  id: string;
+  label: string;
+  blurb: string;
+  icon: string;
+  build: () => { tool: ToolId; name: string; patch?: Record<string, unknown> }[];
+}
+
+/**
+ * Optional starting points. Nothing is ever applied without the admin picking it,
+ * and every inserted node stays fully editable / deletable afterwards.
+ */
+export const RECIPES: Recipe[] = [
+  {
+    id: "urgent-sla",
+    label: "Approve → set URGENT → apply SLA",
+    blurb: "The manager approves, the ticket becomes urgent and gets the matching response/resolve clock.",
+    icon: "bolt",
+    build: () => [
+      { tool: "APPROVAL", name: "Manager approval" },
+      { tool: "SET_PRIORITY", name: "Mark URGENT", patch: { priority: "URGENT" } },
+      { tool: "SET_SLA", name: "Apply urgent SLA" },
+    ],
+  },
+  {
+    id: "triage",
+    label: "Triage on submit",
+    blurb: "As soon as the request is in: route the priority, tell the requester, put an SLA clock on it.",
+    icon: "layers",
+    build: () => [
+      { tool: "START", name: "Requester submits" },
+      { tool: "SET_PRIORITY", name: "Set priority" },
+      { tool: "SET_SLA", name: "Apply SLA" },
+      { tool: "NOTIFY", name: "Tell the requester", patch: { notifyTargetType: "REQUESTER" } },
+    ],
+  },
+  {
+    id: "reject-path",
+    label: "Approval with a reject path",
+    blurb: "One approver; if they approve the flow continues, if they reject the requester is told and the ticket is cancelled.",
+    icon: "split_scene",
+    build: () => [
+      { tool: "APPROVAL", name: "Supervisor sign-off" },
+      { tool: "NOTIFY", name: "Heads up, approved", patch: { when: "AFTER_APPROVE", notifyTargetType: "REQUESTER" } },
+      { tool: "NOTIFY", name: "Rejected — why", patch: { when: "AFTER_REJECT", notifyTargetType: "REQUESTER" } },
+      { tool: "SET_STATUS", name: "Cancel it", patch: { when: "AFTER_REJECT", status: "CANCELLED" } },
+    ],
+  },
+];
