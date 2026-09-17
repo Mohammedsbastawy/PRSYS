@@ -57,6 +57,7 @@ model DEP {
   Manager   Users? @relation("DEPLeader", fields: [ManagerID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
   FormPerms FormPermissions[]
   OwnedTemplates FormTemplates[] @relation("TemplateOwnerDEP")
+  WFStepsTargeted WFSteps[] @relation("WFStepDep")
 }
 
 model Users {
@@ -88,6 +89,8 @@ model Users {
   AuditChanges RequestAuditLog[] @relation("AuditChangedBy")
   VerifiedItems RequestItems[] @relation("ItemVerifier")
   Notifications Notifications[] @relation("NotifUser")
+  WFRunsCreated WFRequestRuns[] @relation("RunCreatedBy")
+  WFRunsDecided WFRequestRuns[] @relation("RunDecidedBy")
 }
 
 model Groups {
@@ -129,6 +132,10 @@ model WFDefinitions {
   Name           String
   Description    String?
   Status         String   @default("ACTIVE")
+  // usable as an on-request "Request approval" button (besides / instead of
+  // being attached to a form template): agents stuck on a request can run it
+  // on demand; it then tracks its own steps + due dates inside that request
+  OnDemand       Boolean  @default(false)
   // the visual canvas (React Flow graph JSON) — the engine still runs on Steps/Rules
   CanvasJson     String?  @db.Text
   CreatedAt      DateTime @default(now())
@@ -137,6 +144,7 @@ model WFDefinitions {
   Templates  FormTemplates[]
   Steps      WFSteps[]
   Rules      WFRules[]
+  Runs       WFRequestRuns[]
 }
 
 // Event-driven automation rules (osTicket "Ticket Filters" / JSM "Automation"):
@@ -256,6 +264,9 @@ model WFSteps {
   TargetUserID     String? 
   TargetGroupID    String? 
   TargetRoleID     String? 
+  // ApproverType "DEPARTMENT" → routes to THIS department's manager (e.g.
+  // "Budget approval" → the Accounting department's manager)
+  TargetDEPID      String?
   ApprovalMode     String   @default("ANY_ONE")
   RejectAction     String   @default("REJECT_COMPLETELY")
   CommentPolicy    String   @default("OPTIONAL") // OPTIONAL | ON_APPROVE | ON_REJECT | ALWAYS
@@ -270,6 +281,8 @@ model WFSteps {
   TargetUser  Users?       @relation("WFUser", fields: [TargetUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
   TargetGroup Groups?      @relation("WFGroup", fields: [TargetGroupID], references: [GroupID], onDelete: NoAction, onUpdate: NoAction)
   TargetRole  Roles?       @relation("WFRole", fields: [TargetRoleID], references: [RoleID], onDelete: NoAction, onUpdate: NoAction)
+  TargetDEP   DEP?         @relation("WFStepDep", fields: [TargetDEPID], references: [DEPID], onDelete: NoAction, onUpdate: NoAction)
+  RunCurrent  WFRequestRuns[] @relation("WFRunCurrentStep")
   ApproveTarget WFSteps? @relation("StepJump", fields: [ApproveTargetStepID], references: [WFStepID], onDelete: SetNull, onUpdate: NoAction)
   JumpSources   WFSteps[] @relation("StepJump")
   Requests    Requests[]
@@ -335,6 +348,7 @@ model Requests {
   Attachments     RequestAttachments[]
   AuditLogs       RequestAuditLog[] @relation("AuditRequest")
   NotifRequests Notifications[] @relation("NotifRequest")
+  Runs            WFRequestRuns[]
 }
 
 model RequestFieldValues {
@@ -387,14 +401,44 @@ model RequestApprovals {
   WFStepID          String  
   ApproverUserID    String  
   Decision          String   @default("PENDING")
-  Comment           String?
+  Comment           String?  
   DecidedAt         DateTime?
   Round             Int      @default(1)
+  // set when the decision belongs to an on-demand approval run (a preset
+  // workflow requested from inside the request) — null = main workflow
+  WFRunID           String? 
   CreatedAt         DateTime @default(now())
 
   Request  Requests @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
   WFStep   WFSteps  @relation(fields: [WFStepID], references: [WFStepID], onDelete: NoAction, onUpdate: NoAction)
   Approver Users    @relation(fields: [ApproverUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
+  WFRun    WFRequestRuns? @relation(fields: [WFRunID], references: [WFRunID], onDelete: Cascade)
+}
+
+// One on-demand run of an "approval preset" workflow inside a request.
+// Each run keeps its own current step, round and SLA due date, so a ticket
+// can be pending on several approvals at once (each with its own clock) and
+// the request page shows who is holding what — and since when.
+model WFRequestRuns {
+  WFRunID         String   @id @default(uuid())
+  RequestID       String  
+  WFDefinitionID  String  
+  Status          String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  CurrentStepID   String? 
+  StepOrder       Int      @default(0)
+  Round           Int      @default(1)
+  DueAt           DateTime?
+  StartedAt       DateTime @default(now())
+  DecidedAt       DateTime?
+  CreatedByUserID String  
+  DecidedByUserID String? 
+
+  Request      Requests      @relation(fields: [RequestID], references: [RequestID], onDelete: Cascade)
+  WFDefinition WFDefinitions @relation(fields: [WFDefinitionID], references: [WFDefinitionID], onDelete: Cascade)
+  CurrentStep  WFSteps?      @relation("WFRunCurrentStep", fields: [CurrentStepID], references: [WFStepID], onDelete: SetNull, onUpdate: NoAction)
+  CreatedBy    Users?        @relation("RunCreatedBy", fields: [CreatedByUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
+  DecidedBy    Users?        @relation("RunDecidedBy", fields: [DecidedByUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
+  Approvals    RequestApprovals[]
 }
 
 model RequestComments {

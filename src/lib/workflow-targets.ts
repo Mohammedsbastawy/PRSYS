@@ -6,9 +6,11 @@ export interface StepTargetInput {
   TargetUserID: string | null;
   TargetGroupID: string | null;
   TargetRoleID: string | null;
+  TargetDEPID?: string | null;
   TargetUser?: { Name: string } | null;
   TargetGroup?: { Name: string } | null;
   TargetRole?: { Name: string } | null;
+  TargetDEP?: { Name: string } | null;
 }
 
 export interface StepLookups {
@@ -17,6 +19,8 @@ export interface StepLookups {
   requesterManager: (requesterId: string) => Promise<string | null>;
   /** Resolves the MANAGER of the requester's department (an assignment, not a role) */
   departmentManager: (requesterId: string) => Promise<string | null>;
+  /** Resolves the MANAGER of a specific department (ApproverType "DEPARTMENT") */
+  departmentManagerById: (depId: string) => Promise<string | null>;
   allApprovers: () => Promise<string[]>;
 }
 
@@ -32,6 +36,8 @@ export function describeStepTarget(step: StepTargetInput): string {
       return "Requester's manager (direct, or department manager as fallback)";
     case "DEPARTMENT_MANAGER":
       return "Requester's department manager (or direct manager as fallback)";
+    case "DEPARTMENT":
+      return step.TargetDEP?.Name ? `Manager of ${step.TargetDEP.Name}` : "A department's manager";
     case "ANY_APPROVER":
     default:
       return "Any approver";
@@ -68,6 +74,13 @@ export async function stepTargetUserIds(
       // graceful fallback: direct manager, so routing never dead-ends
       const dm = await lookups.requesterManager(requesterId);
       return dm ? [dm] : [];
+    }
+    case "DEPARTMENT": {
+      // "Approve with the manager of THIS department" (e.g. Budget Approval →
+      // the Accounting manager). No requester fallback — the department is fixed
+      // by the preset; an unmanaged department surfaces as an unassignable step.
+      const m = step.TargetDEPID ? await lookups.departmentManagerById(step.TargetDEPID) : null;
+      return m ? [m] : [];
     }
     case "ANY_APPROVER":
     default:

@@ -108,6 +108,10 @@ export function approverSummary(n: FlowNode, l: WfLookups): string {
       return "requester's dept manager";
     case "REQUESTER_MANAGER":
       return "requester's direct manager";
+    case "DEPARTMENT": {
+      const d = l.deps.find((x) => x.DEPID === n.targetDepId);
+      return d ? `manager of ${d.Name}` : "a department's manager";
+    }
     case "USER":
       return l.users.find((u) => u.UserID === n.targetUserId)?.Name || "a person";
     case "GROUP":

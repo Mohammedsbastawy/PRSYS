@@ -69,6 +69,7 @@ export interface FlowNode {
   targetUserId: string;
   targetGroupId: string;
   targetRoleId: string;
+  targetDepId: string;
   approvalMode: string;
   commentPolicy: string;
   dueDays: string;
@@ -106,6 +107,7 @@ export interface BuilderStep {
   TargetUserID: string | null;
   TargetGroupID: string | null;
   TargetRoleID: string | null;
+  TargetDEPID?: string | null;
   ApprovalMode: string | null;
   RejectAction: string | null;
   ApproveAction: string | null;
@@ -166,6 +168,7 @@ export function newNode(tool: ToolId, over: Partial<FlowNode> = {}): FlowNode {
     targetUserId: "",
     targetGroupId: "",
     targetRoleId: "",
+    targetDepId: "",
     approvalMode: "",
     commentPolicy: "",
     dueDays: "",

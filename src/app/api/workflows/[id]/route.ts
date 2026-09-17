@@ -18,6 +18,7 @@ const stepInclude = {
   TargetUser: { select: { Name: true } },
   TargetGroup: { select: { Name: true } },
   TargetRole: { select: { Name: true } },
+  TargetDEP: { select: { Name: true } },
 }
 
 // GET /api/workflows/[id]
@@ -50,10 +51,11 @@ const stepSchema = z.object({
   id: z.string().optional(), // WFStepID for existing steps; absent = new step
   stepName: z.string().min(1).max(120),
   stepOrder: z.number().int().default(0),
-  approverType: z.enum(['ANY_APPROVER', 'ROLE', 'GROUP', 'USER', 'REQUESTER_MANAGER', 'DEPARTMENT_MANAGER']),
+  approverType: z.enum(['ANY_APPROVER', 'ROLE', 'GROUP', 'USER', 'REQUESTER_MANAGER', 'DEPARTMENT_MANAGER', 'DEPARTMENT']),
   targetUserId: z.string().optional().nullable(),
   targetGroupId: z.string().optional().nullable(),
   targetRoleId: z.string().optional().nullable(),
+  targetDepId: z.string().optional().nullable(),
   approvalMode: z.enum(['ANY_ONE', 'ALL']).default('ANY_ONE'),
   rejectAction: z.enum(['REJECT_COMPLETELY', 'RETURN_TO_REQUESTER', 'RETURN_TO_PREVIOUS_STEP']).default('REJECT_COMPLETELY'),
   condition: conditionSchema,
@@ -91,6 +93,8 @@ const wfSchema = z.object({
   name: z.string().min(1).max(150),
   description: z.string().max(500).optional().nullable(),
   status: z.enum(['ACTIVE', 'DRAFT']).default('ACTIVE'),
+  // usable as an on-request "Request approval" preset (see WFDefinitions.OnDemand)
+  onDemand: z.boolean().default(false),
   steps: z.array(stepSchema).default([]),
   rules: z.array(ruleSchema).default([]),
   // optional visual canvas (React Flow graph JSON) — stored for the editor, unused by the engine
@@ -99,10 +103,11 @@ const wfSchema = z.object({
 
 type StepInput = {
   stepName: string
-  approverType: 'ANY_APPROVER' | 'ROLE' | 'GROUP' | 'USER' | 'REQUESTER_MANAGER' | 'DEPARTMENT_MANAGER'
+  approverType: 'ANY_APPROVER' | 'ROLE' | 'GROUP' | 'USER' | 'REQUESTER_MANAGER' | 'DEPARTMENT_MANAGER' | 'DEPARTMENT'
   targetUserId?: string | null
   targetGroupId?: string | null
   targetRoleId?: string | null
+  targetDepId?: string | null
   approvalMode?: 'ANY_ONE' | 'ALL'
   rejectAction?: 'REJECT_COMPLETELY' | 'RETURN_TO_REQUESTER' | 'RETURN_TO_PREVIOUS_STEP'
   condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
@@ -209,6 +214,11 @@ async function validateSteps(steps: StepInput[]): Promise<string | null> {
       const u = await prisma.users.findUnique({ where: { UserID: s.targetUserId }, select: { UserID: true } })
       if (!u) return `Step "${s.stepName}": user not found`
     }
+    if (s.approverType === 'DEPARTMENT') {
+      if (!s.targetDepId) return `Step "${s.stepName}": choose a department (its manager will approve)`
+      const d = await prisma.dEP.findUnique({ where: { DEPID: s.targetDepId }, select: { DEPID: true } })
+      if (!d) return `Step "${s.stepName}": department not found`
+    }
   }
   return null
 }
@@ -287,6 +297,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
         TargetUserID: s.approverType === 'USER' ? s.targetUserId! : null,
         TargetGroupID: s.approverType === 'GROUP' ? s.targetGroupId! : null,
         TargetRoleID: s.approverType === 'ROLE' ? s.targetRoleId! : null,
+        TargetDEPID: s.approverType === 'DEPARTMENT' ? s.targetDepId! : null,
         ApprovalMode: s.approvalMode ?? 'ANY_ONE',
         RejectAction: s.rejectAction ?? 'REJECT_COMPLETELY',
         CommentPolicy: s.commentPolicy ?? 'OPTIONAL',
@@ -319,6 +330,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
         Name: data!.name.trim(),
         Description: data!.description ?? null,
         Status: data!.status,
+        OnDemand: data!.onDemand,
         CanvasJson: data!.canvasJson || null,
       },
     })

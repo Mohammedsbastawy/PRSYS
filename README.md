@@ -161,6 +161,7 @@ parked requests without touching the request:
 | --- | --- | --- |
 | Requester's direct manager (`REQUESTER_MANAGER`) | `Users.DirectManagerID` | the requester's department manager (`DEP.ManagerID`) |
 | Requester's department manager (`DEPARTMENT_MANAGER`) | `DEP.ManagerID` of the requester's department | the requester's `DirectManagerID` |
+| A department's manager (`DEPARTMENT`) | `DEP.ManagerID` of the **fixed** department chosen on the step (e.g. "Accounting") — used by approval presets | none (a department without a manager surfaces as an unassignable step + admin alert) |
 | Role / Group / Specific user | members of that role (active users), group members, the user | none |
 | Any approver (`ANY_APPROVER`) | everyone holding `REQUEST_APPROVE` | none |
 
@@ -172,6 +173,31 @@ Two invariants:
 - **A step with no resolvable approver is never auto-passed.** It stays `PENDING_APPROVAL`, writes a
   `STEP_UNASSIGNED` audit entry and notifies the Super Admins. (`ALL`-approval steps used to complete vacuously
   when their target list was empty, silently skipping a whole approval level.)
+
+### On-demand approval presets ("Request Approval" inside a ticket)
+
+A workflow can be attached to a form template (runs on submit) **and/or** flagged *Request-approval preset*
+(the toggle in the workflow editor's top bar → `WFDefinitions.OnDemand`). Flagged, ACTIVE workflows appear in
+the **Request Approval** button on any in-progress request. The handling agent (or the requester) starts a
+preset — e.g. *Budget Approval* routed to the **Accounting** department's manager (`DEPARTMENT` step type) —
+when they are stuck on something the form's workflow does not cover.
+
+Each start creates a **run** (`WFRequestRuns`) that rides *alongside* the main workflow:
+
+- the request's status, main step and round are **untouched** — the agent keeps working on the ticket;
+- the run keeps its own current step, round and **SLA due date** (the step's *Due in (days)*), so a ticket can
+  carry several approvals with several clocks at once — the request page lists every run with who is waiting,
+  since when, how long is left (or how late it is), so the team can see who is causing the delay;
+- approving/rejecting a run uses the same governance as a normal step (`canUserDecideStep` + comment policy,
+  decisions stored in `RequestApprovals` with a `WFRunID`), but the form's automation rules do **not** fire and
+  the request status does not change — a preset rejection ends only the run;
+- the run's next step (if any) is notified like a normal step; a step with no resolvable approver raises the
+  usual admin alert; the agent who raised the run and the requester are notified on every advance/final verdict;
+- one active run per preset per ticket (the button marks presets that are *already waiting*).
+
+**`npx prisma db push` is required once** for the new columns/model
+(`WFDefinitions.OnDemand`, `WFSteps.TargetDEPID`, `RequestApprovals.WFRunID`, `WFRequestRuns`), then
+`npx prisma generate`.
 
 ### Access model (ticket-system style)
 

@@ -61,6 +61,7 @@ interface LoadedStep {
   TargetUserID: string | null;
   TargetGroupID: string | null;
   TargetRoleID: string | null;
+  TargetDEPID?: string | null;
   ApprovalMode: string | null;
   RejectAction: string | null;
   ApproveAction: string | null;
@@ -83,6 +84,7 @@ interface LoadedWorkflow {
   Name: string;
   Description: string | null;
   Status: string;
+  OnDemand?: boolean;
   Steps: LoadedStep[];
   Rules?: LoadedRule[];
   CanvasJson?: string | null;
@@ -94,6 +96,7 @@ interface LoadedWorkflow {
 const APPROVER_TYPES = [
   { value: "DEPARTMENT_MANAGER", label: "Dept manager" },
   { value: "REQUESTER_MANAGER", label: "Direct manager" },
+  { value: "DEPARTMENT", label: "A dept's manager" },
   { value: "USER", label: "One person" },
   { value: "GROUP", label: "Group" },
   { value: "ROLE", label: "Role" },
@@ -531,6 +534,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("ACTIVE");
+  const [onDemand, setOnDemand] = useState(false);
   const [graph, setGraph] = useState<Graph>(EMPTY_GRAPH);
   const [canvasKey, setCanvasKey] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -551,8 +555,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const lookups: WfLookups = useMemo(() => ({ users, groups, roles, deps, slas }), [users, groups, roles, deps, slas]);
 
   const dirty = useMemo(
-    () => JSON.stringify({ name, description, status, graph }) !== baseline.current,
-    [name, description, status, graph]
+    () => JSON.stringify({ name, description, status, onDemand, graph }) !== baseline.current,
+    [name, description, status, onDemand, graph]
   );
 
   /* ------------------------------------------------------------- loaders -- */
@@ -610,11 +614,12 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           setName(w.Name);
           setDescription(w.Description ?? "");
           setStatus(w.Status);
+          setOnDemand(Boolean(w.OnDemand));
           setUsage(w.usage ?? null);
           setGraph(g);
           setCanvasKey((k) => k + 1);
           setSelectedIds([]);
-          baseline.current = JSON.stringify({ name: w.Name, description: w.Description ?? "", status: w.Status, graph: g });
+          baseline.current = JSON.stringify({ name: w.Name, description: w.Description ?? "", status: w.Status, onDemand: Boolean(w.OnDemand), graph: g });
         }
       })
       .catch(() => setError("Failed to load workflow"))
@@ -695,6 +700,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       name: name.trim(),
       description: description.trim() || null,
       status,
+      onDemand,
       steps: built.steps,
       rules: built.rules,
       canvasJson: built.canvasJson,
@@ -742,7 +748,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         if (!assigned.has(tid))
           await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: null }) });
       }
-      baseline.current = JSON.stringify({ name, description, status, graph: savedGraph });
+      baseline.current = JSON.stringify({ name, description, status, onDemand, graph: savedGraph });
       setInitialAssigned(new Set(assigned));
       setSavedAt(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
       if (isNew && savedId) router.replace(`/workflows/${savedId}`);
@@ -852,6 +858,19 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             <option value="ACTIVE">Active</option>
             <option value="DRAFT">Draft</option>
           </select>
+          <label
+            className="flex cursor-pointer select-none items-center gap-1.5 text-[11px] font-medium text-on-surface-variant"
+            title="Show this workflow as a button inside open requests (“Request approval”) — an agent stuck on a ticket can start it on demand. It still works when attached to a form template."
+          >
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 accent-primary"
+              disabled={ro}
+              checked={onDemand}
+              onChange={(e) => setOnDemand(e.target.checked)}
+            />
+            Request-approval preset
+          </label>
           {savedAt && !dirty && <span className="hidden text-[11px] text-outline lg:block">saved {savedAt}</span>}
           {dirty && <span className="badge bg-amber-100 text-on-secondary-fixed-variant">unsaved</span>}
           <button onClick={() => void save()} disabled={saving || ro || (!dirty && !isNew)} className="btn-primary !px-3 !py-1.5 text-xs">
@@ -965,7 +984,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                         />
                         {(selectedNode.data.approverType === "USER" ||
                           selectedNode.data.approverType === "GROUP" ||
-                          selectedNode.data.approverType === "ROLE") && (
+                          selectedNode.data.approverType === "ROLE" ||
+                          selectedNode.data.approverType === "DEPARTMENT") && (
                           <select
                             className="input !py-1.5 text-xs"
                             disabled={ro}
@@ -974,7 +994,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                                 ? selectedNode.data.targetUserId
                                 : selectedNode.data.approverType === "GROUP"
                                   ? selectedNode.data.targetGroupId
-                                  : selectedNode.data.targetRoleId
+                                  : selectedNode.data.approverType === "ROLE"
+                                    ? selectedNode.data.targetRoleId
+                                    : selectedNode.data.targetDepId
                             }
                             onChange={(e) =>
                               patchSelected(
@@ -982,7 +1004,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                                   ? { targetUserId: e.target.value }
                                   : selectedNode.data.approverType === "GROUP"
                                     ? { targetGroupId: e.target.value }
-                                    : { targetRoleId: e.target.value }
+                                    : selectedNode.data.approverType === "ROLE"
+                                      ? { targetRoleId: e.target.value }
+                                      : { targetDepId: e.target.value }
                               )
                             }
                           >
@@ -1003,6 +1027,12 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                               roles.map((r) => (
                                 <option key={r.id} value={r.id}>
                                   {r.name}
+                                </option>
+                              ))}
+                            {selectedNode.data.approverType === "DEPARTMENT" &&
+                              deps.map((d) => (
+                                <option key={d.DEPID} value={d.DEPID}>
+                                  {d.Name} ({d.Code})
                                 </option>
                               ))}
                           </select>

@@ -31,6 +31,44 @@ interface Step {
   DueDays?: number | null;
   CommentPolicy?: string | null;
 }
+interface RunStep extends Step {
+  TargetUser: { Name: string } | null;
+  TargetGroup: { Name: string } | null;
+  TargetRole: { Name: string } | null;
+  TargetDEP: { Name: string } | null;
+}
+interface RunApproval {
+  Approver: { UserID: string; Name: string };
+  Decision: string;
+  Comment: string | null;
+  DecidedAt: string | null;
+}
+/** One on-demand approval run (a preset workflow started from the request) */
+interface Run {
+  WFRunID: string;
+  Status: "PENDING" | "APPROVED" | "REJECTED";
+  CurrentStepID: string | null;
+  Round: number;
+  DueAt: string | null;
+  StartedAt: string;
+  DecidedAt: string | null;
+  TargetSummary: string | null;
+  CanDecide: boolean;
+  DecideReason: string | null;
+  StepProgress: StepProgress | null;
+  WFDefinition: { WFDefinitionID: string; Name: string; Description: string | null };
+  CurrentStep: RunStep | null;
+  CreatedBy: { UserID: string; Name: string } | null;
+  DecidedBy: { Name: string } | null;
+  Approvals: RunApproval[];
+}
+interface ApprovalPreset {
+  WFDefinitionID: string;
+  Name: string;
+  Description: string | null;
+  StepCount: number;
+  TargetSummary: string;
+}
 interface Approval {
   RequestApprovalID: string;
   WFStepID: string;
@@ -195,6 +233,8 @@ interface ReqDetail {
   FieldValues: { Value: string; DisplayValue?: string | null; FormField: { Label: string; FieldType: string } | null }[];
   Items: Item[];
   Approvals: Approval[];
+  Runs: Run[];
+  ApprovalPresets: ApprovalPreset[];
   Comments: CommentT[];
   Attachments: Att[];
   AuditLogs: Audit[];
@@ -704,6 +744,8 @@ export default function RequestDetailPage() {
   const [internal, setInternal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [cancelArm, setCancelArm] = useState(false);
+  const [presetOpen, setPresetOpen] = useState(false);
+  const [runDecision, setRunDecision] = useState<{ runId: string; mode: "APPROVE" | "REJECT" } | null>(null);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -737,6 +779,8 @@ export default function RequestDetailPage() {
       setPoOpen(false);
       setAssignOpen(false);
       setCancelArm(false);
+      setPresetOpen(false);
+      setRunDecision(null);
       await load();
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Action failed");
@@ -852,6 +896,12 @@ export default function RequestDetailPage() {
   const canCatalog = p("CATALOG_VIEW");
   const canSeeInternal = p("REQUEST_VIEW_ALL");
   const cancellable = ["DRAFT", "PENDING_APPROVAL", "CLARIFICATION_REQUESTED"].includes(req.Status);
+  // on-demand approval runs ride alongside any in-progress status
+  const runActive = ["PENDING_APPROVAL", "PROCESSING", "PO_REGISTERED", "CLARIFICATION_REQUESTED"].includes(req.Status);
+  const canRequestApproval =
+    !!user &&
+    runActive &&
+    (req.Assignee?.UserID === user.id || isOwner || p("REQUEST_ASSIGN") || user.role.code === "SUPER_ADMIN");
 
   /* timeline nodes */
   const wfSteps = req.FormTemplate.Workflow?.Steps || [];
@@ -988,6 +1038,51 @@ export default function RequestDetailPage() {
                 <Icon name="check" className="text-[18px]" /> Approve
               </button>
             </>
+          )}
+          {canRequestApproval && req.ApprovalPresets.length > 0 && (
+            <div className="relative">
+              <button className="btn-secondary" disabled={busy !== null} onClick={() => setPresetOpen((v) => !v)}>
+                <Icon name="verified_user" className="text-[18px]" /> Request Approval
+              </button>
+              {presetOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setPresetOpen(false)} />
+                  <div className="absolute right-0 z-20 mt-2 w-80 rounded border border-surface-variant bg-surface-container-lowest p-2 shadow-lg">
+                    <p className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-outline">
+                      Start an approval preset on this ticket
+                    </p>
+                    <div className="space-y-1">
+                      {req.ApprovalPresets.map((wf) => {
+                        const alreadyWaiting = (req.Runs || []).some(
+                          (r) => r.WFDefinition.WFDefinitionID === wf.WFDefinitionID && r.Status === "PENDING"
+                        );
+                        return (
+                          <button
+                            key={wf.WFDefinitionID}
+                            disabled={busy !== null || alreadyWaiting}
+                            title={wf.Description || undefined}
+                            className="w-full rounded border border-transparent px-2.5 py-2 text-left transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={() => act("REQUEST_APPROVAL", { wfDefinitionId: wf.WFDefinitionID })}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-semibold text-on-surface">{wf.Name}</span>
+                              {alreadyWaiting && (
+                                <span className="badge bg-secondary-fixed text-[10px] font-bold text-on-secondary-fixed-variant">
+                                  already waiting
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-on-surface-variant">
+                              → {wf.TargetSummary} · {wf.StepCount} step{wf.StepCount === 1 ? "" : "s"}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           )}
           {p("REQUEST_ASSIGN") && (
             <button className="btn-secondary" disabled={busy !== null} onClick={() => setAssignOpen(true)}>
@@ -1173,6 +1268,144 @@ export default function RequestDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Approval Requests — on-demand approval presets, each with its own SLA clock */}
+      {(() => {
+        const runs = req.Runs || [];
+        const presets = req.ApprovalPresets || [];
+        const pendingCount = runs.filter((r) => r.Status === "PENDING").length;
+        if (runs.length === 0 && !(canRequestApproval && presets.length > 0)) return null;
+        const nowMs = Date.now();
+        return (
+          <div className="card mb-4 p-5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 className="flex items-center gap-1.5 font-headline-sm text-headline-sm font-semibold text-on-surface">
+                <Icon name="verified_user" className="text-[18px]" /> Approval Requests
+              </h3>
+              {pendingCount > 0 && (
+                <span className="badge bg-secondary-fixed text-[10px] font-bold text-on-secondary-fixed-variant">
+                  {pendingCount} waiting
+                </span>
+              )}
+            </div>
+            <div className="space-y-2">
+              {runs.length === 0 &&
+                presets.map((wf) => (
+                  <div
+                    key={wf.WFDefinitionID}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded border border-dashed border-surface-variant p-3"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-on-surface">{wf.Name}</div>
+                      <div className="text-xs text-on-surface-variant">
+                        → {wf.TargetSummary} · {wf.StepCount} step{wf.StepCount === 1 ? "" : "s"}
+                        {wf.Description ? ` — ${wf.Description}` : ""}
+                      </div>
+                    </div>
+                    <button
+                      className="btn-secondary !px-2.5 !py-1 text-xs"
+                      disabled={busy !== null}
+                      onClick={() => act("REQUEST_APPROVAL", { wfDefinitionId: wf.WFDefinitionID })}
+                    >
+                      Start
+                    </button>
+                  </div>
+                ))}
+              {runs.map((r) => {
+                const step = r.CurrentStep;
+                const dueMs = r.DueAt ? new Date(r.DueAt).getTime() : null;
+                const overdue = r.Status === "PENDING" && dueMs !== null && dueMs < nowMs;
+                return (
+                  <div
+                    key={r.WFRunID}
+                    className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded border p-3 ${
+                      r.Status === "PENDING"
+                        ? "border-surface-variant bg-surface-container-low/40"
+                        : r.Status === "APPROVED"
+                          ? "border-tertiary/40 bg-tertiary/10"
+                          : "border-error/30 bg-error-container/30"
+                    }`}
+                  >
+                    <div className="min-w-[220px] flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-on-surface">{r.WFDefinition.Name}</span>
+                        {r.Status === "PENDING" ? (
+                          <span className="badge bg-secondary-fixed text-[10px] font-bold text-on-secondary-fixed-variant">waiting</span>
+                        ) : r.Status === "APPROVED" ? (
+                          <span className="badge bg-tertiary/30 text-[10px] font-bold text-on-surface">approved</span>
+                        ) : (
+                          <span className="badge bg-error-container text-[10px] font-bold text-on-error-container">rejected</span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-xs text-on-surface-variant">
+                        Requested by {r.CreatedBy?.Name ?? "—"} · {fmtDateTime(r.StartedAt)}
+                        {r.Status !== "PENDING" && r.DecidedBy
+                          ? ` · decided by ${r.DecidedBy.Name} · ${fmtDateTime(r.DecidedAt)}`
+                          : ""}
+                      </div>
+                      {r.Status === "PENDING" && step && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                          <span className="flex items-center gap-1 font-medium text-primary-dark">
+                            <Icon name="schedule" className="text-[14px]" />
+                            Waiting: {step.StepName} → {r.TargetSummary ?? "unassigned"}
+                          </span>
+                          {r.StepProgress?.mode === "ALL" && (
+                            <span className="text-outline">
+                              ({r.StepProgress.approved} of {r.StepProgress.total} approved)
+                            </span>
+                          )}
+                          {r.Round > 1 && <span className="text-outline">round {r.Round}</span>}
+                          {dueMs !== null ? (
+                            overdue ? (
+                              <span className="font-bold text-danger">
+                                {fmtDuration(dueMs, nowMs)} OVERDUE — was due {fmtDateTime(r.DueAt)}
+                              </span>
+                            ) : (
+                              <span className="text-secondary">
+                                due {fmtDateTime(r.DueAt)} · {fmtDuration(nowMs, dueMs)} left
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-outline">no SLA on this step</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {r.Status === "PENDING" &&
+                      (r.CanDecide ? (
+                        <div className="flex gap-1.5">
+                          <button
+                            className="btn-secondary !px-2.5 !py-1 text-xs"
+                            disabled={busy !== null}
+                            onClick={() => setRunDecision({ runId: r.WFRunID, mode: "REJECT" })}
+                          >
+                            Reject
+                          </button>
+                          <button
+                            className="btn-primary !px-2.5 !py-1 text-xs"
+                            disabled={busy !== null}
+                            onClick={() => setRunDecision({ runId: r.WFRunID, mode: "APPROVE" })}
+                          >
+                            Approve
+                          </button>
+                        </div>
+                      ) : p("REQUEST_APPROVE") && r.DecideReason ? (
+                        <span className="max-w-[240px] text-[11px] leading-snug text-outline">{r.DecideReason}</span>
+                      ) : null)}
+                  </div>
+                );
+              })}
+              {runs.length === 0 && presets.length === 0 && (
+                <p className="text-xs text-outline">
+                  No approval requests on this ticket. If you are stuck, use{" "}
+                  <span className="font-semibold text-on-surface-variant">Request Approval</span> above to start a
+                  preset.
+                </p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Summary + Items */}
       <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
@@ -1517,6 +1750,28 @@ export default function RequestDetailPage() {
           onConfirm={(text) => act(decision, { comment: text || undefined })}
         />
       )}
+      {(() => {
+        if (!runDecision) return null;
+        const run = (req.Runs || []).find((r) => r.WFRunID === runDecision.runId);
+        if (!run || !run.CurrentStep) return null;
+        return (
+          <DecisionModal
+            mode={runDecision.mode}
+            stepName={`${run.WFDefinition.Name} — ${run.CurrentStep.StepName}`}
+            commentPolicy={run.CurrentStep.CommentPolicy}
+            hint={
+              runDecision.mode === "REJECT"
+                ? "This rejects the approval request only — the ticket itself keeps moving."
+                : run.StepProgress?.mode === "ALL"
+                  ? `Your approval will be recorded (${run.StepProgress.approved + 1} of ${run.StepProgress.total}) — the request completes when everyone assigned has approved.`
+                  : "This decides the approval request only — the ticket's main workflow is untouched."
+            }
+            busy={busy !== null}
+            onClose={() => setRunDecision(null)}
+            onConfirm={(text) => act(runDecision.mode, { comment: text || undefined, wfRunId: run.WFRunID })}
+          />
+        );
+      })()}
       {poOpen && (
         <PoModal
           busy={busy !== null}

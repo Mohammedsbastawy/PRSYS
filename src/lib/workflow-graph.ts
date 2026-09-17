@@ -213,6 +213,7 @@ export function nodeConfigProblems(n: GNode, g: Graph): string[] {
     if (d.approverType === "ROLE" && !d.targetRoleId) out.push("choose a role");
     if (d.approverType === "GROUP" && !d.targetGroupId) out.push("choose a group");
     if (d.approverType === "USER" && !d.targetUserId) out.push("choose who approves");
+    if (d.approverType === "DEPARTMENT" && !d.targetDepId) out.push("choose a department");
     if (d.condField !== "none") {
       const cErr = validateConditionInput(d.condField, d.condOp, d.condValue);
       if (cErr) out.push(cErr);
@@ -303,6 +304,7 @@ export function graphToApi(
     targetUserId: a.data.approverType === "USER" ? a.data.targetUserId || null : null,
     targetGroupId: a.data.approverType === "GROUP" ? a.data.targetGroupId || null : null,
     targetRoleId: a.data.approverType === "ROLE" ? a.data.targetRoleId || null : null,
+    targetDepId: a.data.approverType === "DEPARTMENT" ? a.data.targetDepId || null : null,
     ...(a.data.approvalMode ? { approvalMode: a.data.approvalMode } : {}),
     ...(a.data.rejectAction ? { rejectAction: a.data.rejectAction } : {}),
     // approveTargetIndex is 1-based on the API side
@@ -410,6 +412,7 @@ export function deriveGraph(steps: BuilderStep[], rules: BuilderRule[]): Graph {
       targetUserId: s.TargetUserID ?? "",
       targetGroupId: s.TargetGroupID ?? "",
       targetRoleId: s.TargetRoleID ?? "",
+      targetDepId: s.TargetDEPID ?? "",
       // hidden-but-real legacy settings — preserved so they survive a first save
       approvalMode: blankIf(s.ApprovalMode, "ANY_ONE"),
       rejectAction: blankIf(s.RejectAction, "REJECT_COMPLETELY"),

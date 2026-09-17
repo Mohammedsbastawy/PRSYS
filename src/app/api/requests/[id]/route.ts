@@ -128,6 +128,255 @@ function dueSuffix(dueAt: Date | null): string {
   return ` (due ${dueAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
 }
 
+// Statuses in which an on-demand approval run can be decided. Runs never
+// change the request status — they ride alongside the main workflow while the
+// request is in progress.
+const RUN_ACTIVE_STATUSES = ['PENDING_APPROVAL', 'PROCESSING', 'PO_REGISTERED', 'CLARIFICATION_REQUESTED']
+
+/**
+ * Decide a step of an ON-DEMAND approval run (an approval preset started from
+ * inside the request) instead of the main workflow step.
+ *
+ * Same governance as the main step — canUserDecideStep + the step's comment
+ * policy — but deliberately different in three ways:
+ *  * the request's status / current step / round are untouched (the agent
+ *    keeps working on the ticket while the approval waits),
+ *  * the form's automation rules do NOT fire (the run is an approval chain,
+ *    not the workflow),
+ *  * the RUN's own step chain + SLA due date advance — or the run ends.
+ */
+async function decideRun(opts: {
+  requestId: string
+  runId: string
+  ctx: NonNullable<Awaited<ReturnType<typeof getUserContext>>>
+  payload: { userId: string }
+  action: 'APPROVE' | 'REJECT'
+  comment?: string | null
+  now: Date
+  actorName: string
+}): Promise<Response> {
+  const { requestId, runId, ctx, payload, action, now, actorName } = opts
+  const notActor = (id: string | null | undefined) => !!id && id !== payload.userId
+
+  const request = await prisma.requests.findUnique({
+    where: { RequestID: requestId },
+    select: { RequestID: true, Status: true, RequesterID: true, TrackingNumber: true, Priority: true, FormTemplateID: true },
+  })
+  if (!request) return notFound('Request not found')
+  if (!RUN_ACTIVE_STATUSES.includes(request.Status)) {
+    return json({ error: 'The request is not in progress' }, 400)
+  }
+
+  const run = await prisma.wFRequestRuns.findUnique({
+    where: { WFRunID: runId },
+    include: {
+      CurrentStep: {
+        include: {
+          TargetUser: { select: { Name: true } },
+          TargetGroup: { select: { Name: true } },
+          TargetRole: { select: { Name: true } },
+          TargetDEP: { select: { Name: true } },
+        },
+      },
+      WFDefinition: {
+        select: { Name: true, Steps: { orderBy: { StepOrder: 'asc' } } },
+      },
+    },
+  })
+  if (!run || run.RequestID !== requestId) return notFound('Approval run not found')
+  if (run.Status !== 'PENDING') return json({ error: 'This approval already has a final decision' }, 400)
+  const step = run.CurrentStep
+  if (!step) return json({ error: 'This approval run has no active step' }, 400)
+  const wfSteps: (StepTargetInput & {
+    WFStepID: string
+    StepName: string
+    StepOrder: number
+    DueDays: number | null
+    Condition: string | null
+  })[] = run.WFDefinition.Steps
+
+  const round = run.Round ?? 1
+  const priorDecisions: { ApproverUserID: string; Decision: string }[] = await prisma.requestApprovals.findMany({
+    where: { WFRunID: run.WFRunID, WFStepID: step.WFStepID, Round: round, Decision: { not: 'PENDING' } },
+    select: { ApproverUserID: true, Decision: true },
+  })
+  const verdict = await canUserDecideStep({
+    step,
+    userId: payload.userId,
+    requesterId: request.RequesterID,
+    isSuperAdmin: ctx.roleCode === 'SUPER_ADMIN',
+    hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
+    lookups: stepLookups(),
+    decidedUserIds: priorDecisions.map((d) => d.ApproverUserID),
+  })
+  if (!verdict.canDecide) return json({ error: verdict.reason ?? 'You cannot decide this step' }, 403)
+
+  const decision = action === 'APPROVE' ? 'APPROVED' : 'REJECTED'
+  const cp = step.CommentPolicy ?? 'OPTIONAL'
+  const commentRequired =
+    cp === 'ALWAYS' || (decision === 'APPROVED' && cp === 'ON_APPROVE') || (decision === 'REJECTED' && cp === 'ON_REJECT')
+  if (commentRequired && !(opts.comment ?? '').trim()) {
+    return json({ error: `Step "${step.StepName}" requires a comment with this decision` }, 400)
+  }
+  await prisma.requestApprovals.create({
+    data: {
+      RequestID: requestId,
+      WFStepID: step.WFStepID,
+      ApproverUserID: payload.userId,
+      Decision: decision,
+      Comment: opts.comment ?? null,
+      DecidedAt: now,
+      Round: round,
+      WFRunID: run.WFRunID,
+    },
+  })
+
+  const approvalMode: string = step.ApprovalMode ?? 'ANY_ONE'
+  const approveAction: string = step.ApproveAction ?? 'CONTINUE'
+  const targets = await stepTargetUserIds(step, request.RequesterID, stepLookups())
+  const approvedIds = new Set(
+    priorDecisions.filter((d) => d.Decision === 'APPROVED').map((d) => d.ApproverUserID)
+  )
+  if (decision === 'APPROVED') approvedIds.add(payload.userId)
+
+  let runStatus = 'PENDING'
+  let runCurrentStepId: string | null = step.WFStepID
+  let runStepOrder = step.StepOrder
+  let newRound = round
+  let newDueAt: Date | null = run.DueAt
+  let nextStep: (StepTargetInput & {
+    WFStepID: string
+    StepName: string
+    StepOrder: number
+    DueDays: number | null
+  }) | null = null
+
+  if (decision === 'REJECTED') {
+    // preset rejections end the RUN — the request itself keeps going
+    runStatus = 'REJECTED'
+    runCurrentStepId = null
+    newDueAt = null
+  } else {
+    const waitingOnOthers =
+      approvalMode === 'ALL' &&
+      (targets.length === 0 ? approvedIds.size === 0 : !targets.every((t: string) => approvedIds.has(t)))
+    if (waitingOnOthers) {
+      // the step stays open for the remaining approvers — clock unchanged
+    } else {
+      // the step is complete — route by its approve action (same semantics as
+      // the main workflow, scoped to this run's step list)
+      const jumpTarget =
+        approveAction === 'JUMP_TO_STEP' && step.ApproveTargetStepID
+          ? wfSteps.find((s) => s.WFStepID === step.ApproveTargetStepID && s.WFStepID !== step.WFStepID) ?? null
+          : null
+      if (approveAction === 'APPROVE_COMPLETELY') {
+        runStatus = 'APPROVED'
+        runCurrentStepId = null
+        newDueAt = null
+      } else if (jumpTarget) {
+        nextStep = jumpTarget
+        runCurrentStepId = jumpTarget.WFStepID
+        runStepOrder = jumpTarget.StepOrder
+        newDueAt = dueAtFrom(jumpTarget.DueDays, now)
+        const targetIdx = wfSteps.findIndex((s) => s.WFStepID === jumpTarget.WFStepID)
+        const curIdx = wfSteps.findIndex((s) => s.WFStepID === step.WFStepID)
+        if (targetIdx >= 0 && targetIdx <= curIdx) newRound = round + 1 // jumping back re-opens review
+      } else {
+        // CONTINUE (also the fallback when a jump target is gone)
+        const fwdCtx = await conditionContext(requestId, request.Priority)
+        const curIdx = wfSteps.findIndex((s) => s.WFStepID === step.WFStepID)
+        for (let i = curIdx + 1; i < wfSteps.length; i++) {
+          if (stepApplies(wfSteps[i], fwdCtx)) {
+            nextStep = wfSteps[i]
+            break
+          }
+        }
+        if (nextStep) {
+          runCurrentStepId = nextStep.WFStepID
+          runStepOrder = nextStep.StepOrder
+          newDueAt = dueAtFrom(nextStep.DueDays, now)
+        } else {
+          runStatus = 'APPROVED'
+          runCurrentStepId = null
+          newDueAt = null
+        }
+      }
+    }
+  }
+
+  await prisma.wFRequestRuns.update({
+    where: { WFRunID: run.WFRunID },
+    data: {
+      Status: runStatus,
+      CurrentStepID: runCurrentStepId,
+      StepOrder: runStepOrder,
+      Round: newRound,
+      DueAt: newDueAt,
+      DecidedAt: runStatus === 'PENDING' ? undefined : now,
+      DecidedByUserID: runStatus === 'PENDING' ? undefined : payload.userId,
+    },
+  })
+  await prisma.requestAuditLog.create({
+    data: {
+      RequestID: requestId,
+      FromStatus: request.Status,
+      ToStatus: request.Status,
+      Action: runStatus === 'PENDING' ? 'RUN_STEP_DECIDED' : runStatus === 'APPROVED' ? 'RUN_APPROVED' : 'RUN_REJECTED',
+      ChangedByUserID: payload.userId,
+      Note:
+        `"${run.WFDefinition.Name}" — "${step.StepName}" ${decision.toLowerCase()}${nextStep ? ` → "${nextStep.StepName}"` : ''}${opts.comment ? `: ${opts.comment}` : ''}`.slice(
+          0,
+          400
+        ),
+    },
+  })
+
+  // notify whoever is next in the run's chain
+  if (runStatus === 'PENDING' && nextStep) {
+    const allNext = await stepTargetUserIds(nextStep, request.RequesterID, stepLookups())
+    if (allNext.length === 0) {
+      await alertUnassignableStep(requestId, nextStep, request.RequesterID, request.Status, request.Status, payload.userId)
+    }
+    const visibleNext = await filterVisibleUserIds(allNext.filter((id: string) => id !== payload.userId), request.FormTemplateID)
+    if (visibleNext.length > 0) {
+      await notifyUsers(visibleNext, {
+        title: `Approval needed on ${request.TrackingNumber}`,
+        message: `${run.WFDefinition.Name} moved to "${nextStep.StepName}"${dueSuffix(newDueAt)}`,
+        type: 'REQUEST_SUBMITTED',
+        requestId,
+      })
+    }
+  }
+  // tell the agent who raised the run what happened (advancing or final)
+  if (notActor(run.CreatedByUserID)) {
+    await notifyUsers([run.CreatedByUserID], {
+      title:
+        runStatus === 'PENDING'
+          ? `"${run.WFDefinition.Name}" moved forward`
+          : `"${run.WFDefinition.Name}" ${runStatus === 'APPROVED' ? 'approved' : 'rejected'}`,
+      message:
+        `${actorName} ${decision === 'APPROVED' ? 'approved' : 'rejected'} "${step.StepName}"` +
+        (nextStep ? ` — next: ${nextStep.StepName}` : '') +
+        (opts.comment ? ` — ${opts.comment}` : ''),
+      type: 'REQUEST_SUBMITTED',
+      requestId,
+    })
+  }
+  // final verdict goes to the requester too
+  if (runStatus !== 'PENDING' && notActor(request.RequesterID)) {
+    await notifyUsers([request.RequesterID], {
+      title: `"${run.WFDefinition.Name}" ${runStatus === 'APPROVED' ? 'approved' : 'rejected'} on ${request.TrackingNumber}`,
+      message:
+        `"${step.StepName}" ${decision.toLowerCase()} by ${actorName}` + (opts.comment ? ` — ${opts.comment}` : ''),
+      type: runStatus === 'APPROVED' ? 'REQUEST_APPROVED' : 'REQUEST_REJECTED',
+      requestId,
+    })
+  }
+
+  const fresh = await prisma.requests.findUnique({ where: { RequestID: requestId } })
+  return json(fresh ?? { ok: true })
+}
+
 // GET /api/requests/[id]
 export async function GET(req: NextRequest, { params }: Params) {
   const payload = getUserFromRequest(req)
@@ -163,6 +412,23 @@ export async function GET(req: NextRequest, { params }: Params) {
         },
       },
       Approvals: { include: { WFStep: true, Approver: { select: { UserID: true, Name: true } } }, orderBy: { CreatedAt: 'asc' } },
+      Runs: {
+        include: {
+          WFDefinition: { select: { WFDefinitionID: true, Name: true, Description: true } },
+          CurrentStep: {
+            include: {
+              TargetUser: { select: { Name: true } },
+              TargetGroup: { select: { Name: true } },
+              TargetRole: { select: { Name: true } },
+              TargetDEP: { select: { Name: true } },
+            },
+          },
+          CreatedBy: { select: { UserID: true, Name: true } },
+          DecidedBy: { select: { Name: true } },
+          Approvals: { include: { Approver: { select: { UserID: true, Name: true } } }, orderBy: { CreatedAt: 'asc' } },
+        },
+        orderBy: { StartedAt: 'asc' },
+      },
       Comments: {
         include: { Author: { select: { UserID: true, Name: true, Role: { select: { Name: true } } } } },
         orderBy: { CreatedAt: 'asc' },
@@ -309,7 +575,115 @@ export async function GET(req: NextRequest, { params }: Params) {
     }
   }
 
-  return json({ ...request, RequesterDepartment: department, Comments: comments, Attachments: attachments, FieldValues: fieldValues, CanDecide: canDecide, DecideReason: decideReason, AwaitingTarget: awaitingTarget, StepProgress: stepProgress })
+  // on-demand approval runs — each keeps its own step + SLA clock, so the
+  // page can show who is holding the ticket and since when
+  type RunApprovalRow = {
+    WFStepID: string
+    Round: number | null
+    Decision: string
+    ApproverUserID: string
+    Approver: { Name: string } | null
+  }
+  type RunRow = {
+    WFRunID: string
+    Status: string
+    CurrentStepID: string | null
+    Round: number
+    CurrentStep: (StepTargetInput & { ApprovalMode: string | null }) | null
+    Approvals: RunApprovalRow[]
+  }
+  const enrichedRuns = await Promise.all(
+    (request.Runs ?? []).map(async (run: RunRow) => {
+      const step = run.CurrentStep ?? null
+      let runCanDecide = false
+      let runDecideReason: string | null = null
+      const runLive = run.Status === 'PENDING' && RUN_ACTIVE_STATUSES.includes(request.Status)
+      if (run.Status === 'PENDING' && !runLive) {
+        // the ticket reached a final status while this approval was waiting
+        runDecideReason = 'The request reached a final status'
+      }
+      let runProgress: {
+        mode: string
+        approved: number
+        total: number
+        approvedBy: string[]
+        myDecided: boolean
+      } | null = null
+      if (runLive && step) {
+        const prior = run.Approvals.filter(
+          (a: RunApprovalRow) => a.WFStepID === run.CurrentStepID && (a.Round ?? 1) === (run.Round ?? 1) && a.Decision !== 'PENDING'
+        )
+        const decidedIds = prior.map((a: RunApprovalRow) => a.ApproverUserID)
+        const verdict = await canUserDecideStep({
+          step,
+          userId: payload.userId,
+          requesterId: request.RequesterID,
+          isSuperAdmin: ctx.roleCode === 'SUPER_ADMIN',
+          hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
+          lookups: stepLookups(),
+          decidedUserIds: decidedIds,
+        })
+        runCanDecide = verdict.canDecide
+        runDecideReason = verdict.reason
+        const approvedOnes = prior.filter((a: RunApprovalRow) => a.Decision === 'APPROVED')
+        const approvedCount = new Set(approvedOnes.map((a: RunApprovalRow) => a.ApproverUserID)).size
+        const runTargets = await stepTargetUserIds(step, request.RequesterID, stepLookups())
+        runProgress = {
+          mode: step.ApprovalMode ?? 'ANY_ONE',
+          approved: approvedCount,
+          total: Math.max(runTargets.length, approvedCount),
+          approvedBy: approvedOnes.map((a: RunApprovalRow) => a.Approver?.Name ?? '—'),
+          myDecided: decidedIds.includes(payload.userId),
+        }
+      }
+      return {
+        ...run,
+        TargetSummary: step ? describeStepTarget(step) : null,
+        CanDecide: runCanDecide,
+        DecideReason: runDecideReason,
+        StepProgress: runProgress,
+      }
+    })
+  )
+
+  // presets the request page can offer as "Request approval" buttons
+  const presetRows = await prisma.wFDefinitions.findMany({
+    where: { OnDemand: true, Status: 'ACTIVE' },
+    select: {
+      WFDefinitionID: true,
+      Name: true,
+      Description: true,
+      Steps: {
+        orderBy: { StepOrder: 'asc' },
+        include: {
+          TargetUser: { select: { Name: true } },
+          TargetGroup: { select: { Name: true } },
+          TargetRole: { select: { Name: true } },
+          TargetDEP: { select: { Name: true } },
+        },
+      },
+      _count: { select: { Steps: true } },
+    },
+    orderBy: { Name: 'asc' },
+  })
+  const approvalPresets = presetRows.map((wf: {
+    WFDefinitionID: string
+    Name: string
+    Description: string | null
+    Steps: StepTargetInput[]
+    _count: { Steps: number }
+  }) => {
+    const first = wf.Steps[0] ?? null
+    return {
+      WFDefinitionID: wf.WFDefinitionID,
+      Name: wf.Name,
+      Description: wf.Description,
+      StepCount: wf._count.Steps,
+      TargetSummary: first ? describeStepTarget(first) : 'No steps',
+    }
+  })
+
+  return json({ ...request, Runs: enrichedRuns, ApprovalPresets: approvalPresets, RequesterDepartment: department, Comments: comments, Attachments: attachments, FieldValues: fieldValues, CanDecide: canDecide, DecideReason: decideReason, AwaitingTarget: awaitingTarget, StepProgress: stepProgress })
 }
 
 // PATCH /api/requests/[id] — status transitions
@@ -334,6 +708,7 @@ const actionSchema = z.object({
     'SUBMIT',
     'APPROVE',
     'REJECT',
+    'REQUEST_APPROVAL',
     'REQUEST_CLARIFICATION',
     'ASSIGN',
     'REGISTER_PO',
@@ -344,6 +719,11 @@ const actionSchema = z.object({
     'SET_PRIORITY',
   ]),
   comment: z.string().optional().nullable(),
+  // REQUEST_APPROVAL: which on-demand preset to start
+  wfDefinitionId: z.string().optional().nullable(),
+  // APPROVE/REJECT: when set, the decision belongs to THIS approval run
+  // (an on-demand preset) instead of the main workflow step
+  wfRunId: z.string().optional().nullable(),
   assigneeId: z.string().optional().nullable(),
   oraclePoNumber: z.string().optional().nullable(),
   poNotes: z.string().optional().nullable(),
@@ -531,8 +911,119 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return json(fresh ?? updated)
   }
 
+  // ---- REQUEST_APPROVAL — start an on-demand approval preset on this ticket ----
+  // An agent stuck on a request (or the requester) fires a preset workflow
+  // (e.g. "Budget Approval" → the accounting department's manager). The run
+  // tracks its own steps + SLA inside the request; the main workflow continues
+  // untouched. Every pending run is listed on the request page, so several
+  // approvals — each with its own due date — are all visible at once.
+  if (action === 'REQUEST_APPROVAL') {
+    const wfId = data!.wfDefinitionId
+    if (!wfId) return json({ error: 'Choose a preset workflow' }, 400)
+    if (!RUN_ACTIVE_STATUSES.includes(request.Status)) {
+      return json({ error: 'You can only request an approval while the request is in progress' }, 400)
+    }
+    // the handling agent, the requester, an assigner, or a super admin
+    const canRequest =
+      request.AssigneeID === payload.userId ||
+      request.RequesterID === payload.userId ||
+      hasPermission(ctx, 'REQUEST_ASSIGN') ||
+      ctx.roleCode === 'SUPER_ADMIN'
+    if (!canRequest) {
+      return json({ error: 'Only the handling agent (or the requester) can request an approval' }, 403)
+    }
+    const wf = await prisma.wFDefinitions.findUnique({
+      where: { WFDefinitionID: wfId },
+      include: { Steps: { orderBy: { StepOrder: 'asc' } } },
+    })
+    if (!wf || !wf.OnDemand || wf.Status !== 'ACTIVE') {
+      return json({ error: 'Preset workflow not found' }, 404)
+    }
+    if (wf.Steps.length === 0) return json({ error: `"${wf.Name}" has no approval steps` }, 400)
+    const activeRun = await prisma.wFRequestRuns.findFirst({
+      where: { RequestID: params.id, WFDefinitionID: wfId, Status: 'PENDING' },
+      select: { WFRunID: true },
+    })
+    if (activeRun) return json({ error: `"${wf.Name}" is already waiting on this request` }, 409)
+
+    const condCtx = await conditionContext(params.id, request.Priority)
+    const firstStep: (StepTargetInput & {
+      WFStepID: string
+      StepName: string
+      StepOrder: number
+      DueDays: number | null
+    }) | null =
+      wf.Steps.find((s: { Condition: string | null }) => stepApplies(s, condCtx)) ?? null
+    if (!firstStep) return json({ error: `"${wf.Name}" has no step that applies to this request` }, 400)
+
+    const dueAt = dueAtFrom(firstStep.DueDays, now)
+    const run = await prisma.wFRequestRuns.create({
+      data: {
+        RequestID: params.id,
+        WFDefinitionID: wfId,
+        CurrentStepID: firstStep.WFStepID,
+        StepOrder: firstStep.StepOrder,
+        Round: 1,
+        DueAt: dueAt,
+        CreatedByUserID: payload.userId,
+      },
+    })
+    await prisma.requestAuditLog.create({
+      data: {
+        RequestID: params.id,
+        FromStatus: request.Status,
+        ToStatus: request.Status,
+        Action: 'APPROVAL_REQUESTED',
+        ChangedByUserID: payload.userId,
+        Note: `"${wf.Name}" started at "${firstStep.StepName}"`,
+      },
+    })
+    const targets = await stepTargetUserIds(firstStep, request.RequesterID, stepLookups())
+    if (targets.length === 0) {
+      // e.g. the target department has no manager assigned — surface it
+      await alertUnassignableStep(params.id, firstStep, request.RequesterID, request.Status, request.Status, payload.userId)
+    } else {
+      const visible = await filterVisibleUserIds(
+        targets.filter((id: string) => id !== payload.userId),
+        request.FormTemplateID
+      )
+      if (visible.length > 0) {
+        await notifyUsers(visible, {
+          title: `Approval needed on ${request.TrackingNumber}`,
+          message:
+            `${actorName} requested "${wf.Name}" on ${request.TrackingNumber} — your turn at "${firstStep.StepName}"` +
+            dueSuffix(dueAt),
+          type: 'REQUEST_SUBMITTED',
+          requestId: params.id,
+        })
+      }
+    }
+    if (notActor(request.RequesterID)) {
+      await notifyUsers([request.RequesterID], {
+        title: `Approval requested on ${request.TrackingNumber}`,
+        message: `${actorName} requested "${wf.Name}" (currently at "${firstStep.StepName}")`,
+        type: 'REQUEST_SUBMITTED',
+        requestId: params.id,
+      })
+    }
+    return json(run, 201)
+  }
+
   // ---- APPROVE / REJECT ----
   if (action === 'APPROVE' || action === 'REJECT') {
+    // a decision on an on-demand approval run — same governance, run-scoped
+    if (data!.wfRunId) {
+      return await decideRun({
+        requestId: params.id,
+        runId: data!.wfRunId,
+        ctx,
+        payload,
+        action,
+        comment: data!.comment,
+        now,
+        actorName,
+      })
+    }
     // No blanket REQUEST_APPROVE clearance here — canUserDecideStep governs:
     // directly-targeted approvers (e.g. department managers) decide without the
     // agent permission; anything else still requires it.

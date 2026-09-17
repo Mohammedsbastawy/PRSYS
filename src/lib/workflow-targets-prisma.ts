@@ -42,6 +42,13 @@ export function stepLookups(): StepLookups {
       })
       return dep?.ManagerID ?? null
     },
+    departmentManagerById: async (depId) => {
+      const dep = await prisma.dEP.findUnique({
+        where: { DEPID: depId },
+        select: { ManagerID: true },
+      })
+      return dep?.ManagerID ?? null
+    },
     allApprovers: () => usersWithPermission('REQUEST_APPROVE'),
   }
 }
