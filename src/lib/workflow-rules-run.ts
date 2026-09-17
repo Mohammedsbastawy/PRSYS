@@ -194,8 +194,8 @@ export async function runWorkflowRules(opts: {
       }
       case 'SET_STATUS': {
         // automation may move the ticket, but never fake a decision:
-        // PENDING_APPROVAL / APPROVED / REJECTED belong to the approval engine
-        const ALLOWED = ['DRAFT', 'PO_REGISTERED', 'COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED']
+        // APPROVED / REJECTED belong to the approval engine
+        const ALLOWED = ['DRAFT', 'PENDING_APPROVAL', 'PROCESSING', 'PO_REGISTERED', 'COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED']
         const next = typeof v.status === 'string' ? v.status.toUpperCase() : ''
         if (!ALLOWED.includes(next) || request.Status === next) break
         patch.Status = next

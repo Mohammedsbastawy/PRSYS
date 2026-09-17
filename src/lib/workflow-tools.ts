@@ -157,9 +157,11 @@ export const WHEN_ORDER: WhenId[] = [
  */
 export const SETTABLE_STATUSES = [
   { value: "DRAFT", label: "Back to draft (return to requester)", note: "reopens it for the requester to re-edit and resubmit" },
+  { value: "PENDING_APPROVAL", label: "Pending approval", note: "the engine sets this on submit — use it to move the ticket back to waiting for an approver" },
+  { value: "PROCESSING", label: "Processing", note: "approved and being worked on — between approval and the PO / fulfilment" },
   { value: "PO_REGISTERED", label: "PO registered", note: "the purchase order is on file" },
-  { value: "COMPLETED", label: "Completed", note: "closes the request and stamps the completion time" },
   { value: "FULFILLED", label: "Fulfilled", note: "the work is delivered; stamps the fulfilment time" },
+  { value: "COMPLETED", label: "Completed", note: "closes the request and stamps the completion time" },
   { value: "CLARIFICATION_REQUESTED", label: "Ask the requester for clarification", note: "the requester gets a reply box on the request" },
   { value: "CANCELLED", label: "Cancelled", note: "terminal — nobody can approve it afterwards" },
 ] as const;

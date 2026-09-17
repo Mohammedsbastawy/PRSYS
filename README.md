@@ -106,8 +106,9 @@ round-trip tested, no React) derives both from the graph, so they can never drif
 * Legacy workflows (no `CanvasJson` yet) load by deriving a graph from their saved steps/rules — deterministic
   layout, hidden legacy settings (approval mode, due days, comment policy, on-approve/on-reject, jump targets)
   carried through unchanged and re-saved with the canvas on first save.
-* Statuses an action may write: `DRAFT`, `PO_REGISTERED`, `COMPLETED`, `FULFILLED`, `CLARIFICATION_REQUESTED`,
-  `CANCELLED` — `PENDING_APPROVAL`/`APPROVED`/`REJECTED` stay owned by the approval engine.
+* Statuses an action may write: `DRAFT`, `PENDING_APPROVAL`, `PROCESSING`, `PO_REGISTERED`, `FULFILLED`,
+  `COMPLETED`, `CLARIFICATION_REQUESTED`, `CANCELLED` — `APPROVED`/`REJECTED` stay owned by the approval engine
+  (a rule may never fake an approver's decision).
 * Preset starters (e.g. *approve → set URGENT → apply SLA*) are **spliced into the end of the flow** with editable,
   empty payloads; they wire nodes only.
 * Editing aids: undo/redo of structure (Ctrl+Z / Ctrl+Shift+Z), fit-to-view, `/` focuses the node search, Delete

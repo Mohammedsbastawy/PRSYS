@@ -994,12 +994,12 @@ export default function RequestDetailPage() {
               <Icon name="person_add" className="text-[18px]" /> Assign
             </button>
           )}
-          {p("REQUEST_REGISTER_PO") && req.Status === "APPROVED" && (
+          {p("REQUEST_REGISTER_PO") && ["APPROVED", "PROCESSING"].includes(req.Status) && (
             <button className="btn-secondary" disabled={busy !== null} onClick={() => setPoOpen(true)}>
               <Icon name="receipt_long" className="text-[18px]" /> Register PO
             </button>
           )}
-          {p("REQUEST_FULFILL") && ["APPROVED", "PO_REGISTERED"].includes(req.Status) && (
+          {p("REQUEST_FULFILL") && ["APPROVED", "PROCESSING", "PO_REGISTERED"].includes(req.Status) && (
             <button className="btn-secondary" disabled={busy !== null} onClick={() => act("FULFILL_STOCK")}>
               <Icon name="inventory_2" className="text-[18px]" />{" "}
               {busy === "FULFILL_STOCK" ? "Working..." : "Mark Fulfilled"}

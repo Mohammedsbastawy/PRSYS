@@ -31,6 +31,7 @@ const STATUSES = [
   ["PENDING_APPROVAL", "Submitted and waiting for an approver decision."],
   ["CLARIFICATION_REQUESTED", "An approver asked for more information — reply with a comment."],
   ["APPROVED", "Fully approved — handed over to procurement."],
+  ["PROCESSING", "Approved and being worked on — between approval and the PO / fulfilment."],
   ["PO_REGISTERED", "Procurement registered the Oracle purchase order."],
   ["FULFILLED", "Items issued from stock or delivered."],
   ["COMPLETED", "Request closed and completed."],

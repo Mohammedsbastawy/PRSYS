@@ -149,8 +149,8 @@ function validateRules(rules: RuleInput[], stepCount: number): string | null {
     if (r.action === 'ASSIGN_TO_GROUP' && !v.assignGroupId) return `Rule "${r.name}": choose a group`
     if (r.action === 'ASSIGN_TO_DEPARTMENT' && !v.assignDepId) return `Rule "${r.name}": choose a department`
     if (r.action === 'SET_SLA' && !v.slaPolicyId) return `Rule "${r.name}": choose an SLA policy`
-    if (r.action === 'SET_STATUS' && !['DRAFT', 'PO_REGISTERED', 'COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED'].includes(v.status ?? ''))
-      return `Rule "${r.name}": choose a status the flow may set (approval statuses are owned by the engine)`
+    if (r.action === 'SET_STATUS' && !['DRAFT', 'PENDING_APPROVAL', 'PROCESSING', 'PO_REGISTERED', 'COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED'].includes(v.status ?? ''))
+      return `Rule "${r.name}": choose a status the flow may set (approved / rejected are owned by the approval engine)`
     if (
       typeof v.fireOnStepOrder === 'number' &&
       (v.fireOnStepOrder < 0 || v.fireOnStepOrder >= stepCount)
