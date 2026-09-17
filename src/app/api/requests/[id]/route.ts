@@ -315,6 +315,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 // PATCH /api/requests/[id] — status transitions
 const draftItemSchema = z.object({
   id: z.string().optional().nullable(), // present = update row, absent = new row
+  fieldId: z.string().optional().nullable(), // FormFieldID of an "items" field this row belongs to
   name: z.string().min(1).max(300),
   details: z.string().max(2000).optional().nullable(),
   uom: z.string().max(50).optional().nullable(),
@@ -934,6 +935,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
 
     if (data!.items) {
+      const itemsFieldIds = new Set(
+        tmplFields.filter((f) => f.FieldType === 'items').map((f) => f.FormFieldID)
+      )
+      for (const it of data!.items) {
+        if (it.fieldId && !itemsFieldIds.has(it.fieldId)) {
+          return json({ error: 'An item is bound to an unknown items field' }, 400)
+        }
+      }
       const existing: {
         RequestItemID: string
         ItemVerifiedByUserID: string | null
@@ -957,6 +966,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
       for (const it of data!.items) {
         const row = {
+          FormFieldID: it.fieldId ?? null,
           RequestedItemName: it.name.trim(),
           RequestedItemDetails: it.details?.trim() ? it.details.trim() : null,
           RequestedUom: it.uom?.trim() ? it.uom.trim() : null,

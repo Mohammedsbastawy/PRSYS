@@ -1188,7 +1188,7 @@ export default function RequestDetailPage() {
             <SummaryRow icon="event" label="Needed By">
               {fmtDate(req.NeededByDate)}
             </SummaryRow>
-            {req.FieldValues.map((fv, i) => (
+            {req.FieldValues.filter((fv) => fv.FormField?.FieldType !== "items").map((fv, i) => (
               <SummaryRow key={i} icon="info" label={fv.FormField?.Label || "Field"}>
                 {fv.FormField?.FieldType === "file" ? (
                   <FileAnswerLinks

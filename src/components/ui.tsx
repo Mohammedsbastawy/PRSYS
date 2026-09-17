@@ -420,30 +420,38 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
         <Fragment key={i}>
           {i > 0 && (
             <div
-              className={`mx-1 mt-[13px] h-0.5 min-w-[24px] flex-1 ${
-                nodes[i - 1].state === "done" ? "bg-primary" : "bg-surface-container-highest"
+              className={`mx-1 mt-[15px] h-0.5 min-w-[24px] flex-1 ${
+                nodes[i - 1].state === "done"
+                  ? "bg-green-600"
+                  : nodes[i - 1].state === "current"
+                    ? "bg-primary"
+                    : "bg-surface-container-highest"
               }`}
             />
           )}
           <div className="flex w-28 shrink-0 flex-col items-center gap-1.5 text-center">
             {n.state === "done" ? (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary">
-                <Icon name="check" className="text-[16px] font-bold text-white" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 shadow-sm">
+                <Icon name="check" className="text-[17px] font-bold text-white" />
               </span>
             ) : n.state === "current" ? (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border-[2.5px] border-primary bg-surface-container-lowest">
-                <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+              <span
+                title="The request is waiting here"
+                className="relative flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-primary bg-surface-container-lowest shadow-[0_0_0_4px_rgba(163,57,0,0.14)]"
+              >
+                <span className="absolute h-full w-full animate-ping rounded-full bg-primary/15" />
+                <span className="relative h-3 w-3 rounded-full bg-primary" />
               </span>
             ) : n.state === "rejected" ? (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-error">
-                <Icon name="close" className="text-[16px] font-bold text-white" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-error">
+                <Icon name="close" className="text-[17px] font-bold text-white" />
               </span>
             ) : n.state === "skipped" ? (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-surface-container-highest bg-surface-container-low">
-                <Icon name="minimize" className="text-[16px] text-outline" />
+              <span className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-dashed border-surface-container-highest bg-surface-container-low">
+                <Icon name="minimize" className="text-[17px] text-outline" />
               </span>
             ) : (
-              <span className="h-7 w-7 rounded-full border-2 border-surface-variant bg-surface-container-lowest" />
+              <span className="h-8 w-8 rounded-full border-2 border-surface-variant bg-surface-container-lowest" />
             )}
             <span
               className={`text-xs leading-tight ${
@@ -452,12 +460,17 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
                   : n.state === "rejected"
                     ? "font-semibold text-error"
                     : n.state === "current"
-                      ? "font-semibold text-primary-dark"
+                      ? "font-bold text-primary-dark"
                       : "font-medium text-on-surface"
               }`}
             >
               {n.name}
             </span>
+            {n.state === "current" && (
+              <span className="-mt-1 rounded-full bg-primary-fixed px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+                Waiting here
+              </span>
+            )}
             {n.sub && (
               <span
                 className={`text-[11px] leading-tight ${n.alert ? "font-semibold text-error" : "text-outline"}`}

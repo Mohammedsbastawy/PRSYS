@@ -8,6 +8,8 @@
 //   checkbox        → "true" when checked, empty/absent when not
 //   multiselect     → JSON array string, e.g. '["A","B"]'
 //   file            → JSON array of attachment IDs, e.g. '["uuid1","uuid2"]'
+//   items           → JSON array of item rows (they also land in RequestItems),
+//                     e.g. '[{"name":"X","details":"spec","uom":"Piece","qty":2,"price":null}]'
 //   section         → layout only, never stores a value
 //
 // Config protocol (FormFields.Config: JSON string or null):
@@ -39,6 +41,7 @@ export const FIELD_TYPES: FieldTypeDef[] = [
   { value: "tel", label: "Phone", icon: "call", group: "Basic Input" },
   { value: "url", label: "URL / Link", icon: "link", group: "Basic Input" },
   { value: "file", label: "File Upload", icon: "attach_file", group: "Basic Input" },
+  { value: "items", label: "Items List", icon: "inventory_2", group: "Basic Input" },
   // Numbers & Dates
   { value: "number", label: "Number", icon: "numbers", group: "Numbers & Dates" },
   { value: "currency", label: "Currency", icon: "payments", group: "Numbers & Dates" },
@@ -75,6 +78,7 @@ export const FIELD_TYPE_VALUES = [
   "checkbox",
   "user",
   "department",
+  "items",
   "section",
 ] as const;
 
@@ -333,6 +337,70 @@ export function parseMultiValue(raw: string | null | undefined): string[] {
   return t ? [t] : [];
 }
 
+/** One row of an "items" field (a requested material). */
+export interface ItemsRowValue {
+  name: string;
+  details: string;
+  uom: string;
+  qty: number;
+  price: string | null;
+}
+
+/** Parse the stored JSON rows of an "items" field into clean row objects. */
+export function parseItemsValue(raw: string | null | undefined): ItemsRowValue[] {
+  if (!raw) return [];
+  let arr: unknown;
+  try {
+    arr = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((r): ItemsRowValue | null => {
+      if (typeof r !== "object" || r === null) return null;
+      const o = r as Record<string, unknown>;
+      const name = typeof o.name === "string" ? o.name.trim() : "";
+      if (!name) return null;
+      const qty = typeof o.qty === "number" ? o.qty : Number(o.qty);
+      if (!Number.isFinite(qty) || qty <= 0) return null;
+      const price =
+        o.price === null || o.price === undefined || o.price === ""
+          ? null
+          : Number.isFinite(Number(o.price))
+            ? String(o.price)
+            : null;
+      return {
+        name,
+        details: typeof o.details === "string" ? o.details.trim() : "",
+        uom: typeof o.uom === "string" ? o.uom.trim() : "",
+        qty,
+        price,
+      };
+    })
+    .filter((r): r is ItemsRowValue => r !== null);
+}
+
+/** True when every row of an "items" value is well-formed. */
+export function itemsValueIsValid(raw: string | null | undefined): boolean {
+  if (!raw || !raw.trim()) return true; // empty is fine — the required check is separate
+  try {
+    const arr: unknown = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return false;
+    for (const r of arr) {
+      if (typeof r !== "object" || r === null) return false;
+      const o = r as Record<string, unknown>;
+      if (typeof o.name !== "string" || o.name.trim() === "") return false;
+      const qty = Number(o.qty);
+      if (!Number.isFinite(qty) || qty <= 0) return false;
+      if (o.price !== null && o.price !== undefined && o.price !== "" && !Number.isFinite(Number(o.price))) return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Parse an "accept" extensions string ("pdf, jpg") into clean lowercase extensions. */
 export function parseAcceptList(accept: string | null | undefined): string[] {
   if (!accept) return [];
@@ -349,6 +417,16 @@ export function isValueEmpty(type: string, raw: string | null | undefined): bool
   const t = raw.trim();
   if (t === "") return true;
   if (type === "multiselect" || type === "file") return parseMultiValue(t).length === 0;
+  if (type === "items") {
+    // "is there at least one row attempt?" — row QUALITY is the format
+    // validator's job (validateFieldValue), not the emptiness check's
+    try {
+      const arr: unknown = JSON.parse(t);
+      return !Array.isArray(arr) || arr.length === 0;
+    } catch {
+      return false; // not JSON, but something is there — let the validator report it
+    }
+  }
   return false;
 }
 
@@ -464,6 +542,9 @@ export function validateFieldValue(
     }
     case "checkbox":
       return v === "true" ? null : "has an invalid value";
+    case "items":
+      if (!itemsValueIsValid(v)) return "every item row needs a name and a quantity greater than zero";
+      return null;
     case "user":
     case "department":
     case "section":

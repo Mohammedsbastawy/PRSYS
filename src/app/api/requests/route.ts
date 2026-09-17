@@ -138,8 +138,11 @@ export async function POST(req: NextRequest) {
     FormFieldID: fv.fieldId!,
     Value: fv.value,
   }))
+  // only "items" fields of this template may own rows — anything else is
+  // treated as a built-in item (FormFieldID stays null)
+  const itemsFieldIds = new Set(tmpl.Fields.filter((f) => f.FieldType === 'items').map((f) => f.FormFieldID))
   const items = (data!.items ?? []).map((it) => ({
-    FormFieldID: it.formFieldId || null,
+    FormFieldID: it.formFieldId && itemsFieldIds.has(it.formFieldId) ? it.formFieldId : null,
     RequestedItemName: it.requestedItemName,
     RequestedItemDetails: it.requestedItemDetails ?? null,
     RequestedUom: it.requestedUom ?? null,

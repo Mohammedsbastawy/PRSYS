@@ -220,6 +220,34 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
       </div>
     );
   }
+  if (f.fieldType === "items") {
+    return (
+      <div className="pointer-events-none">
+        <div className="mb-1 block text-sm font-medium text-on-surface">
+          {f.label || <span className="text-outline">Untitled field</span>}{" "}
+          {f.isRequired && <span className="text-danger">*</span>}
+        </div>
+        <div className="overflow-hidden rounded border border-surface-variant">
+          <div className="flex gap-2 border-b border-surface-variant bg-surface-container px-3 py-1.5 text-xs font-semibold text-outline">
+            <span className="flex-1">Item</span>
+            <span className="w-32">Spec / Details</span>
+            <span className="w-20">UOM</span>
+            <span className="w-14">Qty</span>
+          </div>
+          <div className="flex gap-2 px-3 py-2 text-sm text-outline">
+            <span className="flex-1 truncate">e.g. Laptop 14&quot;</span>
+            <span className="w-32 truncate">e.g. i5 / 16GB</span>
+            <span className="w-20">Piece</span>
+            <span className="w-14">1</span>
+          </div>
+          <div className="border-t border-dashed border-surface-variant px-3 py-1.5 text-xs font-medium text-primary">
+            + Add item
+          </div>
+        </div>
+        {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
+      </div>
+    );
+  }
   if (f.fieldType === "checkbox") {
     return (
       <div className="pointer-events-none flex items-center gap-2 pt-1 text-sm text-on-surface">
@@ -318,6 +346,19 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
   );
 }
 
+interface PreviewItemRow {
+  key: number;
+  name: string;
+  details: string;
+  uom: string;
+  qty: string;
+  price: string;
+}
+
+function newPreviewItemRow(): PreviewItemRow {
+  return { key: Date.now() + Math.floor(Math.random() * 1000), name: "", details: "", uom: "Piece", qty: "1", price: "" };
+}
+
 /* ---------- Interactive requester-facing preview (not saved) ---------- */
 function LivePreview({
   name,
@@ -333,6 +374,7 @@ function LivePreview({
   departments: Option[];
 }) {
   const [vals, setVals] = useState<Record<string, string>>({});
+  const [itemRows, setItemRows] = useState<Record<string, PreviewItemRow[]>>({});
 
   function toggleMulti(key: string, opt: string) {
     const cur = parseMultiValue(vals[key] || "");
@@ -352,7 +394,7 @@ function LivePreview({
       )}
       <div className="grid gap-4 md:grid-cols-2">
         {fields.map((f) => {
-          const wide = f.fieldType === "textarea" || f.fieldType === "section" || f.fieldType === "multiselect" || f.fieldType === "file";
+          const wide = f.fieldType === "textarea" || f.fieldType === "section" || f.fieldType === "multiselect" || f.fieldType === "file" || f.fieldType === "items";
           const opts = OPTION_TYPES.includes(f.fieldType) ? optionsOf(f) : [];
           const numAttrs =
             MINMAX_TYPES.includes(f.fieldType)
@@ -489,6 +531,106 @@ function LivePreview({
                       </option>
                     ))}
                   </select>
+                  {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
+                </>
+              ) : f.fieldType === "items" ? (
+                <>
+                  <label className="label">
+                    {f.label || "Untitled field"}{" "}
+                    {f.isRequired && <span className="text-danger">*</span>}
+                  </label>
+                  {(() => {
+                    const rs = itemRows[f.key] || [];
+                    const set = (next: PreviewItemRow[]) => setItemRows((p) => ({ ...p, [f.key]: next }));
+                    return (
+                      <div>
+                        {rs.length === 0 ? (
+                          <div className="rounded border border-dashed border-surface-variant bg-surface-container-low px-4 py-4 text-center text-sm text-on-surface-variant">
+                            No items yet — the requester adds rows here.
+                          </div>
+                        ) : (
+                          <div className="overflow-x-auto rounded border border-surface-variant">
+                            <table className="tbl w-full min-w-[620px]">
+                              <thead>
+                                <tr>
+                                  <th>Item</th>
+                                  <th className="w-36">Spec / Details</th>
+                                  <th className="w-24">UOM</th>
+                                  <th className="w-20">Qty</th>
+                                  <th className="w-24">Price</th>
+                                  <th className="w-8"></th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {rs.map((r) => (
+                                  <tr key={r.key}>
+                                    <td>
+                                      <input
+                                        className="input !border-transparent !px-0 font-medium focus:!border-primary"
+                                        placeholder="Item name"
+                                        value={r.name}
+                                        onChange={(e) => set(rs.map((x) => (x.key === r.key ? { ...x, name: e.target.value } : x)))}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        className="input"
+                                        placeholder="Spec / details"
+                                        value={r.details}
+                                        onChange={(e) => set(rs.map((x) => (x.key === r.key ? { ...x, details: e.target.value } : x)))}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        className="input"
+                                        placeholder="Piece"
+                                        value={r.uom}
+                                        onChange={(e) => set(rs.map((x) => (x.key === r.key ? { ...x, uom: e.target.value } : x)))}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="any"
+                                        className="input"
+                                        value={r.qty}
+                                        onChange={(e) => set(rs.map((x) => (x.key === r.key ? { ...x, qty: e.target.value } : x)))}
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        min="0"
+                                        step="any"
+                                        className="input"
+                                        placeholder="—"
+                                        value={r.price}
+                                        onChange={(e) => set(rs.map((x) => (x.key === r.key ? { ...x, price: e.target.value } : x)))}
+                                      />
+                                    </td>
+                                    <td>
+                                      <button
+                                        type="button"
+                                        className="icon-btn !h-7 !w-7 text-danger"
+                                        onClick={() => set(rs.filter((x) => x.key !== r.key))}
+                                        aria-label="Remove item"
+                                      >
+                                        <Icon name="close" className="text-[14px]" />
+                                      </button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                        <button type="button" className="btn-secondary mt-2.5 !py-1 text-xs" onClick={() => set([...rs, newPreviewItemRow()])}>
+                          <Icon name="add" className="text-[16px]" /> Add item
+                        </button>
+                      </div>
+                    );
+                  })()}
                   {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
                 </>
               ) : (
@@ -1057,7 +1199,10 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
               ))}
             </div>
             <p className="mt-3 text-[11px] leading-snug text-outline">
-              Items and attachments are built into every request — no need to add them as fields.
+              Every request also has built-in Items (Oracle catalog search) and Attachments in the
+              Form Settings. The <span className="font-semibold">Items List</span> field is a line-item
+              table you can place anywhere in the form — its rows land in the request&apos;s Requested
+              Items.
             </p>
           </div>
 

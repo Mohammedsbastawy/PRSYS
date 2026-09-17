@@ -51,6 +51,7 @@ interface Row {
   oracle: string | null;
   code: string;
   name: string;
+  details: string;
   uom: string;
   qty: number;
   org: string;
@@ -73,7 +74,9 @@ interface ExistingAtt {
 }
 interface EditItemPayload {
   RequestItemID: string;
+  FormFieldID: string | null;
   RequestedItemName: string;
+  RequestedItemDetails: string | null;
   RequestedUom: string | null;
   RequestedQuantity: number | string;
   ItemCatalogCacheID: string | null;
@@ -118,6 +121,125 @@ function inputType(t: string): string {
   return "text";
 }
 
+/** The line-item table shared by the built-in Items section and "items" fields. */
+function ItemsRowsTable({
+  rows,
+  invalidKeys,
+  onAdd,
+  onUpdate,
+  onRemove,
+}: {
+  rows: Row[];
+  invalidKeys: number[];
+  onAdd: () => void;
+  onUpdate: (key: number, patch: Partial<Row>) => void;
+  onRemove: (key: number) => void;
+}) {
+  return (
+    <div>
+      {rows.length === 0 ? (
+        <div className="rounded border border-dashed border-surface-variant bg-surface-container-low px-4 py-5 text-center text-sm text-on-surface-variant">
+          No items yet — add the items you need below.
+        </div>
+      ) : (
+        <div className="overflow-x-auto rounded border border-surface-variant">
+          <table className="tbl w-full min-w-[760px]">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th className="w-44">Spec / Details</th>
+                <th className="w-28">UOM</th>
+                <th className="w-24">Quantity</th>
+                <th className="w-28">Est. Price</th>
+                <th className="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const bad = invalidKeys.includes(r.key);
+                const uomOpts = UOMS.includes(r.uom) ? UOMS : [r.uom, ...UOMS].filter(Boolean);
+                return (
+                  <tr key={r.key} className={bad ? "!bg-error-container/60" : ""}>
+                    <td>
+                      <input
+                        className="input !border-transparent !px-0 font-medium hover:!border-surface-variant focus:!border-primary"
+                        placeholder="Item name / description"
+                        value={r.name}
+                        onChange={(e) => onUpdate(r.key, { name: e.target.value })}
+                      />
+                      <div className="text-xs text-outline">
+                        {r.code ? (
+                          <>
+                            {r.code}
+                            {r.org ? ` · ${r.org}` : ""}
+                          </>
+                        ) : (
+                          "Custom item"
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <input
+                        className="input"
+                        placeholder="e.g. size, model, grade"
+                        value={r.details}
+                        onChange={(e) => onUpdate(r.key, { details: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <select className="input" value={r.uom} onChange={(e) => onUpdate(r.key, { uom: e.target.value })}>
+                        {uomOpts.map((u) => (
+                          <option key={u} value={u}>
+                            {u}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        className="input"
+                        value={r.qty}
+                        onChange={(e) => onUpdate(r.key, { qty: parseFloat(e.target.value) || 0 })}
+                      />
+                    </td>
+                    <td>
+                      <input
+                        type="number"
+                        min="0"
+                        step="any"
+                        placeholder="Optional"
+                        className="input"
+                        value={r.price}
+                        onChange={(e) => onUpdate(r.key, { price: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <button
+                        type="button"
+                        className="icon-btn !h-8 !w-8 text-danger"
+                        onClick={() => onRemove(r.key)}
+                        aria-label="Remove item"
+                      >
+                        <Icon name="delete" className="text-[18px]" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <button type="button" className="btn-secondary mt-3 !py-1.5" onClick={onAdd}>
+        <Icon name="add" className="text-[18px]" /> Add item
+      </button>
+    </div>
+  );
+}
+
 export default function RequestForm({
   templateId,
   editRequestId,
@@ -139,6 +261,10 @@ export default function RequestForm({
   const [values, setValues] = useState<Record<string, string>>({});
   const [fieldFiles, setFieldFiles] = useState<Record<string, File[]>>({});
   const [rows, setRows] = useState<Row[]>([]);
+  // rows belonging to "items" fields (keyed by FormFieldID) — the built-in
+  // items section keeps using `rows` above
+  const [fieldRows, setFieldRows] = useState<Record<string, Row[]>>({});
+  const [fieldRowErrors, setFieldRowErrors] = useState<Record<string, number[]>>({});
   const [files, setFiles] = useState<File[]>([]);
   const [existingAtts, setExistingAtts] = useState<ExistingAtt[]>([]);
   const [error, setError] = useState("");
@@ -213,22 +339,46 @@ export default function RequestForm({
             }
           }
           setValues(vals);
+          // the template first — it tells us which items rows belong to an
+          // "items" field versus the built-in items section
+          const t = await fetch(`/api/form-templates/${req.FormTemplateID}?context=fill`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const tmpl = t.ok ? ((await t.json()) as Template) : null;
+          setTemplate(tmpl);
+          const itemsFieldIds = new Set(
+            ((tmpl?.Fields || []) as TField[])
+              .filter((f) => f.FieldType === "items")
+              .map((f) => f.FormFieldID)
+          );
+          const toRow = (it: EditItemPayload, key: number): Row => ({
+            key,
+            id: it.RequestItemID,
+            catalogId: it.ItemCatalogCacheID ?? null,
+            oracle: it.OracleItemID ?? null,
+            code: it.ItemCode ?? "",
+            name: it.RequestedItemName ?? "",
+            details: it.RequestedItemDetails ?? "",
+            uom: it.RequestedUom ?? it.Uom ?? "Piece",
+            qty: Number(it.RequestedQuantity ?? 0),
+            org: it.OrganizationCode ?? "",
+            price: it.EstimatedPrice != null ? String(it.EstimatedPrice) : "",
+          });
+          let nextKey = 1;
           const items = (req.Items || []) as EditItemPayload[];
           setRows(
-            items.map((it, i) => ({
-              key: i + 1,
-              id: it.RequestItemID,
-              catalogId: it.ItemCatalogCacheID ?? null,
-              oracle: it.OracleItemID ?? null,
-              code: it.ItemCode ?? "",
-              name: it.RequestedItemName ?? "",
-              uom: it.RequestedUom ?? it.Uom ?? "Piece",
-              qty: Number(it.RequestedQuantity ?? 0),
-              org: it.OrganizationCode ?? "",
-              price: it.EstimatedPrice != null ? String(it.EstimatedPrice) : "",
-            }))
+            items
+              .filter((it) => !it.FormFieldID || !itemsFieldIds.has(it.FormFieldID))
+              .map((it) => toRow(it, nextKey++))
           );
-          keyRef.current = items.length + 1;
+          const byField: Record<string, Row[]> = {};
+          for (const it of items) {
+            if (it.FormFieldID && itemsFieldIds.has(it.FormFieldID)) {
+              (byField[it.FormFieldID] ??= []).push(toRow(it, nextKey++));
+            }
+          }
+          setFieldRows(byField);
+          keyRef.current = nextKey;
           setExistingAtts(
             ((req.Attachments || []) as EditAttPayload[]).map((a) => ({
               id: a.RequestAttachmentID,
@@ -237,10 +387,6 @@ export default function RequestForm({
               fieldId: a.FormFieldID ?? null,
             }))
           );
-          const t = await fetch(`/api/form-templates/${req.FormTemplateID}?context=fill`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          setTemplate(t.ok ? await t.json() : null);
         } catch {
           setEditError("Failed to load request.");
         }
@@ -316,7 +462,7 @@ export default function RequestForm({
 
   function addCustomRow() {
     const key = keyRef.current++;
-    setRows((p) => [...p, { key, id: null, catalogId: null, oracle: null, code: "", name: "", uom: "Piece", qty: 1, org: "", price: "" }]);
+    setRows((p) => [...p, { key, id: null, catalogId: null, oracle: null, code: "", name: "", details: "", uom: "Piece", qty: 1, org: "", price: "" }]);
   }
   function addCatalogRow(it: CatItem) {
     if (rows.some((r) => r.catalogId === it.ItemCatalogCacheID)) {
@@ -334,6 +480,7 @@ export default function RequestForm({
         oracle: it.OracleItemID,
         code: it.ItemCode,
         name: it.ItemName,
+        details: "",
         uom: it.Uom,
         qty: 1,
         org: it.OrganizationCode,
@@ -348,6 +495,24 @@ export default function RequestForm({
   }
   function removeRow(key: number) {
     setRows((p) => p.filter((r) => r.key !== key));
+  }
+
+  /* items-field rows (one table per "items" field in the form) */
+  function addFieldRow(fieldId: string) {
+    const key = keyRef.current++;
+    setFieldRows((p) => ({
+      ...p,
+      [fieldId]: [...(p[fieldId] || []), { key, id: null, catalogId: null, oracle: null, code: "", name: "", details: "", uom: "Piece", qty: 1, org: "", price: "" }],
+    }));
+  }
+  function updateFieldRow(fieldId: string, key: number, patch: Partial<Row>) {
+    setFieldRows((p) => ({
+      ...p,
+      [fieldId]: (p[fieldId] || []).map((r) => (r.key === key ? { ...r, ...patch } : r)),
+    }));
+  }
+  function removeFieldRow(fieldId: string, key: number) {
+    setFieldRows((p) => ({ ...p, [fieldId]: (p[fieldId] || []).filter((r) => r.key !== key) }));
   }
 
   async function deleteExistingAtt(id: string) {
@@ -376,6 +541,9 @@ export default function RequestForm({
   const isFieldVisible = (f: TField): boolean =>
     evalShowWhen(parseFieldConfig(f.Config).showWhen, valueByKey);
 
+  const rowInvalid = (r: Row) =>
+    !r.name.trim() || !(r.qty > 0) || (r.price.trim() !== "" && isNaN(Number(r.price)));
+
   function validate(submit: boolean): boolean {
     if (!submit) return true;
     const badFields =
@@ -388,15 +556,20 @@ export default function RequestForm({
             existingAtts.filter((a) => a.fieldId === f.FormFieldID).length;
           return have === 0;
         }
+        if (f.FieldType === "items") return (fieldRows[f.FormFieldID] || []).length === 0;
         return isValueEmpty(f.FieldType, values[f.FormFieldID] || "");
       }).map((f) => f.FormFieldID) || [];
-    const badRows = rows
-      .filter((r) => !r.name.trim() || !(r.qty > 0) || (r.price.trim() !== "" && isNaN(Number(r.price))))
-      .map((r) => r.key);
+    const badRows = rows.filter(rowInvalid).map((r) => r.key);
+    const badFieldRows: Record<string, number[]> = {};
+    for (const f of (template?.Fields || []).filter((x) => x.FieldType === "items" && isFieldVisible(x))) {
+      const bad = (fieldRows[f.FormFieldID] || []).filter(rowInvalid).map((r) => r.key);
+      if (bad.length > 0) badFieldRows[f.FormFieldID] = bad;
+    }
     const badTitle = bc.title.show && bc.title.required && title.trim() === "";
     const badNeeded = bc.neededBy.show && bc.neededBy.required && !neededBy;
     setInvalidFields(badFields);
     setInvalidRows(badRows);
+    setFieldRowErrors(badFieldRows);
     setInvalidTitle(badTitle);
     setInvalidNeeded(badNeeded);
     const msgs: string[] = [];
@@ -406,9 +579,12 @@ export default function RequestForm({
       const labels = template.Fields.filter((f) => badFields.includes(f.FormFieldID)).map((f) => f.Label);
       msgs.push(`Missing required fields: ${labels.join(", ")}`);
     }
+    const anyBadRows = badRows.length > 0 || Object.keys(badFieldRows).length > 0;
     if (bc.items.show) {
       if (rows.length === 0) msgs.push("Add at least one item");
-      else if (badRows.length > 0) msgs.push("Some items are missing a name, quantity or valid price");
+      else if (anyBadRows) msgs.push("Some items are missing a name, quantity or valid price");
+    } else if (anyBadRows) {
+      msgs.push("Some items are missing a name, quantity or valid price");
     }
     if (msgs.length > 0) {
       setError(msgs.join(" · "));
@@ -478,6 +654,37 @@ export default function RequestForm({
     if (!validate(submit)) return;
     setBusy(submit ? "submit" : "draft");
     try {
+      const itemsFieldDefs = (template.Fields || []).filter(
+        (f) => f.FieldType === "items" && isFieldVisible(f)
+      );
+      const cleanFieldRows = (fId: string): Row[] =>
+        (fieldRows[fId] || []).filter((r) => r.name.trim() && r.qty > 0);
+      // "items" fields also keep a JSON field value (drives required checks)
+      const itemsFieldValues = itemsFieldDefs.flatMap((f) => {
+        const rs = cleanFieldRows(f.FormFieldID);
+        if (rs.length === 0) return [];
+        return [
+          {
+            fieldId: f.FormFieldID,
+            value: JSON.stringify(
+              rs.map((r) => ({
+                name: r.name.trim(),
+                details: r.details.trim(),
+                uom: r.uom,
+                qty: Number(r.qty),
+                price: r.price.trim() === "" ? null : Number(r.price),
+              }))
+            ),
+          },
+        ];
+      });
+      const normalFieldValues = Object.entries(values)
+        .filter(([fieldId]) => {
+          const f = template.Fields.find((x) => x.FormFieldID === fieldId);
+          return !f || isFieldVisible(f);
+        })
+        .filter(([fieldId, v]) => typeOf(fieldId) !== "file" && typeOf(fieldId) !== "items" && !isValueEmpty(typeOf(fieldId), v))
+        .map(([fieldId, value]) => ({ fieldId, value: value.trim() }));
       let requestId: string;
       if (isEdit && editRequestId) {
         const res = await fetch(`/api/requests/${editRequestId}`, {
@@ -488,28 +695,36 @@ export default function RequestForm({
             title: title.trim() || null,
             priority,
             neededByDate: neededBy || null,
-            fieldValues: Object.entries(values)
-              .filter(([fieldId]) => {
-                const f = template.Fields.find((x) => x.FormFieldID === fieldId);
-                return !f || isFieldVisible(f);
-              })
-              .filter(([fieldId, v]) => typeOf(fieldId) !== "file" && !isValueEmpty(typeOf(fieldId), v))
-              .map(([fieldId, value]) => ({ fieldId, value: value.trim() })),
-            items: rows
-              .filter((r) => r.name.trim() && r.qty > 0)
-              .map((r) => ({
-                id: r.id,
-                name: r.name.trim(),
-                quantity: Number(r.qty),
-                uom: r.uom || undefined,
-                catalogId: r.catalogId,
-                oracleItemId: r.oracle,
-                itemCode: r.code || undefined,
-                itemName: r.catalogId ? r.name.trim() : undefined,
-                itemUom: r.uom || undefined,
-                orgCode: r.org || undefined,
-                estimatedPrice: r.price.trim() === "" ? undefined : Number(r.price),
-              })),
+            fieldValues: [...normalFieldValues, ...itemsFieldValues],
+            items: [
+              ...rows
+                .filter((r) => r.name.trim() && r.qty > 0)
+                .map((r) => ({
+                  id: r.id,
+                  name: r.name.trim(),
+                  details: r.details.trim() || undefined,
+                  quantity: Number(r.qty),
+                  uom: r.uom || undefined,
+                  catalogId: r.catalogId,
+                  oracleItemId: r.oracle,
+                  itemCode: r.code || undefined,
+                  itemName: r.catalogId ? r.name.trim() : undefined,
+                  itemUom: r.uom || undefined,
+                  orgCode: r.org || undefined,
+                  estimatedPrice: r.price.trim() === "" ? undefined : Number(r.price),
+                })),
+              ...itemsFieldDefs.flatMap((f) =>
+                cleanFieldRows(f.FormFieldID).map((r) => ({
+                  id: r.id,
+                  fieldId: f.FormFieldID,
+                  name: r.name.trim(),
+                  details: r.details.trim() || undefined,
+                  quantity: Number(r.qty),
+                  uom: r.uom || undefined,
+                  estimatedPrice: r.price.trim() === "" ? undefined : Number(r.price),
+                }))
+              ),
+            ],
           }),
         });
         if (!res.ok) {
@@ -526,27 +741,34 @@ export default function RequestForm({
             title: title.trim() || undefined,
             priority,
             neededByDate: neededBy || undefined,
-            fieldValues: Object.entries(values)
-              .filter(([fieldId]) => {
-                const f = template.Fields.find((x) => x.FormFieldID === fieldId);
-                return !f || isFieldVisible(f);
-              })
-              .filter(([fieldId, v]) => typeOf(fieldId) !== "file" && !isValueEmpty(typeOf(fieldId), v))
-              .map(([fieldId, value]) => ({ fieldId, value: value.trim() })),
-            items: rows
-              .filter((r) => r.name.trim() && r.qty > 0)
-              .map((r) => ({
-                requestedItemName: r.name.trim(),
-                requestedQuantity: Number(r.qty),
-                requestedUom: r.uom || undefined,
-                itemCatalogCacheId: r.catalogId,
-                oracleItemId: r.oracle,
-                itemCode: r.code || undefined,
-                itemName: r.catalogId ? r.name.trim() : undefined,
-                uom: r.uom || undefined,
-                organizationCode: r.org || undefined,
-                estimatedPrice: r.price.trim() === "" ? undefined : Number(r.price),
-              })),
+            fieldValues: [...normalFieldValues, ...itemsFieldValues],
+            items: [
+              ...rows
+                .filter((r) => r.name.trim() && r.qty > 0)
+                .map((r) => ({
+                  requestedItemName: r.name.trim(),
+                  requestedItemDetails: r.details.trim() || undefined,
+                  requestedQuantity: Number(r.qty),
+                  requestedUom: r.uom || undefined,
+                  itemCatalogCacheId: r.catalogId,
+                  oracleItemId: r.oracle,
+                  itemCode: r.code || undefined,
+                  itemName: r.catalogId ? r.name.trim() : undefined,
+                  uom: r.uom || undefined,
+                  organizationCode: r.org || undefined,
+                  estimatedPrice: r.price.trim() === "" ? undefined : Number(r.price),
+                })),
+              ...itemsFieldDefs.flatMap((f) =>
+                cleanFieldRows(f.FormFieldID).map((r) => ({
+                  formFieldId: f.FormFieldID,
+                  requestedItemName: r.name.trim(),
+                  requestedItemDetails: r.details.trim() || undefined,
+                  requestedQuantity: Number(r.qty),
+                  requestedUom: r.uom || undefined,
+                  estimatedPrice: r.price.trim() === "" ? undefined : Number(r.price),
+                }))
+              ),
+            ],
           }),
         });
         if (!res.ok) {
@@ -770,6 +992,27 @@ export default function RequestForm({
                             <div className="text-base font-bold text-on-surface">{f.Label}</div>
                             {cfg.help && <p className="mt-0.5 text-xs text-on-surface-variant">{cfg.help}</p>}
                           </div>
+                        </div>
+                      );
+                    }
+
+                    if (f.FieldType === "items") {
+                      const fRows = fieldRows[f.FormFieldID] || [];
+                      const invalid = invalidFields.includes(f.FormFieldID);
+                      return (
+                        <div key={f.FormFieldID} className="md:col-span-2">
+                          <label className="label">
+                            {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
+                          </label>
+                          <ItemsRowsTable
+                            rows={fRows}
+                            invalidKeys={fieldRowErrors[f.FormFieldID] || []}
+                            onAdd={() => addFieldRow(f.FormFieldID)}
+                            onUpdate={(key, patch) => updateFieldRow(f.FormFieldID, key, patch)}
+                            onRemove={(key) => removeFieldRow(f.FormFieldID, key)}
+                          />
+                          {invalid && <p className="mt-1 text-xs font-medium text-danger">Add at least one item</p>}
+                          {cfg.help && <p className="mt-1 text-xs text-outline">{cfg.help}</p>}
                         </div>
                       );
                     }
@@ -1025,11 +1268,8 @@ export default function RequestForm({
               {/* Items */}
               {bc.items.show && (
               <div className="border-b border-surface-variant p-6 md:p-8">
-                <div className="mb-5 flex items-center justify-between">
+                <div className="mb-5">
                   <h2 className="border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">Items</h2>
-                  <button type="button" className="btn-secondary !py-1.5" onClick={addCustomRow}>
-                    <Icon name="add" className="text-[18px]" /> Add item
-                  </button>
                 </div>
 
                 {canCatalog && (
@@ -1088,99 +1328,13 @@ export default function RequestForm({
                   </div>
                 )}
 
-                {rows.length === 0 ? (
-                  <div className="rounded border border-dashed border-surface-variant bg-surface-container-low px-4 py-6 text-center text-sm text-on-surface-variant">
-                    No items yet — search the catalog above or add a custom item.
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto rounded border border-surface-variant">
-                    <table className="tbl w-full min-w-[720px]">
-                      <thead>
-                        <tr>
-                          <th>Item</th>
-                          <th className="w-28">UOM</th>
-                          <th className="w-28">Quantity</th>
-                          <th className="w-32">Est. Price</th>
-                          <th className="w-10"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {rows.map((r) => {
-                          const bad = invalidRows.includes(r.key);
-                          const uomOpts = UOMS.includes(r.uom) ? UOMS : [r.uom, ...UOMS];
-                          return (
-                            <tr key={r.key} className={bad ? "!bg-error-container/60" : ""}>
-                              <td>
-                                <input
-                                  className="input !border-transparent !px-0 font-medium hover:!border-surface-variant focus:!border-primary"
-                                  placeholder="Item name / description"
-                                  value={r.name}
-                                  onChange={(e) => updateRow(r.key, { name: e.target.value })}
-                                />
-                                <div className="text-xs text-outline">
-                                  {r.code ? (
-                                    <>
-                                      {r.code}
-                                      {r.org ? ` · ${r.org}` : ""}
-                                    </>
-                                  ) : (
-                                    "Custom item"
-                                  )}
-                                </div>
-                              </td>
-                              <td>
-                                <select
-                                  className="input"
-                                  value={r.uom}
-                                  onChange={(e) => updateRow(r.key, { uom: e.target.value })}
-                                >
-                                  {uomOpts.map((u) => (
-                                    <option key={u} value={u}>
-                                      {u}
-                                    </option>
-                                  ))}
-                                </select>
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="any"
-                                  className="input"
-                                  value={r.qty}
-                                  onChange={(e) =>
-                                    updateRow(r.key, { qty: parseFloat(e.target.value) || 0 })
-                                  }
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  step="any"
-                                  placeholder="Optional"
-                                  className="input"
-                                  value={r.price}
-                                  onChange={(e) => updateRow(r.key, { price: e.target.value })}
-                                />
-                              </td>
-                              <td>
-                                <button
-                                  type="button"
-                                  className="icon-btn !h-8 !w-8 text-danger"
-                                  onClick={() => removeRow(r.key)}
-                                  aria-label="Remove item"
-                                >
-                                  <Icon name="delete" className="text-[18px]" />
-                                </button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <ItemsRowsTable
+                  rows={rows}
+                  invalidKeys={invalidRows}
+                  onAdd={addCustomRow}
+                  onUpdate={updateRow}
+                  onRemove={removeRow}
+                />
               </div>
               )}
 
