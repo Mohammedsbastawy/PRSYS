@@ -28,6 +28,9 @@ export async function runWorkflowRules(opts: {
   excludeUserIds?: string[] // don't notify the actor
   /** StepOrder of the step being decided — used to filter step-scoped rules */
   stepOrder?: number | null
+  /** actions never to execute (on-demand runs skip SET_STATUS / JUMP_TO_STEP —
+   *  the ticket's lifecycle belongs to its main workflow, not to a preset run) */
+  skipActions?: string[]
 }): Promise<RuleRunResult> {
   const rules = await prisma.wFRules.findMany({
     where: { WFDefinitionID: opts.wfDefinitionId, Trigger: opts.trigger, IsActive: true },
@@ -53,6 +56,14 @@ export async function runWorkflowRules(opts: {
     // a rule bound to another step must not fire here (flow-wide rules have no binding)
     if (opts.trigger === 'ON_STEP_APPROVED' || opts.trigger === 'ON_STEP_REJECTED') {
       if (!ruleAppliesToStep(v, opts.stepOrder)) continue
+    }
+
+    // caller-supplied safety line (preset runs): skip with a visible audit note
+    if (opts.skipActions?.includes(rule.Action)) {
+      result.applied.push(
+        `Rule "${rule.Name}": skipped (${rule.Action === 'SET_STATUS' ? 'ticket status stays with the main workflow' : 'run chains cannot jump the ticket'})`
+      )
+      continue
     }
 
     switch (rule.Action) {

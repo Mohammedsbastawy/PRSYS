@@ -156,7 +156,19 @@ const PALETTE_SECTIONS: { name: string; items: PaletteItemSpec[] }[] = (() => {
   ];
 })();
 
-function Palette({ ro, onAdd, onRecipe }: { ro: boolean; onAdd: (p: PaletteItemSpec) => void; onRecipe: (id: string) => void }) {
+function Palette({
+  ro,
+  preset,
+  templateCount,
+  onAdd,
+  onRecipe,
+}: {
+  ro: boolean;
+  preset: boolean;
+  templateCount: number;
+  onAdd: (p: PaletteItemSpec) => void;
+  onRecipe: (id: string) => void;
+}) {
   const [q, setQ] = useState("");
   const needle = q.trim().toLowerCase();
   return (
@@ -181,7 +193,26 @@ function Palette({ ro, onAdd, onRecipe }: { ro: boolean; onAdd: (p: PaletteItemS
             <div key={s.name}>
               <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">{s.name}</div>
               <div className="space-y-1">
-                {items.map((it) => (
+                {items.map((it) => {
+                  // the trigger is contextual: preset workflows start on the
+                  // Request Approval button click, not on submit
+                  const isStart = it.kind === "start";
+                  const both = preset && templateCount > 0;
+                  const label = isStart
+                    ? preset
+                      ? both
+                        ? "Submitted · or requested"
+                        : "Approval requested"
+                      : it.label
+                    : it.label;
+                  const blurb = isStart
+                    ? preset
+                      ? both
+                        ? "on submit — or when the button is pressed in a ticket"
+                        : "the moment the Request Approval button is pressed"
+                      : it.blurb
+                    : it.blurb;
+                  return (
                   <button
                     key={it.tool + it.kind}
                     type="button"
@@ -192,18 +223,19 @@ function Palette({ ro, onAdd, onRecipe }: { ro: boolean; onAdd: (p: PaletteItemS
                       e.dataTransfer.effectAllowed = "copy";
                     }}
                     onClick={() => onAdd(it)}
-                    title={ro ? it.blurb : `${it.blurb}\n\nDrag it anywhere on the canvas, or click to add it at the end of the flow.`}
+                    title={ro ? blurb : `${blurb}\n\nDrag it anywhere on the canvas, or click to add it at the end of the flow.`}
                     className="flex w-full cursor-grab items-start gap-2 rounded-lg border border-surface-variant bg-white p-1.5 text-left transition-colors hover:border-primary/50 hover:bg-surface-container-lowest active:cursor-grabbing"
                   >
                     <span className={`mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded border ${it.accent}`}>
                       <Icon name={it.icon} className="text-[14px]" />
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-xs font-semibold text-on-surface">{it.label}</span>
-                      <span className="block truncate text-[10px] leading-snug text-outline">{it.blurb}</span>
+                      <span className="block truncate text-xs font-semibold text-on-surface">{label}</span>
+                      <span className="block truncate text-[10px] leading-snug text-outline">{blurb}</span>
                     </span>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
           );
@@ -644,10 +676,13 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const nodeTitle = useCallback((id: string) => {
     const n = graph.nodes.find((x) => x.id === id);
     if (!n) return "a deleted node";
-    if (n.kind === "start") return "Request submitted";
+    if (n.kind === "start") {
+      if (onDemand) return (usage?.templates ?? 0) > 0 ? "Submitted · or requested" : "Approval requested";
+      return "Request submitted";
+    }
     if (n.kind === "approval") return n.data.name || "Untitled approval";
     return toolMeta(n.data.tool as ToolId)?.label ?? "a node";
-  }, [graph]);
+  }, [graph, onDemand, usage]);
 
   const wiringSummary = useCallback(
     (id: string) => {
@@ -890,7 +925,13 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         <div className="flex min-h-0 flex-1">
           {/* palette */}
           <aside className="hidden w-60 shrink-0 border-r border-surface-variant bg-surface-container-low/40 p-3 lg:block">
-            <Palette ro={ro} onAdd={(p) => canvasApi.current?.addNodeAtCenter(p.kind, p.tool)} onRecipe={(id) => canvasApi.current?.appendRecipe(id)} />
+            <Palette
+              ro={ro}
+              preset={onDemand}
+              templateCount={usage?.templates ?? 0}
+              onAdd={(p) => canvasApi.current?.addNodeAtCenter(p.kind, p.tool)}
+              onRecipe={(id) => canvasApi.current?.appendRecipe(id)}
+            />
           </aside>
 
           {/* canvas */}
@@ -900,6 +941,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
               initial={graph}
               ro={ro}
               lookups={lookups}
+              preset={onDemand}
+              templateCount={usage?.templates ?? 0}
               onGraph={setGraph}
               onSelection={setSelectedIds}
               apiRef={canvasApi}
@@ -958,8 +1001,31 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
 
                 {selectedNode.kind === "start" && (
                   <p className="text-xs leading-relaxed text-on-surface-variant">
-                    Everything wired to this node&apos;s port runs the moment the request is submitted — before anybody
-                    approves anything. It cannot be deleted, but its port can feed as many actions as you like.
+                    {onDemand ? (
+                      (usage?.templates ?? 0) > 0 ? (
+                        <>
+                          This is the trigger. When the workflow is attached to a form, everything wired to this
+                          node&apos;s port runs the moment the request is submitted; and because it&apos;s a
+                          request-approval preset, the chain also starts whenever someone presses{" "}
+                          <span className="font-semibold text-on-surface">Request Approval</span> inside a ticket.
+                          It cannot be deleted — wire your first node to its port.
+                        </>
+                      ) : (
+                        <>
+                          This is the trigger — and for a preset there is no &ldquo;submit&rdquo;: the whole chain
+                          starts the moment someone presses{" "}
+                          <span className="font-semibold text-on-surface">Request Approval</span> inside a ticket.
+                          Wire your first node (e.g. the accountant&apos;s approval) to its port. It cannot be
+                          deleted, and it never changes the ticket&apos;s status.
+                        </>
+                      )
+                    ) : (
+                      <>
+                        Everything wired to this node&apos;s port runs the moment the request is submitted — before
+                        anybody approves anything. It cannot be deleted, but its port can feed as many actions as
+                        you like.
+                      </>
+                    )}
                   </p>
                 )}
 
@@ -1041,6 +1107,18 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                           <span className="text-[11px] font-medium text-amber-700">pick who decides — nothing is selected</span>
                         )}
                       </div>
+                    </Field>
+                    <Field label="Deadline (days)" hint="how long the approver has to decide — shown as this step's SLA, e.g. on request-approval runs. Leave empty for no deadline.">
+                      <input
+                        className="input !py-1.5 text-xs"
+                        type="number"
+                        min={1}
+                        max={365}
+                        disabled={ro}
+                        placeholder="no deadline"
+                        value={selectedNode.data.dueDays}
+                        onChange={(e) => patchSelected({ dueDays: e.target.value })}
+                      />
                     </Field>
                     <Field label="Only if" hint="the whole node is skipped when this is false">
                       <ConditionRow n={selectedNode.data} disabled={ro} onPatch={patchSelected} />

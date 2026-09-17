@@ -115,6 +115,11 @@ round-trip tested, no React) derives both from the graph, so they can never drif
   (a rule may never fake an approver's decision).
 * Preset starters (e.g. *approve → set URGENT → apply SLA*) are **spliced into the end of the flow** with editable,
   empty payloads; they wire nodes only.
+* The trigger node is undeletable (it is the chain's entry) but its label is **contextual**: form-bound
+  workflows show *Request submitted*; a *Request-approval preset* shows *Approval requested — the moment the
+  Request Approval button is pressed inside the ticket* (both labels when the workflow is also attached to a
+  form). Actions wired to the trigger run on the submit path only — a preset run starts straight at the first
+  approval node.
 * Editing aids: undo/redo of structure (Ctrl+Z / Ctrl+Shift+Z), fit-to-view, `/` focuses the node search, Delete
   removes the selected node, Ctrl/Cmd+S saves, and an unsaved-changes badge + unload guard track the diff against
   the last save.
@@ -189,8 +194,13 @@ Each start creates a **run** (`WFRequestRuns`) that rides *alongside* the main w
   carry several approvals with several clocks at once — the request page lists every run with who is waiting,
   since when, how long is left (or how late it is), so the team can see who is causing the delay;
 - approving/rejecting a run uses the same governance as a normal step (`canUserDecideStep` + comment policy,
-  decisions stored in `RequestApprovals` with a `WFRunID`), but the form's automation rules do **not** fire and
-  the request status does not change — a preset rejection ends only the run;
+  decisions stored in `RequestApprovals` with a `WFRunID`) and fires the **step-bound** automation the same way
+  the main flow does — the "if approved → …, if rejected → …" nodes wired to the step's ports (notify,
+  re-prioritise, re-assign, re-snapshot SLA). The request status does **not** change and a preset rejection
+  ends only the run: `SET_STATUS` / `JUMP_TO_STEP` rules are skipped inside runs (with an audit note), and the
+  `ON_SUBMIT` / final `ON_REQUEST_*` triggers never fire from a run — the ticket's lifecycle stays with the
+  main workflow;
+- the step's *Deadline (days)* is the run's SLA clock (the "…and then SLA" part of a preset);
 - the run's next step (if any) is notified like a normal step; a step with no resolvable approver raises the
   usual admin alert; the agent who raised the run and the requester are notified on every advance/final verdict;
 - one active run per preset per ticket (the button marks presets that are *already waiting*).

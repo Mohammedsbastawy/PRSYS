@@ -141,8 +141,10 @@ const RUN_ACTIVE_STATUSES = ['PENDING_APPROVAL', 'PROCESSING', 'PO_REGISTERED', 
  * policy — but deliberately different in three ways:
  *  * the request's status / current step / round are untouched (the agent
  *    keeps working on the ticket while the approval waits),
- *  * the form's automation rules do NOT fire (the run is an approval chain,
- *    not the workflow),
+ *  * only the STEP-BOUND rules fire (the "what happens after" actions —
+ *    notify / re-prioritise / re-assign / re-snapshot SLA), and even those
+ *    skip SET_STATUS + JUMP_TO_STEP; ON_SUBMIT and the final
+ *    ON_REQUEST_* triggers never fire from a run,
  *  * the RUN's own step chain + SLA due date advance — or the run ends.
  */
 async function decideRun(opts: {
@@ -330,6 +332,23 @@ async function decideRun(opts: {
         ),
     },
   })
+  // step-bound automation — the "and then what" of the preset (notify,
+  // re-prioritise, re-assign, re-snapshot SLA). SET_STATUS / JUMP_TO_STEP are
+  // skipped: the ticket's lifecycle belongs to its main workflow, not a run.
+  {
+    const condCtx2 = await conditionContext(requestId, request.Priority)
+    const stepRes = await runWorkflowRules({
+      wfDefinitionId: run.WFDefinitionID,
+      requestId,
+      trigger: decision === 'APPROVED' ? 'ON_STEP_APPROVED' : 'ON_STEP_REJECTED',
+      condCtx: condCtx2,
+      actorName,
+      excludeUserIds: [payload.userId],
+      stepOrder: step.StepOrder,
+      skipActions: ['SET_STATUS', 'JUMP_TO_STEP'],
+    })
+    await auditRuleResults(requestId, request.Status, request.Status, payload.userId, stepRes)
+  }
 
   // notify whoever is next in the run's chain
   if (runStatus === 'PENDING' && nextStep) {

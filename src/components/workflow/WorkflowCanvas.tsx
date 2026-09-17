@@ -128,12 +128,16 @@ interface Props {
   initial: Graph;
   ro: boolean;
   lookups: WfLookups;
+  /** the workflow is a "Request-approval preset" — labels the trigger accordingly */
+  preset?: boolean;
+  /** how many form templates use this workflow */
+  templateCount?: number;
   onGraph: (g: Graph) => void;
   onSelection: (ids: string[]) => void;
   apiRef: React.MutableRefObject<WorkflowCanvasApi | null>;
 }
 
-function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Props) {
+function CanvasInner({ initial, ro, lookups, preset, templateCount, onGraph, onSelection, apiRef }: Props) {
   const [nodes, setNodes, onNodesChange] = useNodesState<WfNode>(initial.nodes.map(toRfNode));
   const [edges, setEdges, onEdgesChange] = useEdgesState(initial.edges.map(toRfEdge));
   const { screenToFlowPosition, fitView } = useReactFlow();
@@ -414,8 +418,16 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
   }, [nodes, edges]);
 
   const ctxValue = useMemo(
-    () => ({ lookups, issues, onPatch: patchNode, onRemove: removeNode, ro }),
-    [lookups, issues, patchNode, removeNode, ro]
+    () => ({
+      lookups,
+      issues,
+      onPatch: patchNode,
+      onRemove: removeNode,
+      ro,
+      preset: preset ?? false,
+      templateCount: templateCount ?? 0,
+    }),
+    [lookups, issues, patchNode, removeNode, ro, preset, templateCount]
   );
 
   const nodeTypes = useMemo(() => WF_NODE_TYPES, []);

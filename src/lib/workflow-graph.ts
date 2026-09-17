@@ -312,7 +312,8 @@ export function graphToApi(
       ? { approveAction: a.data.approveAction, ...(a.data.approveAction === "JUMP_TO_STEP" && a.data.approveTargetKey ? { approveTargetIndex: (stepIndexOf.get(a.data.approveTargetKey) ?? 0) + 1 } : {}) }
       : {}),
     condition: conditionOf(a.data),
-    ...((a.data.dueDays ?? "").trim() !== "" ? { dueDays: Number(a.data.dueDays) } : {}),
+    // step deadline (its SLA) — non-positive / garbage values are dropped, not saved
+    ...(((a.data.dueDays ?? "").trim() !== "" && Number(a.data.dueDays) >= 1) ? { dueDays: Math.floor(Number(a.data.dueDays)) } : {}),
     ...(a.data.commentPolicy ? { commentPolicy: a.data.commentPolicy } : {}),
   }));
 

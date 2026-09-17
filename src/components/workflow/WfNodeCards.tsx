@@ -58,6 +58,10 @@ interface WfNodeCtxValue {
   onPatch: (id: string, patch: Partial<FlowNode>) => void;
   onRemove: (id: string) => void;
   ro: boolean;
+  /** the workflow is flagged "Request-approval preset" — the trigger is the button click, not the submit */
+  preset: boolean;
+  /** how many form templates use this workflow (the submit path still exists) */
+  templateCount: number;
 }
 
 const EMPTY_LOOKUPS: WfLookups = { users: [], groups: [], roles: [], deps: [], slas: [] };
@@ -67,6 +71,8 @@ const WfNodeContext = createContext<WfNodeCtxValue>({
   onPatch: () => {},
   onRemove: () => {},
   ro: false,
+  preset: false,
+  templateCount: 0,
 });
 export const WfNodeProvider = WfNodeContext.Provider;
 export function useWfCtx(): WfNodeCtxValue {
@@ -217,19 +223,34 @@ function IconChip({ name, accent }: { name: string; accent: string }) {
 /* ----------------------------------------------------------------- nodes -- */
 
 export function StartNode(_: NodeProps) {
-  const { issues, ro } = useWfCtx();
+  const { issues, ro, preset, templateCount } = useWfCtx();
+  const both = preset && templateCount > 0;
+  // the trigger is CONTEXTUAL: a form-bound workflow starts on submit, a
+  // preset starts when the Request Approval button is pressed inside a ticket
+  const title = preset ? (both ? "Submitted · or requested" : "Approval requested") : "Request submitted";
+  const sub = preset
+    ? both
+      ? "the moment a request is submitted — or the Request Approval button is pressed"
+      : "the moment the Request Approval button is pressed inside the ticket"
+    : "the moment a request enters the queue";
+  const hint = ro
+    ? ""
+    : both || !preset
+      ? " — drag actions onto its port"
+      : " — the approval chain runs from the next node";
   return (
     <Card selected={_.selected} issues={issues[_.id] ?? []}>
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         <IconChip name="play_circle" accent="bg-emerald-50 text-emerald-700 border-emerald-200" />
         <div className="min-w-0">
           <div className="text-[10px] font-bold uppercase tracking-wider text-outline">Trigger</div>
-          <div className="truncate text-[13px] font-semibold text-on-surface">Request submitted</div>
+          <div className="truncate text-[13px] font-semibold text-on-surface">{title}</div>
         </div>
         <Port id="out" type="source" position={Position.Right} tone="out" />
       </div>
       <div className="border-t border-[#eef1f7] px-3 py-1.5 text-[11px] leading-snug text-on-surface-variant">
-        the moment a request enters the queue{ro ? "" : " — drag actions onto its port"}
+        {sub}
+        {hint}
       </div>
     </Card>
   );
@@ -250,9 +271,19 @@ export function ApprovalNode(n: NodeProps) {
           </div>
           <Port id="in" type="target" position={Position.Left} tone="target" />
         </div>
-        <div className="mt-1.5 truncate text-[11px] text-on-surface-variant">
-          <Icon name="person" className="mr-1 inline text-[13px] align-[-1px] text-outline" />
-          {approverSummary(d, ctx.lookups)}
+        <div className="mt-1.5 flex items-center gap-2 truncate text-[11px] text-on-surface-variant">
+          <span className="truncate">
+            <Icon name="person" className="mr-1 inline text-[13px] align-[-1px] text-outline" />
+            {approverSummary(d, ctx.lookups)}
+          </span>
+          {Number(d.dueDays) >= 1 && (
+            <span
+              className="shrink-0 rounded-full bg-secondary-fixed px-1.5 py-0.5 text-[10px] font-bold text-on-secondary-fixed-variant"
+              title="deadline — this step's SLA (days)"
+            >
+              {d.dueDays}d
+            </span>
+          )}
         </div>
         {hasCond && (
           <div className="mt-1 truncate rounded bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
