@@ -102,6 +102,19 @@ function graphFromRf(nodes: WfNode[], edges: Edge[]): Graph {
   };
 }
 
+/**
+ * Rebuilding node objects from the graph would silently drop React Flow's
+ * own per-node state (selected / dragging) — which made the config rail
+ * collapse on every keystroke. Merge that state back, matched by id.
+ */
+function withRfState(next: WfNode[], prev: WfNode[]): WfNode[] {
+  const byId = new Map(prev.map((p) => [p.id, p]));
+  return next.map((n) => {
+    const old = byId.get(n.id);
+    return old ? { ...n, selected: old.selected, dragging: old.dragging ?? false } : n;
+  });
+}
+
 /* ---------------------------------------------------------------- props -- */
 
 export interface WorkflowCanvasApi {
@@ -177,10 +190,8 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
 
   const apply = useCallback(
     (g: Graph) => {
-      const n = g.nodes.map(toRfNode);
-      const e = g.edges.map(toRfEdge);
-      setNodes(n);
-      setEdges(e);
+      setNodes(withRfState(g.nodes.map(toRfNode), nodesRef.current));
+      setEdges(g.edges.map(toRfEdge));
       onGraphRef.current(g);
     },
     [setNodes, setEdges]
@@ -253,8 +264,11 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
       const ng: Graph = { ...g, nodes: [...g.nodes, n] };
       push();
       apply(ng);
+      // a fresh node opens its settings, like the old palette did
+      setNodes((prev) => prev.map((x) => ({ ...x, selected: x.id === n.id })));
+      onSelection([n.id]);
     },
-    [ro, nodes, edges, push, apply, showToast]
+    [ro, nodes, edges, push, apply, showToast, setNodes, onSelection]
   );
 
   const onDrop = useCallback(
@@ -288,8 +302,9 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
         ...g,
         nodes: g.nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...patch } } : n)),
       };
-      // data edits are not structural — update without touching undo history
-      setNodes(ng.nodes.map(toRfNode));
+      // data edits are not structural — update without touching undo history,
+      // and keep the selection flags so the config rail doesn't collapse
+      setNodes(withRfState(ng.nodes.map(toRfNode), nodesRef.current));
       onGraphRef.current(ng);
     },
     [ro, nodes, edges, setNodes]
