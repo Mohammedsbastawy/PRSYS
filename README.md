@@ -94,17 +94,17 @@ Tools available on the palette (`src/lib/workflow-tools.ts`):
   (zero `WFSteps` rows).
 * Unchosen optional fields (quorum / approval mode, comment policy, due days) are **omitted** from the payload so the
   API's documented default applies, and `apiToNodes` maps those defaults back to an empty box instead of showing a
-  value you never picked. Quorum, due days and approve/reject routing are deliberately **not exposed in the UI**:
-  any one approver is enough (the default), due time is controlled by an **Apply SLA policy** step, approving moves
-  on to the next node and rejecting ends the request; redirecting is done with a **Jump to a node** tool instead.
-  Saved values for all of these still round-trip unchanged. Same for the name: `WFSteps.StepName` cannot be empty,
-  so an unnamed approval gets a label derived from who decides (`Department manager approval`) at save time and
-  loads back as an empty box.
+  value you never picked. Quorum, comment policy, due days and approve/reject routing are deliberately **not exposed
+  in the UI**: any one approver is enough (the default), comments stay optional, due time is controlled by an
+  **Apply SLA policy** step, approving moves on to the next node and rejecting ends the request; redirecting is done
+  with a **Jump to a node** tool instead. Saved values for all of these still round-trip unchanged. Same for the
+  name: `WFSteps.StepName` cannot be empty, so an unnamed approval gets a label derived from who decides
+  (`Department manager approval`) at save time and loads back as an empty box.
 * The only two mandatory picks are **who decides** (an approval node) and **when it runs** (an action node);
   anything else left unset is reported at save time rather than guessed for you.
 * Presets in the palette wire **ports only** — they never fill in a priority, a policy or a name.
 * **Approval / decision** — who decides (requester's dept manager, direct manager, one person, group, role, any
-  approver), comment policy, an *only if* gate. It exposes two drop ports — **if approved**
+  approver) and an *only if* gate. It exposes two drop ports — **if approved**
   (green) and **if rejected** (red), each with a **+ add** button (or drag) — and nothing runs there until you drop
   a tool on them. Approving continues to the next node; rejecting ends the request. Due time comes from an
   **Apply SLA policy** step, not from the approval itself.

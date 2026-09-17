@@ -139,12 +139,6 @@ const APPROVER_TYPES = [
   { value: "ROLE", label: "A role" },
   { value: "ANY_APPROVER", label: "Anyone who may approve" },
 ];
-const COMMENT_POLICIES = [
-  { value: "OPTIONAL", label: "Comment optional" },
-  { value: "ON_APPROVE", label: "Comment on approve" },
-  { value: "ON_REJECT", label: "Comment on reject" },
-  { value: "ALWAYS", label: "Comment always" },
-];
 
 const ACTION_TOOLS: ToolId[] = TOOLS.filter((t) => t.kind === "action").map((t) => t.id);
 
@@ -376,7 +370,9 @@ function zoneProps(ctx: NodeCtx, zoneId: string, onDrop: () => void) {
     onDragOver: (e: React.DragEvent) => {
       if (!ctx.drag) return;
       e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
+      // must match the effectAllowed set on drag start — the palette drags a NEW tool (copy),
+      // the canvas drags an existing node (move); a mismatch cancels the drop entirely
+      e.dataTransfer.dropEffect = ctx.drag.kind === "new" ? "copy" : "move";
       ctx.enter(zoneId);
     },
     onDragLeave: () => ctx.leave(),
@@ -508,7 +504,12 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
           type="button"
           disabled={ctx.ro}
           draggable={!ctx.ro}
-          onDragStart={() => ctx.startNodeDrag(n.key)}
+          onDragStart={(e) => {
+            // setData is required for the drag to start at all (Firefox); "move" pairs with the canvas zones
+            e.dataTransfer.setData("text/plain", n.key);
+            e.dataTransfer.effectAllowed = "move";
+            ctx.startNodeDrag(n.key);
+          }}
           onDragEnd={ctx.endDrag}
           onClick={() => p({ open: !n.open })}
           title={ctx.ro ? meta.label : "Drag to move · click to open or close"}
@@ -689,26 +690,9 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
         </div>
       </Field>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="Comments">
-          <select
-            className="input !py-1 text-xs"
-            disabled={ctx.ro}
-            value={n.commentPolicy}
-            onChange={(e) => ctx.patch(n.key, { commentPolicy: e.target.value })}
-          >
-            <option value="">not set — comment optional</option>
-            {COMMENT_POLICIES.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Only if" hint="The whole node is skipped when this is false">
-          <ConditionRow n={n} disabled={ctx.ro} onPatch={(patch) => ctx.patch(n.key, patch)} />
-        </Field>
-      </div>
+      <Field label="Only if" hint="The whole node is skipped when this is false">
+        <ConditionRow n={n} disabled={ctx.ro} onPatch={(patch) => ctx.patch(n.key, patch)} />
+      </Field>
 
       <p className="text-[10px] leading-relaxed text-outline">
         Approving moves the request to the next node; rejecting ends it. Use the green and red ports below to run
@@ -1220,9 +1204,18 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     if (drag?.kind === "move") {
       const from = nodes.findIndex((x) => x.key === drag.key);
       if (from < 0) return endDrag();
+      const moved = nodes[from];
+      if (before?.key === drag.key) return endDrag(); // dropped back on itself — keep it where it was
       const next = [...nodes];
-      const [moved] = next.splice(from, 1);
-      const target = lineInsertIndex(next, before);
+      next.splice(from, 1);
+      // the gap right under a main-line node is the top of the next card; "insert before
+      // that card" is where it already is, so read that drop as "insert after" — otherwise
+      // moving a node down one slot looks like nothing happened
+      const beforeIndex = before ? nodes.indexOf(before) : -1;
+      const target =
+        !attachment(nodes, moved) && before && beforeIndex === from + 1
+          ? next.indexOf(before) + 1
+          : lineInsertIndex(next, before);
       // moving onto the bare line detaches it: it runs after any approval instead
       const patched =
         moved.tool === "APPROVAL" || moved.tool === "START" ? moved : { ...moved, when: "ANY_APPROVE" as WhenId, attachKey: "" };
@@ -1248,9 +1241,16 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     if (drag?.kind === "move") {
       const from = nodes.findIndex((x) => x.key === drag.key);
       if (from < 0) return endDrag();
+      const moved = nodes[from];
+      if (before?.key === drag.key) return endDrag(); // dropped back on itself — keep it where it was
+      const att = attachment(nodes, moved);
+      const sameSlot = Boolean(att && att.parentId === parentKey && att.slot === slot);
       const next = [...nodes];
-      const [moved] = next.splice(from, 1);
-      const target = slotInsertIndex(next, parentKey, slot, before);
+      next.splice(from, 1);
+      // same as on the main line: the top of the next sibling in this port reads as "after it"
+      const beforeIndex = before ? nodes.indexOf(before) : -1;
+      const target =
+        sameSlot && before && beforeIndex === from + 1 ? next.indexOf(before) + 1 : slotInsertIndex(next, parentKey, slot, before);
       next.splice(Math.max(0, Math.min(target, next.length)), 0, {
         ...moved,
         when: moved.tool === "APPROVAL" || moved.tool === "START" ? moved.when : w.when,
