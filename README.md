@@ -123,8 +123,10 @@ How it maps to the database (`src/lib/workflow-builder.ts`, React-free and round
   / `ON_REQUEST_REJECTED`. Rules never bound to a step stay flow-wide, which is how pre-existing rules load.
 * `Apply SLA policy` re-snapshots `SLAPolicyID`, `ResponseDueAt`, `ResolveDueAt` from the target matching the
   request's *current* priority — so “approve → URGENT → 1h/8h clock” works as one chain in order.
-* `Set ticket status` may write `COMPLETED`, `FULFILLED`, `CLARIFICATION_REQUESTED` (the requester is notified) or
-  `CANCELLED`; `PENDING_APPROVAL`/`APPROVED`/`REJECTED` are rejected by the API because the approval engine owns them.
+* `Set ticket status` may write `DRAFT` (returns the request to the requester — the open step is dropped and they
+  re-edit + resubmit), `PO_REGISTERED`, `COMPLETED`, `FULFILLED`, `CLARIFICATION_REQUESTED` (the requester is
+  notified) or `CANCELLED`; `PENDING_APPROVAL`/`APPROVED`/`REJECTED` are rejected by the API because the approval
+  engine owns them (a rule may never fake an approver's decision, and "pending" is set automatically on submit).
 * **No schema change** — everything rides in existing columns and the `ActionValue` JSON, so no `prisma db push`.
 * Editing aids: undo/redo of structure (Ctrl+Z / Ctrl+Shift+Z), `/` focuses the tool search, Delete removes the
   selected node, Ctrl/Cmd+S saves, pausing a node keeps it as an inactive rule instead of deleting it, and an

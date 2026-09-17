@@ -69,7 +69,7 @@ export const TOOLS: Tool[] = [
     label: "Set ticket status",
     icon: "flag",
     category: "Update the request",
-    blurb: "Move the ticket itself: complete it, fulfil it, ask for clarification or cancel it.",
+    blurb: "Move the ticket itself: return it to the requester, mark the PO registered, complete it, fulfil it, ask for clarification or cancel it.",
     kind: "action",
     accent: "bg-secondary-fixed text-amber-700 border-secondary-fixed-dim",
   },
@@ -138,6 +138,8 @@ export const WHEN_ORDER: WhenId[] = [
  * a rule must not be able to fake a decision.
  */
 export const SETTABLE_STATUSES = [
+  { value: "DRAFT", label: "Back to draft (return to requester)", note: "reopens it for the requester to re-edit and resubmit" },
+  { value: "PO_REGISTERED", label: "PO registered", note: "the purchase order is on file" },
   { value: "COMPLETED", label: "Completed", note: "closes the request and stamps the completion time" },
   { value: "FULFILLED", label: "Fulfilled", note: "the work is delivered; stamps the fulfilment time" },
   { value: "CLARIFICATION_REQUESTED", label: "Ask the requester for clarification", note: "the requester gets a reply box on the request" },

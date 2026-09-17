@@ -107,7 +107,7 @@ function validateRules(rules: RuleInput[], stepCount: number): string | null {
       return `Rule "${r.name}": choose a priority`
     if (r.action === 'ASSIGN_TO_USER' && !v.userId) return `Rule "${r.name}": choose a user`
     if (r.action === 'SET_SLA' && !v.slaPolicyId) return `Rule "${r.name}": choose an SLA policy`
-    if (r.action === 'SET_STATUS' && !['COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED'].includes(v.status ?? ''))
+    if (r.action === 'SET_STATUS' && !['DRAFT', 'PO_REGISTERED', 'COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED'].includes(v.status ?? ''))
       return `Rule "${r.name}": choose a status the flow may set (approval statuses are owned by the engine)`
     if (
       typeof v.fireOnStepOrder === 'number' &&

@@ -145,14 +145,28 @@ export async function runWorkflowRules(opts: {
       case 'SET_STATUS': {
         // automation may move the ticket, but never fake a decision:
         // PENDING_APPROVAL / APPROVED / REJECTED belong to the approval engine
-        const ALLOWED = ['COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED']
+        const ALLOWED = ['DRAFT', 'PO_REGISTERED', 'COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED']
         const next = typeof v.status === 'string' ? v.status.toUpperCase() : ''
         if (!ALLOWED.includes(next) || request.Status === next) break
         patch.Status = next
         const now = new Date()
         if (next === 'COMPLETED' || next === 'FULFILLED') patch.CompletedAt = now
         if (next === 'CANCELLED') patch.ResolvedAt = now
+        if (next === 'DRAFT') {
+          // same shape as the manual "return to requester": drop the open step so a
+          // resubmit starts a fresh round instead of resuming a stale one
+          patch.CurrentWFStepID = null
+          patch.CurrentStepDueAt = null
+        }
         request.Status = next
+        if (next === 'DRAFT') {
+          await notifyUsers([request.RequesterID], {
+            title: `Request ${request.TrackingNumber} returned for correction`,
+            message: `Workflow rule "${rule.Name}" returned it to you — please re-edit and resubmit.`,
+            type: 'REQUEST_REJECTED',
+            requestId: request.RequestID,
+          })
+        }
         if (next === 'CLARIFICATION_REQUESTED') {
           // same courtesy the manual "ask for clarification" action gives the requester
           await notifyUsers([request.RequesterID], {
