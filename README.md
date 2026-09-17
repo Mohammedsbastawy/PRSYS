@@ -90,9 +90,12 @@ Node kinds:
 * **Request submitted** (trigger) — the moment a request enters the queue; its port feeds everything that runs at submit. One per flow, cannot be deleted.
 * **Approval / decision** — who decides (dept manager, direct manager, one person, group, role, any approver) plus an *only if* gate. It exposes two coloured output ports — **approved** (green) and **rejected** (red) — and whatever you wire to them runs on that answer.
 * **Actions** — Set priority · Set ticket status · Apply SLA policy · Assign an owner / a group / a department · Notify people · Jump to a node. One input, one output, each with its own *only if* condition.
-* **End · approved / rejected** — terminals that accept **several** inputs; every approved path should end in one, every rejected path in the other.
 
-Connection rules (enforced while you drag, with a hint when refused): no loops, a node takes one input (end nodes excepted), one wire per output port (re-wiring replaces the old one), nothing feeds into the start, and an approval can never be reached through a *rejected* port.
+There are **no special end nodes**: a branch may simply end at any node. The final outcome is a plain ticket
+status — the engine sets the request to `APPROVED` when the last step approves, to `REJECTED` when a step
+rejects (and fires the matching `ON_REQUEST_APPROVED` / `ON_REQUEST_REJECTED` rules automatically).
+
+Connection rules (enforced while you drag, with a hint when refused): no loops, a node takes one input, one wire per output port (re-wiring replaces the old one), nothing feeds into the start, and an approval can never be reached through a *rejected* port.
 
 **Two stores, one source of truth.** The canvas (node positions + wiring) is saved as `WFDefinitions.CanvasJson`
 (TEXT), but the engine still runs on `WFSteps` / `WFRules` — on every save `src/lib/workflow-graph.ts` (pure,
@@ -100,8 +103,9 @@ round-trip tested, no React) derives both from the graph, so they can never drif
 
 * approval nodes → `WFSteps` in execution order · action nodes → `WFRules` whose trigger is the edge that feeds the
   node: start → `ON_SUBMIT`, an approval's green port → `ON_STEP_APPROVED` (bound by `ActionValue.fireOnStepOrder`),
-  red port → `ON_STEP_REJECTED`; chains of actions keep their step, the "End" terminals carry `ON_REQUEST_APPROVED` /
-  `ON_REQUEST_REJECTED`.
+  red port → `ON_STEP_REJECTED`; chains of actions keep their step. Final-outcome rules (legacy
+  `ON_REQUEST_APPROVED` / `ON_REQUEST_REJECTED`) load onto the last approval's ports — the engine fires the
+  step-level and the request-level triggers together when the request completes, so they run at the right moment.
 * **`npx prisma db push` is required once** for the new `CanvasJson` column.
 * Legacy workflows (no `CanvasJson` yet) load by deriving a graph from their saved steps/rules — deterministic
   layout, hidden legacy settings (approval mode, due days, comment policy, on-approve/on-reject, jump targets)

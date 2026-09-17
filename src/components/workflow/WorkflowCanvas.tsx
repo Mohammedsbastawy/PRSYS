@@ -53,15 +53,11 @@ const TYPE_TO_KIND: Record<string, GNodeKind> = {
   wf_start: "start",
   wf_approval: "approval",
   wf_action: "action",
-  wf_end_approved: "end_approved",
-  wf_end_rejected: "end_rejected",
 };
 const KIND_TO_TYPE: Record<GNodeKind, string> = {
   start: "wf_start",
   approval: "wf_approval",
   action: "wf_action",
-  end_approved: "wf_end_approved",
-  end_rejected: "wf_end_rejected",
 };
 
 type WfNode = Node;
@@ -151,6 +147,29 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
   const edgesRef = useRef(edges);
   edgesRef.current = edges;
 
+  // Every graph we send to the parent, remembered — the resync effect below
+  // uses it to tell "the parent replaced the graph" from "we did".
+  const lastEmitted = useRef<string>("");
+  const emit = useCallback((g: Graph) => {
+    lastEmitted.current = JSON.stringify(g);
+    onGraphRef.current(g);
+  }, []);
+
+  // When the PARENT replaces the graph (a fresh load, or the saved WFStepIDs
+  // written back after a save), the canvas follows — keeping React Flow's
+  // per-node state (selection) where it can. This heals any drift between
+  // what is on screen and what the editor state believes.
+  useEffect(() => {
+    const init = JSON.stringify(initial);
+    if (init === lastEmitted.current) return; // that change came from the canvas
+    const cur = JSON.stringify(graphFromRf(nodes, edges));
+    if (init === cur) return; // already in sync
+    setNodes(withRfState(initial.nodes.map(toRfNode), nodesRef.current));
+    setEdges(initial.edges.map(toRfEdge));
+    lastEmitted.current = init;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial]);
+
   /* history — structure only (connect / remove / add / recipe), not drags */
   const past = useRef<string[]>([]);
   const future = useRef<string[]>([]);
@@ -167,9 +186,9 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
       const p = JSON.parse(raw) as { n: WfNode[]; e: Edge[] };
       setNodes(p.n);
       setEdges(p.e);
-      onGraphRef.current(graphFromRf(p.n, p.e));
+      emit(graphFromRf(p.n, p.e));
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, emit]
   );
 
   const undo = useCallback(() => {
@@ -192,9 +211,9 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
     (g: Graph) => {
       setNodes(withRfState(g.nodes.map(toRfNode), nodesRef.current));
       setEdges(g.edges.map(toRfEdge));
-      onGraphRef.current(g);
+      emit(g);
     },
-    [setNodes, setEdges]
+    [setNodes, setEdges, emit]
   );
 
   const showToast = useCallback((msg: string) => {
@@ -305,9 +324,9 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
       // data edits are not structural — update without touching undo history,
       // and keep the selection flags so the config rail doesn't collapse
       setNodes(withRfState(ng.nodes.map(toRfNode), nodesRef.current));
-      onGraphRef.current(ng);
+      emit(ng);
     },
-    [ro, nodes, edges, setNodes]
+    [ro, nodes, edges, setNodes, emit]
   );
 
   const removeNode = useCallback(
@@ -376,10 +395,13 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
 
   /* ------------------------------------------------------------ drag stop -- */
 
-  const handleDragStop = useCallback((_e: MouseEvent | TouchEvent, _node: WfNode, all: WfNode[]) => {
-    // positions are part of the saved canvas — notify without touching history
-    onGraphRef.current(graphFromRf(all, edgesRef.current));
-  }, []);
+  const handleDragStop = useCallback(
+    (_e: MouseEvent | TouchEvent, _node: WfNode, all: WfNode[]) => {
+      // positions are part of the saved canvas — notify without touching history
+      emit(graphFromRf(all, edgesRef.current));
+    },
+    [emit]
+  );
 
   /* -------------------------------------------------------------- ctx value -- */
 
@@ -441,15 +463,7 @@ function CanvasInner({ initial, ro, lookups, onGraph, onSelection, apiRef }: Pro
             className="!bg-white/90 !border !border-surface-variant"
             nodeColor={(n) => {
               const t = n.type;
-              return t === "wf_start"
-                ? "#059669"
-                : t === "wf_approval"
-                  ? "#a33900"
-                  : t === "wf_end_approved"
-                    ? "#15803d"
-                    : t === "wf_end_rejected"
-                      ? "#dc2626"
-                      : "#7c3aed";
+              return t === "wf_start" ? "#059669" : t === "wf_approval" ? "#a33900" : "#7c3aed";
             }}
             maskColor="rgba(243,245,250,0.7)"
           />

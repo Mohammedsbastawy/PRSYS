@@ -150,27 +150,6 @@ const PALETTE_SECTIONS: { name: string; items: PaletteItemSpec[] }[] = (() => {
       name: "Flow control",
       items: ACTION_TOOLS.filter((id) => id === "JUMP_TO_STEP").map(t),
     },
-    {
-      name: "Endings",
-      items: [
-        {
-          kind: "end_approved",
-          tool: "NOTIFY",
-          label: "End · approved",
-          icon: "task_alt",
-          accent: "bg-green-50 text-green-700 border-green-200",
-          blurb: "the request completes — wire every 'approved' path here",
-        },
-        {
-          kind: "end_rejected",
-          tool: "NOTIFY",
-          label: "End · rejected",
-          icon: "block",
-          accent: "bg-red-50 text-red-700 border-red-200",
-          blurb: "the request closes — wire every 'rejected' path here",
-        },
-      ],
-    },
   ];
 })();
 
@@ -661,8 +640,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     const n = graph.nodes.find((x) => x.id === id);
     if (!n) return "a deleted node";
     if (n.kind === "start") return "Request submitted";
-    if (n.kind === "end_approved") return "End · approved";
-    if (n.kind === "end_rejected") return "End · rejected";
     if (n.kind === "approval") return n.data.name || "Untitled approval";
     return toolMeta(n.data.tool as ToolId)?.label ?? "a node";
   }, [graph]);
@@ -704,7 +681,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       setError("Give the workflow a name first.");
       return;
     }
-    const built = graphToApi(graph, { slas, users, groups, departments: deps });
+    // save what is actually on screen — the canvas is the source of truth for
+    // structure; the editor state follows it (it also self-corrects any drift)
+    const live = canvasApi.current?.getGraph() ?? graph;
+    const built = graphToApi(live, { slas, users, groups, departments: deps });
     if (built.problems.length > 0) {
       const p = built.problems[0];
       setError(p.key ? `“${p.reason}” — fix the highlighted node.` : p.reason);
@@ -736,10 +716,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       // StepOrder) so the NEXT save updates steps in place instead of trying
       // to recreate + delete them (blocked once a step has approval decisions).
       const savedSteps = Array.isArray(d.Steps) ? [...d.Steps].sort((a, b) => (a.StepOrder ?? 0) - (b.StepOrder ?? 0)) : [];
-      let savedGraph = graph;
+      let savedGraph = live;
       if (savedSteps.length > 0) {
         const idByNodeId = new Map<string, string>();
-        walk(graph)
+        walk(live)
           .order.filter((n) => n.kind === "approval")
           .forEach((n, i) => {
             const s = savedSteps[i];
@@ -747,10 +727,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           });
         if (idByNodeId.size > 0) {
           savedGraph = {
-            ...graph,
-            nodes: graph.nodes.map((n) => (idByNodeId.has(n.id) ? { ...n, data: { ...n.data, id: idByNodeId.get(n.id) } } : n)),
+            ...live,
+            nodes: live.nodes.map((n) => (idByNodeId.has(n.id) ? { ...n, data: { ...n.data, id: idByNodeId.get(n.id) } } : n)),
           };
-          setGraph(savedGraph);
+          setGraph(savedGraph); // the canvas resyncs to it (keeps its selection)
         }
       }
       const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
@@ -918,11 +898,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                         ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                         : selectedNode.kind === "approval"
                           ? "border-surface-variant bg-surface-container-low text-primary-dark"
-                          : selectedNode.kind === "end_approved"
-                            ? "border-green-200 bg-green-50 text-green-700"
-                            : selectedNode.kind === "end_rejected"
-                              ? "border-red-200 bg-red-50 text-red-700"
-                              : toolMeta(selectedNode.data.tool as ToolId)?.accent ?? "border-surface-variant bg-surface-container-low"
+                          : toolMeta(selectedNode.data.tool as ToolId)?.accent ?? "border-surface-variant bg-surface-container-low"
                     }`}
                   >
                     <Icon
@@ -931,11 +907,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                           ? "play_circle"
                           : selectedNode.kind === "approval"
                             ? "verified_user"
-                            : selectedNode.kind === "end_approved"
-                              ? "task_alt"
-                              : selectedNode.kind === "end_rejected"
-                                ? "block"
-                                : toolMeta(selectedNode.data.tool as ToolId)?.icon ?? "bolt"
+                            : toolMeta(selectedNode.data.tool as ToolId)?.icon ?? "bolt"
                       }
                       className="text-[16px]"
                     />
@@ -946,9 +918,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                         ? "Trigger"
                         : selectedNode.kind === "approval"
                           ? "Approval"
-                          : selectedNode.kind === "action"
-                            ? toolMeta(selectedNode.data.tool as ToolId)?.label ?? "Action"
-                            : "Ending"}
+                          : toolMeta(selectedNode.data.tool as ToolId)?.label ?? "Action"}
                     </div>
                     <div className="truncate text-sm font-semibold text-on-surface">{nodeTitle(selectedNode.id)}</div>
                   </div>
@@ -1048,6 +1018,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                     <p className="text-[10px] leading-relaxed text-outline">
                       Wire the <span className="font-semibold text-[#15803d]">approved</span> port to what happens next,
                       and the <span className="font-semibold text-[#b42318]">rejected</span> port to the reject path.
+                      A branch may simply end — when the last step approves the request becomes approved, when it
+                      rejects the request becomes rejected (a plain status, no extra node).
                     </p>
                   </div>
                 )}
@@ -1067,19 +1039,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                       <ConditionRow n={selectedNode.data} disabled={ro} onPatch={patchSelected} />
                     </Field>
                   </div>
-                )}
-
-                {selectedNode.kind === "end_approved" && (
-                  <p className="text-xs leading-relaxed text-on-surface-variant">
-                    Every &ldquo;approved&rdquo; path in the flow should end here. It can accept several inputs — a request
-                    reaching this node completes as approved.
-                  </p>
-                )}
-                {selectedNode.kind === "end_rejected" && (
-                  <p className="text-xs leading-relaxed text-on-surface-variant">
-                    Every &ldquo;rejected&rdquo; path should end here. It can accept several inputs — a request reaching
-                    this node closes as rejected.
-                  </p>
                 )}
 
                 {/* wiring summary */}

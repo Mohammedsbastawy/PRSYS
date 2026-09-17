@@ -2,13 +2,16 @@
 //
 // The canvas is a directed graph:
 //
-//   START ──▶ [actions…] ──▶ APPROVAL ──approve──▶ [actions…] ──▶ … ──▶ END approved
+//   START ──▶ [actions…] ──▶ APPROVAL ──approve──▶ [actions…] ──▶ …
 //                                      │
-//                                      └──reject──▶ [actions…] ──▶ END rejected
+//                                      └──reject──▶ [actions…] ──▶ …
 //
 // * Every node except START has exactly ONE input edge — that edge IS its
 //   trigger (after submit / after this approval approves / after it rejects).
-// * END nodes are terminals that accept many inputs.
+// * A branch may simply END at any node — there are no special "end" nodes.
+//   The final outcome is a plain ticket status: the engine sets the request
+//   to APPROVED / REJECTED by itself when the last step completes or is
+//   rejected, and fires the matching final rules.
 // * Nothing is stored twice: Steps + Rules stay the engine source of truth,
 //   and the saved graph JSON (WFDefinitions.CanvasJson) carries layout + wiring.
 
@@ -28,7 +31,7 @@ import { parseStepCondition, validateConditionInput } from "./workflow-condition
 import { RULE_ACTIONS, parseRuleActionValue } from "./workflow-rules";
 import { RECIPES, SETTABLE_STATUSES } from "./workflow-tools";
 
-export type GNodeKind = "start" | "approval" | "action" | "end_approved" | "end_rejected";
+export type GNodeKind = "start" | "approval" | "action";
 
 export interface GNode {
   id: string;
@@ -82,10 +85,6 @@ export function outEdges(g: Graph, id: string): GEdge[] {
 export function inEdges(g: Graph, id: string): GEdge[] {
   return g.edges.filter((e) => e.target === id);
 }
-export function isTerminal(kind: GNodeKind): boolean {
-  return kind === "end_approved" || kind === "end_rejected";
-}
-
 /** walk `from` forward; returns every node reachable (from itself on) */
 function reachableFrom(g: Graph, from: string): Set<string> {
   const seen = new Set<string>([from]);
@@ -103,7 +102,7 @@ function reachableFrom(g: Graph, from: string): Set<string> {
 /**
  * Add a connection with n8n-style replacement rules:
  *  - one edge per source handle (a second wire from the same handle replaces it)
- *  - one input per node (a second wire into a node replaces it) — end nodes accept many
+ *  - one input per node (a second wire into a node replaces it)
  *  - no self wires, no cycles, START can't be wired into
  */
 export function connectGraph(g: Graph, conn: { source: string; sourceHandle?: string; target: string }): Graph {
@@ -111,14 +110,14 @@ export function connectGraph(g: Graph, conn: { source: string; sourceHandle?: st
   if (!source || !target || source === target) return g;
   const src = nodeById(g, source);
   const tgt = nodeById(g, target);
-  if (!src || !tgt || tgt.kind === "start" || isTerminal(src.kind)) return g;
+  if (!src || !tgt || tgt.kind === "start") return g;
   const handle = conn.sourceHandle ?? "out";
   if (src.kind === "approval" && handle !== "approve" && handle !== "reject") return g;
   // cycle: source must not be reachable from target
   if (reachableFrom(g, target).has(source)) return g;
   const edges = g.edges
     .filter((e) => !(e.source === source && (e.sourceHandle ?? "out") === handle))
-    .filter((e) => (isTerminal(tgt.kind) ? true : e.target !== target));
+    .filter((e) => e.target !== target);
   edges.push({ id: nextKey("edge"), source, sourceHandle: handle, target });
   return { nodes: g.nodes, edges };
 }
@@ -131,7 +130,6 @@ export function connectProblem(g: Graph, conn: { source: string; sourceHandle?: 
   if (!src || !tgt) return null;
   if (conn.source === conn.target) return "a node cannot connect to itself";
   if (tgt.kind === "start") return "nothing can feed into the start";
-  if (isTerminal(src.kind)) return "end nodes have no output ports";
   const handle = conn.sourceHandle ?? "out";
   if (src.kind === "approval" && handle !== "approve" && handle !== "reject") return "use the approval's approved / rejected ports";
   if (reachableFrom(g, conn.target).has(conn.source)) return "that would create a loop — a flow must always end";
@@ -349,9 +347,14 @@ export function apiToGraph(steps: BuilderStep[], rules: BuilderRule[], canvasJso
     try {
       const raw = JSON.parse(canvasJson) as { v?: number; nodes?: Record<string, unknown>[]; edges?: Record<string, unknown>[] };
       if (raw && raw.v === GRAPH_VERSION && Array.isArray(raw.nodes) && Array.isArray(raw.edges) && raw.nodes.length > 0) {
-        const nodes: GNode[] = raw.nodes.map((r) => {
+        const nodes: GNode[] = raw.nodes
+          // legacy terminals ("End · approved/rejected") no longer exist — the
+          // engine finalizes the request by itself; drop them (edges to them
+          // fall out via the id check below) and self-heal saved canvases
+          .filter((r) => r.kind !== "end_approved" && r.kind !== "end_rejected")
+          .map((r) => {
           const rd = (r.data ?? {}) as Record<string, unknown>;
-          const kind = (["start", "approval", "action", "end_approved", "end_rejected"].includes(String(r.kind)) ? r.kind : "action") as GNodeKind;
+          const kind = (["start", "approval", "action"].includes(String(r.kind)) ? r.kind : "action") as GNodeKind;
           const tool = (typeof rd.tool === "string" && ACTION_NODE_TOOLS.includes(rd.tool as ToolId) ? rd.tool : "NOTIFY") as ToolId;
           const id = String(r.id);
           const rp = r.position as { x?: number; y?: number } | undefined;
@@ -418,8 +421,6 @@ export function deriveGraph(steps: BuilderStep[], rules: BuilderRule[]): Graph {
     if (cond) Object.assign(n.data, { condField: cond.field, condOp: cond.op, condValue: cond.value });
     return addNode(n);
   });
-  const endApproved = addNode(makeNode("end_approved", "NOTIFY"));
-  const endRejected = addNode(makeNode("end_rejected", "NOTIFY"));
   // legacy "jump on approve" targets, remapped onto the new approval node ids
   sorted.forEach((s, i) => {
     const jumpIdx = sorted.findIndex((x) => x.WFStepID === s.ApproveTargetStepID);
@@ -467,7 +468,8 @@ export function deriveGraph(steps: BuilderStep[], rules: BuilderRule[]): Graph {
     else push("submit", r);
   }
 
-  // main line: start → submit actions → (approval + approve chain)* → end approved
+  // main line: start → submit actions → (approval + approve chain)* — a
+  // branch may end at any node; the engine sets the final status itself
   let tail = start;
   for (const r of chains.get("submit") ?? []) {
     const a = actionFromRule(r);
@@ -483,9 +485,8 @@ export function deriveGraph(steps: BuilderStep[], rules: BuilderRule[]): Graph {
       tail = x;
     }
   });
-  link(tail, tail.kind === "approval" ? "approve" : "out", endApproved);
 
-  // reject branches: each approval's reject output → its actions → end rejected
+  // reject branches: each approval's reject output → its actions (may end there)
   approvals.forEach((a, i) => {
     let p = a;
     for (const r of chains.get(`reject-${i}`) ?? []) {
@@ -493,7 +494,6 @@ export function deriveGraph(steps: BuilderStep[], rules: BuilderRule[]): Graph {
       link(p, "reject", x);
       p = x;
     }
-    link(p, p.kind === "approval" ? "reject" : "out", endRejected);
   });
   return autoLayout({ nodes, edges });
 }
@@ -529,9 +529,6 @@ export function autoLayout(g: Graph): Graph {
       }
     }
     for (const m of branchOrder) pos.set(m.id, { x: m.col * CELL.x, y: 90 + CELL.y });
-    // the rejected terminal belongs at the far right of its row
-    const endR = g.nodes.find((n) => n.kind === "end_rejected");
-    if (endR && branchOrder.length > 0) pos.set(endR.id, { x: (Math.max(...branchOrder.map((b) => b.col)) + 1) * CELL.x, y: 90 + CELL.y });
   }
   // anything left (unwired nodes) parks in a bottom row, visible and fixable
   let gi = 0;
@@ -566,31 +563,23 @@ export function mainLine(g: Graph): GNode[] {
 }
 
 /**
- * Append one of the preset recipes as a fresh, fully-connected chain that is
- * spliced into the main line: the tail's main port is taken over (if it wired a
- * terminal end node, the end node is re-attached after the chain), and the
- * recipe's chips wire in recipe order — approvals continue the main branch,
- * AFTER_APPROVE actions hang on the main branch, AFTER_REJECT actions chain on
- * the last approval's reject port.
+ * Append one of the preset recipes as a fresh, fully-connected chain spliced
+ * at the end of the main line: the recipe's chips wire in recipe order —
+ * approvals continue the main branch, AFTER_APPROVE actions hang on the main
+ * branch, AFTER_REJECT actions chain on the last approval's reject port.
+ * The tail's main port must be free (nothing is ever taken over).
  */
 export function appendRecipeToGraph(g: Graph, recipeId: string): Graph {
   const r = RECIPES.find((x) => x.id === recipeId);
   if (!r) return g;
   const line = mainLine(g);
-  const tail = [...line].reverse().find((n) => !isTerminal(n.kind));
+  const tail = line[line.length - 1];
   if (!tail) return g;
 
   const mainHandle = (n: GNode): SourceHandle => (n.kind === "approval" ? "approve" : "out");
-  const existing = g.edges.find((e) => e.source === tail.id && e.sourceHandle === mainHandle(tail));
-  const endKind = existing ? nodeById(g, existing.target)?.kind : undefined;
-  const endTarget = existing && endKind && isTerminal(endKind) ? existing.target : null;
-  // if the tail's main port goes to a non-terminal, the line is mid-flow: use a free port instead
-  if (existing && !endTarget) {
-    if (tail.kind !== "approval") return g;
-    if (g.edges.some((e) => e.source === tail.id && e.sourceHandle === "reject")) return g;
-  }
+  if (g.edges.some((e) => e.source === tail.id && e.sourceHandle === mainHandle(tail))) return g;
 
-  let ng: Graph = endTarget ? { ...g, edges: g.edges.filter((e) => e.id !== existing!.id) } : g;
+  let ng: Graph = g;
   const chips = r.build().filter((c) => c.tool !== "START");
   let mainPrev: GNode = tail;
   let rejPrev: GNode | null = null;
@@ -614,12 +603,6 @@ export function appendRecipeToGraph(g: Graph, recipeId: string): Graph {
       mainPrev = n;
     }
     i += 1;
-  }
-  // re-attach the taken-over end node after the new chain
-  if (endTarget) {
-    const last = mainPrev;
-    ng = connectGraph(ng, { source: last.id, sourceHandle: mainHandle(last), target: endTarget });
-    ng = { ...ng, nodes: ng.nodes.map((n) => (n.id === endTarget ? { ...n, position: { x: mainPrev.position.x + CELL.x, y: mainPrev.position.y } } : n)) };
   }
   return ng;
 }

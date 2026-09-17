@@ -6,7 +6,7 @@
  * Every card is an n8n-style compact tile: a colored icon chip, a title, a
  * one-line summary of what it does, and coloured ports —
  *   · approval nodes expose a green "approve" port and a red "reject" port
- *   · end nodes accept any number of inputs
+ *   · branches may end at any node — the engine sets the final status itself
  * The full settings live in the right-hand config rail; the card only shows
  * enough to read the flow at a glance.
  */
@@ -312,32 +312,8 @@ export function ActionNode(n: NodeProps) {
   );
 }
 
-export function EndNode(n: NodeProps) {
-  const ctx = useWfCtx();
-  const approved = n.type === "wf_end_approved";
-  return (
-    <Card selected={n.selected} issues={ctx.issues[n.id] ?? []} onDelete={() => ctx.onRemove(n.id)}>
-      <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <IconChip
-          name={approved ? "task_alt" : "block"}
-          accent={approved ? "bg-green-50 text-green-700 border-green-200" : "bg-red-50 text-red-700 border-red-200"}
-        />
-        <div className="min-w-0">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-outline">{approved ? "End · approved" : "End · rejected"}</div>
-          <div className="truncate text-[12px] font-medium text-on-surface-variant">
-            {approved ? "the request completes" : "the request is closed"}
-          </div>
-        </div>
-        <Port id="in" type="target" position={Position.Left} tone="target" />
-      </div>
-    </Card>
-  );
-}
-
 export const WF_NODE_TYPES = {
   wf_start: StartNode,
   wf_approval: ApprovalNode,
   wf_action: ActionNode,
-  wf_end_approved: EndNode,
-  wf_end_rejected: EndNode,
 };
