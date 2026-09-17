@@ -37,7 +37,7 @@ interface UserRow {
   Groups: { GroupID: string; Name: string }[];
 }
 interface RoleOpt { id: string; code: string; name: string }
-interface DepOpt { DEPID: string; Name: string; Code: string }
+interface DepOpt { DEPID: string; Name: string; Code: string; managerId: string | null }
 interface UserOpt { UserID: string; Name: string }
 
 interface ListResp { items: UserRow[]; total: number; totalPages: number }
@@ -111,7 +111,7 @@ export default function UsersPage() {
     if (!token) return;
     const h = { Authorization: `Bearer ${token}` };
     fetch("/api/roles", { headers: h }).then((r) => (r.ok ? r.json() : [])).then(setRoles).catch(() => {});
-    fetch("/api/departments", { headers: h }).then((r) => (r.ok ? r.json() : [])).then(setDeps).catch(() => {});
+    fetch("/api/departments", { headers: h }).then((r) => (r.ok ? r.json() : [])).then((d) => setDeps(Array.isArray(d) ? d.map((x) => ({ DEPID: x.DEPID, Name: x.Name, Code: x.Code, managerId: x.Manager?.UserID ?? null })) : [])).catch(() => {});
     fetch("/api/users?pageSize=500", { headers: h })
       .then((r) => (r.ok ? r.json() : { items: [] }))
       .then((d: ListResp) => setAllUsers(d.items.map((u) => ({ UserID: u.UserID, Name: u.Name }))))
@@ -283,6 +283,7 @@ export default function UsersPage() {
                             {u.UserID === me?.id && <span className="ml-1 text-[11px] font-normal text-outline">(you)</span>}
                           </div>
                           <div className="truncate text-[11px] text-outline">{u.Email}</div>
+                          {u.Manager && <div className="truncate text-[11px] text-outline">Direct manager: {u.Manager.Name}</div>}
                         </div>
                       </div>
                     </td>
@@ -467,13 +468,24 @@ function UserFormModal({
             </select>
           </Field>
           <Field label="Department">
-            <select className="input" value={depId} onChange={(e) => setDepId(e.target.value)}>
+            <select
+              className="input"
+              value={depId}
+              onChange={(e) => {
+                const v = e.target.value;
+                setDepId(v);
+                // the normal case: the direct manager is this department's manager —
+                // fill it in automatically; the admin can still override it below
+                const depMgr = deps.find((d) => d.DEPID === v)?.managerId;
+                if (depMgr) setManagerId(depMgr);
+              }}
+            >
               <option value="">— None —</option>
               {deps.map((d) => <option key={d.DEPID} value={d.DEPID}>{d.Name}</option>)}
             </select>
           </Field>
         </div>
-        <Field label="Direct Manager" hint="Used by workflows that route approvals to the direct manager.">
+        <Field label="Direct Manager" hint="Defaults to the selected department's manager — override per user when the chain differs. Workflows that route to “the requester's direct manager” use this.">
           <select className="input" value={managerId} onChange={(e) => setManagerId(e.target.value)}>
             <option value="">— None —</option>
             {managers.map((m) => <option key={m.UserID} value={m.UserID}>{m.Name}</option>)}
