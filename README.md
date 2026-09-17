@@ -77,63 +77,42 @@ npm run dev
 
 ### Workflow builder (`/workflows/[id]`)
 
-A three-panel canvas built the way n8n / ServiceNow Flow Designer lay it out, and **nothing is pre-created**:
+A visual, n8n-style canvas built on **@xyflow/react** (React Flow) — three panels:
 
 | Panel | What it holds |
 | --- | --- |
-| **Tools** (left) | searchable, grouped palette — drag a tool onto the canvas, or click it to append |
-| **Canvas** (middle) | your nodes, in the order you dropped them; drag to reorder, drag into a port to attach |
-| **Flow / Readiness / Forms** (right) | a tree of the flow, the list of open problems (click one to jump to the node), and the attached forms |
+| **Nodes** (left) | searchable palette — drag a node onto the canvas at any point, or click to add it at the end of the flow; preset starters below |
+| **Canvas** (middle) | the flow itself: drag nodes anywhere, drag a coloured port to connect, click a node to configure it; undo/redo + fit-view toolbar, minimap, dot grid |
+| **Config / Readiness / Forms** (right) | settings for the selected node (with a live "runs after / leads to" summary), the list of open problems (click one to jump to the node), and the attached forms |
 
-Tools available on the palette (`src/lib/workflow-tools.ts`):
+Node kinds:
 
-* **Requester submits** — a marker node with no settings; drop actions on its port to run them at submit time.
-* **Nothing is pre-selected.** A new node has no name, no approver type, no trigger and no payload value: every
-  select opens on `— choose —` / `not set`, and the priority chips highlight nothing until you pick. A flow
-  does not have to start with an approver at all — automations hanging on the submit marker are a complete workflow
-  (zero `WFSteps` rows).
-* Unchosen optional fields (quorum / approval mode, comment policy, due days) are **omitted** from the payload so the
-  API's documented default applies, and `apiToNodes` maps those defaults back to an empty box instead of showing a
-  value you never picked. Quorum, comment policy, due days and approve/reject routing are deliberately **not exposed
-  in the UI**: any one approver is enough (the default), comments stay optional, due time is controlled by an
-  **Apply SLA policy** step, approving moves on to the next node and rejecting ends the request; redirecting is done
-  with a **Jump to a node** tool instead. Saved values for all of these still round-trip unchanged. Same for the
-  name: `WFSteps.StepName` cannot be empty, so an unnamed approval gets a label derived from who decides
-  (`Department manager approval`) at save time and loads back as an empty box.
-* The only two mandatory picks are **who decides** (an approval node) and **when it runs** (an action node);
-  anything else left unset is reported at save time rather than guessed for you.
-* Presets in the palette wire **ports only** — they never fill in a priority, a policy or a name.
-* **Approval / decision** — who decides (requester's dept manager, direct manager, one person, group, role, any
-  approver) and an *only if* gate. It exposes two drop ports — **if approved**
-  (green) and **if rejected** (red), each with a **+ add** button (or drag) — and nothing runs there until you drop
-  a tool on them. Approving continues to the next node; rejecting ends the request. Due time comes from an
-  **Apply SLA policy** step, not from the approval itself.
-* **Set priority**, **Set ticket status**, **Apply SLA policy**, **Assign an owner**, **Assign to a group**,
-  **Assign to a department**, **Notify people** — one action
-  each, with their own *only if* condition. A request carries a single assignee, so **Assign to a group** lands it on
-  the group's first active member (stable pick) and notifies the whole group so a colleague can take it over;
-  **Assign to a department** makes the department's manager the assignee (skipped if the department has no manager).
-* **Jump to a node** — move the approval chain elsewhere (a Jump stops the rest of its group).
-* Optional **presets** at the bottom of the palette insert an editable chain (e.g. *approve → set URGENT → apply
-  SLA*); they are never applied on their own.
+* **Request submitted** (trigger) — the moment a request enters the queue; its port feeds everything that runs at submit. One per flow, cannot be deleted.
+* **Approval / decision** — who decides (dept manager, direct manager, one person, group, role, any approver) plus an *only if* gate. It exposes two coloured output ports — **approved** (green) and **rejected** (red) — and whatever you wire to them runs on that answer.
+* **Actions** — Set priority · Set ticket status · Apply SLA policy · Assign an owner / a group / a department · Notify people · Jump to a node. One input, one output, each with its own *only if* condition.
+* **End · approved / rejected** — terminals that accept **several** inputs; every approved path should end in one, every rejected path in the other.
 
-How it maps to the database (`src/lib/workflow-builder.ts`, React-free and round-trip stable):
+Connection rules (enforced while you drag, with a hint when refused): no loops, a node takes one input (end nodes excepted), one wire per output port (re-wiring replaces the old one), nothing feeds into the start, and an approval can never be reached through a *rejected* port.
 
-* approval nodes → `WFSteps` in canvas order · action nodes → `WFRules` · the submit marker → nothing on its own.
-* the port a node sits in *is* its trigger: `ON_SUBMIT`, `ON_STEP_APPROVED`/`ON_STEP_REJECTED` bound to that step
-  through `ActionValue.fireOnStepOrder` (so a node follows its approval when you drag it to another one), both
-  ports at once = two rows that merge back into one node, and the two end-of-request ports = `ON_REQUEST_APPROVED`
-  / `ON_REQUEST_REJECTED`. Rules never bound to a step stay flow-wide, which is how pre-existing rules load.
-* `Apply SLA policy` re-snapshots `SLAPolicyID`, `ResponseDueAt`, `ResolveDueAt` from the target matching the
-  request's *current* priority — so “approve → URGENT → 1h/8h clock” works as one chain in order.
-* `Set ticket status` may write `DRAFT` (returns the request to the requester — the open step is dropped and they
-  re-edit + resubmit), `PO_REGISTERED`, `COMPLETED`, `FULFILLED`, `CLARIFICATION_REQUESTED` (the requester is
-  notified) or `CANCELLED`; `PENDING_APPROVAL`/`APPROVED`/`REJECTED` are rejected by the API because the approval
-  engine owns them (a rule may never fake an approver's decision, and "pending" is set automatically on submit).
-* **No schema change** — everything rides in existing columns and the `ActionValue` JSON, so no `prisma db push`.
-* Editing aids: undo/redo of structure (Ctrl+Z / Ctrl+Shift+Z), `/` focuses the tool search, Delete removes the
-  selected node, Ctrl/Cmd+S saves, pausing a node keeps it as an inactive rule instead of deleting it, and an
-  unsaved-changes badge + unload guard track the diff against the last save.
+**Two stores, one source of truth.** The canvas (node positions + wiring) is saved as `WFDefinitions.CanvasJson`
+(TEXT), but the engine still runs on `WFSteps` / `WFRules` — on every save `src/lib/workflow-graph.ts` (pure,
+round-trip tested, no React) derives both from the graph, so they can never drift:
+
+* approval nodes → `WFSteps` in execution order · action nodes → `WFRules` whose trigger is the edge that feeds the
+  node: start → `ON_SUBMIT`, an approval's green port → `ON_STEP_APPROVED` (bound by `ActionValue.fireOnStepOrder`),
+  red port → `ON_STEP_REJECTED`; chains of actions keep their step, the "End" terminals carry `ON_REQUEST_APPROVED` /
+  `ON_REQUEST_REJECTED`.
+* **`npx prisma db push` is required once** for the new `CanvasJson` column.
+* Legacy workflows (no `CanvasJson` yet) load by deriving a graph from their saved steps/rules — deterministic
+  layout, hidden legacy settings (approval mode, due days, comment policy, on-approve/on-reject, jump targets)
+  carried through unchanged and re-saved with the canvas on first save.
+* Statuses an action may write: `DRAFT`, `PO_REGISTERED`, `COMPLETED`, `FULFILLED`, `CLARIFICATION_REQUESTED`,
+  `CANCELLED` — `PENDING_APPROVAL`/`APPROVED`/`REJECTED` stay owned by the approval engine.
+* Preset starters (e.g. *approve → set URGENT → apply SLA*) are **spliced into the end of the flow** with editable,
+  empty payloads; they wire nodes only.
+* Editing aids: undo/redo of structure (Ctrl+Z / Ctrl+Shift+Z), fit-to-view, `/` focuses the node search, Delete
+  removes the selected node, Ctrl/Cmd+S saves, and an unsaved-changes badge + unload guard track the diff against
+  the last save.
 
 ### Lost the admin password?
 

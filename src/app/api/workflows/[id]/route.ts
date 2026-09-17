@@ -93,6 +93,8 @@ const wfSchema = z.object({
   status: z.enum(['ACTIVE', 'DRAFT']).default('ACTIVE'),
   steps: z.array(stepSchema).default([]),
   rules: z.array(ruleSchema).default([]),
+  // optional visual canvas (React Flow graph JSON) — stored for the editor, unused by the engine
+  canvasJson: z.string().max(1_500_000).optional().nullable(),
 })
 
 type StepInput = {
@@ -114,10 +116,12 @@ type RuleInput = {
   name: string
   trigger: 'ON_SUBMIT' | 'ON_STEP_APPROVED' | 'ON_STEP_REJECTED' | 'ON_REQUEST_APPROVED' | 'ON_REQUEST_REJECTED'
   condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
-  action: 'SET_PRIORITY' | 'SET_SLA' | 'SET_STATUS' | 'ASSIGN_TO_USER' | 'NOTIFY' | 'JUMP_TO_STEP'
+  action: 'SET_PRIORITY' | 'SET_SLA' | 'SET_STATUS' | 'ASSIGN_TO_USER' | 'ASSIGN_TO_GROUP' | 'ASSIGN_TO_DEPARTMENT' | 'NOTIFY' | 'JUMP_TO_STEP'
   actionValue?: {
     priority?: string
     userId?: string
+    assignGroupId?: string
+    assignDepId?: string
     notifyTargetType?: 'USER' | 'GROUP' | 'ROLE' | 'DEPARTMENT_MANAGER' | 'REQUESTER'
     notifyTargetId?: string | null
     notifyTitle?: string
@@ -315,6 +319,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
         Name: data!.name.trim(),
         Description: data!.description ?? null,
         Status: data!.status,
+        CanvasJson: data!.canvasJson || null,
       },
     })
     // automation rules are safe to replace in full (nothing references them row-wise)

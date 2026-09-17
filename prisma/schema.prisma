@@ -129,6 +129,8 @@ model WFDefinitions {
   Name           String
   Description    String?
   Status         String   @default("ACTIVE")
+  // the visual canvas (React Flow graph JSON) — the engine still runs on Steps/Rules
+  CanvasJson     String?  @db.Text
   CreatedAt      DateTime @default(now())
   UpdatedAt      DateTime @updatedAt
 

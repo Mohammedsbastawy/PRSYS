@@ -271,11 +271,11 @@ export function approvalLabel(nodes: FlowNode[], key: string): string | null {
   return approvalNameAt(nodes, approvalNodes(nodes).findIndex((a) => a.key === key));
 }
 
-function conditionOf(n: FlowNode): { field: string; op: string; value: string } | null {
+export function conditionOf(n: FlowNode): { field: string; op: string; value: string } | null {
   return n.condField === "none" ? null : { field: n.condField, op: n.condOp, value: n.condValue.trim() };
 }
 
-function actionPayload(n: FlowNode, nodes: FlowNode[]): RuleActionValue {
+export function actionPayload(n: FlowNode, nodes: FlowNode[]): RuleActionValue {
   const out: RuleActionValue = {};
   switch (n.tool) {
     case "SET_PRIORITY":

@@ -34,10 +34,12 @@ const ruleSchema = z.object({
   name: z.string().min(1).max(150),
   trigger: z.enum(['ON_SUBMIT', 'ON_STEP_APPROVED', 'ON_STEP_REJECTED', 'ON_REQUEST_APPROVED', 'ON_REQUEST_REJECTED']),
   condition: conditionSchema,
-  action: z.enum(['SET_PRIORITY', 'SET_SLA', 'SET_STATUS', 'ASSIGN_TO_USER', 'NOTIFY', 'JUMP_TO_STEP']),
+  action: z.enum(['SET_PRIORITY', 'SET_SLA', 'SET_STATUS', 'ASSIGN_TO_USER', 'ASSIGN_TO_GROUP', 'ASSIGN_TO_DEPARTMENT', 'NOTIFY', 'JUMP_TO_STEP']),
   actionValue: z.object({
     priority: z.string().optional(),
     userId: z.string().optional(),
+    assignGroupId: z.string().optional(),
+    assignDepId: z.string().optional(),
     notifyTargetType: z.enum(['USER', 'GROUP', 'ROLE', 'DEPARTMENT_MANAGER', 'REQUESTER']).optional(),
     notifyTargetId: z.string().optional().nullable(),
     notifyTitle: z.string().max(150).optional(),
@@ -57,6 +59,8 @@ const wfSchema = z.object({
   status: z.enum(['ACTIVE', 'DRAFT']).default('ACTIVE'),
   steps: z.array(stepSchema).default([]),
   rules: z.array(ruleSchema).default([]),
+  // optional visual canvas (React Flow graph JSON) — stored for the editor, unused by the engine
+  canvasJson: z.string().max(1_500_000).optional().nullable(),
 })
 
 type StepInput = {
@@ -249,6 +253,7 @@ export async function POST(req: NextRequest) {
       Name: data!.name.trim(),
       Description: data!.description ?? null,
       Status: data!.status,
+      CanvasJson: data!.canvasJson || null,
       Steps: {
         create: (data!.steps ?? []).map((s, i) => stepRow(s, i)),
       },
