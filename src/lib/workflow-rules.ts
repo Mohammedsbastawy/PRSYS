@@ -15,6 +15,8 @@ export const RULE_ACTIONS = [
   { value: 'SET_SLA', label: 'Apply an SLA policy' },
   { value: 'SET_STATUS', label: 'Set ticket status' },
   { value: 'ASSIGN_TO_USER', label: 'Assign to a user' },
+  { value: 'ASSIGN_TO_GROUP', label: 'Assign to a group' },
+  { value: 'ASSIGN_TO_DEPARTMENT', label: 'Assign to a department' },
   { value: 'NOTIFY', label: 'Notify people' },
   { value: 'JUMP_TO_STEP', label: 'Jump to a step' },
 ] as const
@@ -33,6 +35,10 @@ export interface RuleActionValue {
   priority?: string
   /** ASSIGN_TO_USER */
   userId?: string
+  /** ASSIGN_TO_GROUP — routes to the group; lands on the first active member, whole group notified */
+  assignGroupId?: string
+  /** ASSIGN_TO_DEPARTMENT — the department manager becomes the assignee */
+  assignDepId?: string
   /** NOTIFY */
   notifyTargetType?: 'USER' | 'GROUP' | 'ROLE' | 'DEPARTMENT_MANAGER' | 'REQUESTER'
   notifyTargetId?: string | null
@@ -87,6 +93,7 @@ export function describeRule(
     userName?: (id: string) => string
     roleName?: (id: string) => string
     slaName?: (id: string) => string
+    depName?: (id: string) => string
     stepName?: (order: number) => string
   }
 ): string {
@@ -102,6 +109,12 @@ export function describeRule(
       break
     case 'ASSIGN_TO_USER':
       then = `assign → ${v.userId ? look?.userName?.(v.userId) ?? 'user' : 'user'}`
+      break
+    case 'ASSIGN_TO_GROUP':
+      then = `assign → group ${v.assignGroupId ? look?.groupName?.(v.assignGroupId) ?? 'group' : 'group'}`
+      break
+    case 'ASSIGN_TO_DEPARTMENT':
+      then = `assign → department ${v.assignDepId ? look?.depName?.(v.assignDepId) ?? 'department' : 'department'}`
       break
     case 'NOTIFY': {
       const tgt =

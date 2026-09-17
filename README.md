@@ -108,8 +108,11 @@ Tools available on the palette (`src/lib/workflow-tools.ts`):
   (green) and **if rejected** (red), each with a **+ add** button (or drag) — and nothing runs there until you drop
   a tool on them. Approving continues to the next node; rejecting ends the request. Due time comes from an
   **Apply SLA policy** step, not from the approval itself.
-* **Set priority**, **Set ticket status**, **Apply SLA policy**, **Assign an owner**, **Notify people** — one action
-  each, with their own *only if* condition.
+* **Set priority**, **Set ticket status**, **Apply SLA policy**, **Assign an owner**, **Assign to a group**,
+  **Assign to a department**, **Notify people** — one action
+  each, with their own *only if* condition. A request carries a single assignee, so **Assign to a group** lands it on
+  the group's first active member (stable pick) and notifies the whole group so a colleague can take it over;
+  **Assign to a department** makes the department's manager the assignee (skipped if the department has no manager).
 * **Jump to a node** — move the approval chain elsewhere (a Jump stops the rest of its group).
 * Optional **presets** at the bottom of the palette insert an editable chain (e.g. *approve → set URGENT → apply
   SLA*); they are never applied on their own.

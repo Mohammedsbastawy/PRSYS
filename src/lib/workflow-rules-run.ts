@@ -85,6 +85,56 @@ export async function runWorkflowRules(opts: {
         result.applied.push(`Rule "${rule.Name}": assigned → ${target.Name}`)
         break
       }
+      case 'ASSIGN_TO_GROUP': {
+        if (!v.assignGroupId) break
+        const group = await prisma.groups.findUnique({ where: { GroupID: v.assignGroupId }, select: { Name: true } })
+        const members = await prisma.groupMembers.findMany({ where: { GroupID: v.assignGroupId }, select: { UserID: true } })
+        if (members.length === 0) break
+        const active = await prisma.users.findMany({
+          where: { UserID: { in: members.map((m) => m.UserID) }, IsActive: true },
+          select: { UserID: true, Name: true },
+        })
+        if (active.length === 0) break
+        // the request carries a single assignee, so it lands on one member —
+        // name order keeps the pick stable across runs, and the whole group
+        // is notified so a colleague can take it over
+        const target = active.slice().sort((a, b) => a.Name.localeCompare(b.Name))[0]
+        patch.AssigneeID = target.UserID
+        request.AssigneeID = target.UserID
+        result.newAssigneeId = target.UserID
+        const groupVisible = await filterVisibleUserIds(active.map((u) => u.UserID), request.FormTemplateID)
+        if (groupVisible.length > 0) {
+          await notifyUsers(groupVisible, {
+            title: `Request ${request.TrackingNumber} assigned to ${group?.Name ?? 'your group'}`,
+            message: `Workflow rule "${rule.Name}" routed it to your group — currently with ${target.Name}.`,
+            type: 'REQUEST_ASSIGNED',
+            requestId: request.RequestID,
+          })
+        }
+        result.applied.push(`Rule "${rule.Name}": assigned → group ${group?.Name ?? ''} (with ${target.Name})`)
+        break
+      }
+      case 'ASSIGN_TO_DEPARTMENT': {
+        if (!v.assignDepId) break
+        const dep = await prisma.dEP.findUnique({ where: { DEPID: v.assignDepId }, select: { Name: true, ManagerID: true } })
+        if (!dep?.ManagerID) break
+        const mgr = await prisma.users.findUnique({ where: { UserID: dep.ManagerID }, select: { UserID: true, Name: true, IsActive: true } })
+        if (!mgr?.IsActive) break
+        patch.AssigneeID = mgr.UserID
+        request.AssigneeID = mgr.UserID
+        result.newAssigneeId = mgr.UserID
+        const depVisible = await filterVisibleUserIds([mgr.UserID], request.FormTemplateID)
+        if (depVisible.length > 0) {
+          await notifyUsers(depVisible, {
+            title: `Request ${request.TrackingNumber} assigned to you`,
+            message: `Workflow rule "${rule.Name}" routed it to the ${dep.Name} department.`,
+            type: 'REQUEST_ASSIGNED',
+            requestId: request.RequestID,
+          })
+        }
+        result.applied.push(`Rule "${rule.Name}": assigned → ${dep.Name} (${mgr.Name})`)
+        break
+      }
       case 'NOTIFY': {
         let ids: string[] = []
         if (v.notifyTargetType === 'USER' && v.notifyTargetId) {

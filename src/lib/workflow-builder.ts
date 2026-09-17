@@ -29,6 +29,8 @@ export type ToolId =
   | "SET_STATUS"
   | "SET_SLA"
   | "ASSIGN_TO_USER"
+  | "ASSIGN_TO_GROUP"
+  | "ASSIGN_TO_DEPARTMENT"
   | "NOTIFY"
   | "JUMP_TO_STEP";
 
@@ -84,6 +86,8 @@ export interface FlowNode {
   status: string;
   slaPolicyId: string;
   userId: string;
+  assignGroupId: string;
+  assignDepId: string;
   notifyTargetType: string;
   notifyUserId: string;
   notifyGroupId: string;
@@ -127,6 +131,14 @@ export interface UserOption {
   UserID: string;
   Name: string;
 }
+export interface GroupOption {
+  id: string;
+  name: string;
+}
+export interface DepOption {
+  DEPID: string;
+  Name: string;
+}
 
 let seq = 0;
 export function nextKey(prefix: string): string {
@@ -134,7 +146,7 @@ export function nextKey(prefix: string): string {
   return `${prefix}-${Date.now().toString(36)}-${seq}`;
 }
 
-export const ACTION_TOOLS: ToolId[] = ["SET_PRIORITY", "SET_STATUS", "SET_SLA", "ASSIGN_TO_USER", "NOTIFY", "JUMP_TO_STEP"];
+export const ACTION_TOOLS: ToolId[] = ["SET_PRIORITY", "SET_STATUS", "SET_SLA", "ASSIGN_TO_USER", "ASSIGN_TO_GROUP", "ASSIGN_TO_DEPARTMENT", "NOTIFY", "JUMP_TO_STEP"];
 
 export function isActionTool(t: ToolId): boolean {
   return ACTION_TOOLS.includes(t);
@@ -167,6 +179,8 @@ export function newNode(tool: ToolId, over: Partial<FlowNode> = {}): FlowNode {
     status: "",
     slaPolicyId: "",
     userId: "",
+    assignGroupId: "",
+    assignDepId: "",
     notifyTargetType: "",
     notifyUserId: "",
     notifyGroupId: "",
@@ -276,6 +290,12 @@ function actionPayload(n: FlowNode, nodes: FlowNode[]): RuleActionValue {
     case "ASSIGN_TO_USER":
       if (n.userId) out.userId = n.userId;
       break;
+    case "ASSIGN_TO_GROUP":
+      if (n.assignGroupId) out.assignGroupId = n.assignGroupId;
+      break;
+    case "ASSIGN_TO_DEPARTMENT":
+      if (n.assignDepId) out.assignDepId = n.assignDepId;
+      break;
     case "NOTIFY":
       out.notifyTargetType = n.notifyTargetType as NonNullable<RuleActionValue["notifyTargetType"]>;
       out.notifyTargetId =
@@ -329,6 +349,8 @@ const TOOL_LABELS: Partial<Record<ToolId, string>> = {
   SET_STATUS: "Set ticket status",
   SET_SLA: "Apply SLA policy",
   ASSIGN_TO_USER: "Assign an owner",
+  ASSIGN_TO_GROUP: "Assign to a group",
+  ASSIGN_TO_DEPARTMENT: "Assign to a department",
   NOTIFY: "Notify people",
   JUMP_TO_STEP: "Jump to a node",
 };
@@ -336,7 +358,7 @@ const TOOL_LABELS: Partial<Record<ToolId, string>> = {
 export function derivedNodeName(
   n: FlowNode,
   nodes: FlowNode[],
-  opts: { slas?: SlaOption[]; users?: UserOption[] } = {}
+  opts: { slas?: SlaOption[]; users?: UserOption[]; groups?: GroupOption[]; departments?: DepOption[] } = {}
 ): string {
   if (n.name.trim()) return n.name.trim().slice(0, 150);
   // a field the admin left unset must not produce a half-empty audit label
@@ -354,6 +376,14 @@ export function derivedNodeName(
       return n.userId
         ? `Assign → ${opts.users?.find((u) => u.UserID === n.userId)?.Name ?? "user"}`
         : label("user", "Assign an owner");
+    case "ASSIGN_TO_GROUP":
+      return n.assignGroupId
+        ? `Assign → group ${opts.groups?.find((g) => g.id === n.assignGroupId)?.name ?? "group"}`
+        : label("group", "Assign to a group");
+    case "ASSIGN_TO_DEPARTMENT":
+      return n.assignDepId
+        ? `Assign → ${opts.departments?.find((d) => d.DEPID === n.assignDepId)?.Name ?? "department"}`
+        : label("department", "Assign to a department");
     case "NOTIFY":
       return n.notifyTitle.trim() || "Notify people";
     case "JUMP_TO_STEP":
@@ -372,7 +402,7 @@ export interface BuiltWorkflow {
 
 export function nodesToApi(
   nodes: FlowNode[],
-  opts: { slas?: SlaOption[]; users?: UserOption[] } = {}
+  opts: { slas?: SlaOption[]; users?: UserOption[]; groups?: GroupOption[]; departments?: DepOption[] } = {}
 ): BuiltWorkflow {
   const approvals = approvalNodes(nodes);
   const problems: { key: string; reason: string }[] = [];
@@ -472,6 +502,8 @@ export function sameAction(a: FlowNode, b: FlowNode): boolean {
     a.status === b.status &&
     a.slaPolicyId === b.slaPolicyId &&
     a.userId === b.userId &&
+    a.assignGroupId === b.assignGroupId &&
+    a.assignDepId === b.assignDepId &&
     a.notifyTargetType === b.notifyTargetType &&
     a.notifyUserId === b.notifyUserId &&
     a.notifyGroupId === b.notifyGroupId &&
@@ -535,6 +567,8 @@ export function apiToNodes(nodes0: BuilderStep[], rules: BuilderRule[], opts: { 
       status: v.status ?? "COMPLETED",
       slaPolicyId: v.slaPolicyId ?? "",
       userId: v.userId ?? "",
+      assignGroupId: v.assignGroupId ?? "",
+      assignDepId: v.assignDepId ?? "",
       notifyTargetType: v.notifyTargetType ?? "REQUESTER",
       notifyUserId: v.notifyTargetType === "USER" ? v.notifyTargetId ?? "" : "",
       notifyGroupId: v.notifyTargetType === "GROUP" ? v.notifyTargetId ?? "" : "",

@@ -77,6 +77,12 @@ interface GroupRow {
   id: string;
   name: string;
 }
+interface DepRow {
+  DEPID: string;
+  Name: string;
+  Code?: string;
+  managerName?: string | null;
+}
 interface UserRow {
   UserID: string;
   Name: string;
@@ -351,6 +357,7 @@ interface NodeCtx extends ZoneHandlers {
   nodes: FlowNode[];
   roles: RoleRow[];
   groups: GroupRow[];
+  deps: DepRow[];
   users: UserRow[];
   slas: SlaRow[];
   ro: boolean;
@@ -833,6 +840,35 @@ function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
         </select>
       )}
 
+      {n.tool === "ASSIGN_TO_GROUP" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <select className="input w-auto !py-1 text-xs" disabled={ctx.ro} value={n.assignGroupId} onChange={(e) => ctx.patch(n.key, { assignGroupId: e.target.value })}>
+            <option value="">— which group? —</option>
+            {ctx.groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name}
+              </option>
+            ))}
+          </select>
+          <span className="text-[11px] text-outline">lands on the first active member · the whole group is notified</span>
+        </div>
+      )}
+
+      {n.tool === "ASSIGN_TO_DEPARTMENT" && (
+        <div className="flex flex-wrap items-center gap-2">
+          <select className="input w-auto !py-1 text-xs" disabled={ctx.ro} value={n.assignDepId} onChange={(e) => ctx.patch(n.key, { assignDepId: e.target.value })}>
+            <option value="">— which department? —</option>
+            {ctx.deps.map((d) => (
+              <option key={d.DEPID} value={d.DEPID}>
+                {d.Name}
+                {d.Code ? ` (${d.Code})` : ""}
+              </option>
+            ))}
+          </select>
+          <span className="text-[11px] text-outline">the department&apos;s manager becomes the assignee</span>
+        </div>
+      )}
+
       {n.tool === "NOTIFY" && (
         <div className="grid gap-2 sm:grid-cols-2">
           <select
@@ -1043,6 +1079,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
 
   const [roles, setRoles] = useState<RoleRow[]>([]);
   const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [deps, setDeps] = useState<DepRow[]>([]);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [slas, setSlas] = useState<SlaRow[]>([]);
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -1080,6 +1117,13 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       .then((r) => (r.ok ? r.json() : []))
       .then((d: GroupRow[]) => setGroups(Array.isArray(d) ? d : []))
       .catch(() => setGroups([]));
+    fetch("/api/departments", { headers: h })
+      .then((r) => (r.ok ? r.json() : []))
+      .then(
+        (d: (DepRow & { Manager?: { Name: string } | null })[]) =>
+          setDeps(Array.isArray(d) ? d.map((x) => ({ DEPID: x.DEPID, Name: x.Name, Code: x.Code, managerName: x.Manager?.Name ?? null })) : [])
+      )
+      .catch(() => setDeps([]));
     fetch("/api/users/lookup", { headers: h })
       .then((r) => (r.ok ? r.json() : []))
       .then((d: UserRow[]) => setUsers(Array.isArray(d) ? d : []))
@@ -1392,6 +1436,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         if (n.tool === "SET_PRIORITY" && !n.priority) push(n.key, "pick a priority");
         if (n.tool === "SET_SLA" && !n.slaPolicyId) push(n.key, "choose an SLA policy");
         if (n.tool === "ASSIGN_TO_USER" && !n.userId) push(n.key, "choose the user to assign");
+        if (n.tool === "ASSIGN_TO_GROUP" && !n.assignGroupId) push(n.key, "choose the group to assign");
+        if (n.tool === "ASSIGN_TO_DEPARTMENT" && !n.assignDepId) push(n.key, "choose the department to assign");
         if (n.tool === "JUMP_TO_STEP" && !n.jumpToStepKey) push(n.key, "choose the node to land on");
         if (n.tool === "SET_STATUS" && !SETTABLE_STATUSES.some((s) => s.value === n.status)) push(n.key, "choose a status");
         if (n.tool === "NOTIFY" && !n.notifyTargetType) push(n.key, "choose who to notify");
@@ -1434,7 +1480,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       focusNode(issueList[0].key);
       return;
     }
-    const built = nodesToApi(nodes, { slas, users });
+    const built = nodesToApi(nodes, { slas, users, groups, departments: deps });
     if (built.problems.length > 0) {
       setError(`“${built.problems[0].reason}” — fix the node before saving.`);
       focusNode(built.problems[0].key);
@@ -1532,6 +1578,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     nodes,
     roles,
     groups,
+    deps,
     users,
     slas,
     ro,

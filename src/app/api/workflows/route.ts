@@ -78,10 +78,12 @@ type RuleInput = {
   name: string
   trigger: 'ON_SUBMIT' | 'ON_STEP_APPROVED' | 'ON_STEP_REJECTED' | 'ON_REQUEST_APPROVED' | 'ON_REQUEST_REJECTED'
   condition?: { field: 'totalValue' | 'itemCount' | 'priority'; op: '==' | '!=' | '>' | '<' | '>=' | '<=' | 'in'; value: string } | null
-  action: 'SET_PRIORITY' | 'SET_SLA' | 'SET_STATUS' | 'ASSIGN_TO_USER' | 'NOTIFY' | 'JUMP_TO_STEP'
+  action: 'SET_PRIORITY' | 'SET_SLA' | 'SET_STATUS' | 'ASSIGN_TO_USER' | 'ASSIGN_TO_GROUP' | 'ASSIGN_TO_DEPARTMENT' | 'NOTIFY' | 'JUMP_TO_STEP'
   actionValue?: {
     priority?: string
     userId?: string
+    assignGroupId?: string
+    assignDepId?: string
     notifyTargetType?: 'USER' | 'GROUP' | 'ROLE' | 'DEPARTMENT_MANAGER' | 'REQUESTER'
     notifyTargetId?: string | null
     notifyTitle?: string
@@ -106,6 +108,8 @@ function validateRules(rules: RuleInput[], stepCount: number): string | null {
     if (r.action === 'SET_PRIORITY' && !['LOW', 'MEDIUM', 'HIGH', 'URGENT'].includes(v.priority ?? ''))
       return `Rule "${r.name}": choose a priority`
     if (r.action === 'ASSIGN_TO_USER' && !v.userId) return `Rule "${r.name}": choose a user`
+    if (r.action === 'ASSIGN_TO_GROUP' && !v.assignGroupId) return `Rule "${r.name}": choose a group`
+    if (r.action === 'ASSIGN_TO_DEPARTMENT' && !v.assignDepId) return `Rule "${r.name}": choose a department`
     if (r.action === 'SET_SLA' && !v.slaPolicyId) return `Rule "${r.name}": choose an SLA policy`
     if (r.action === 'SET_STATUS' && !['DRAFT', 'PO_REGISTERED', 'COMPLETED', 'FULFILLED', 'CLARIFICATION_REQUESTED', 'CANCELLED'].includes(v.status ?? ''))
       return `Rule "${r.name}": choose a status the flow may set (approval statuses are owned by the engine)`
