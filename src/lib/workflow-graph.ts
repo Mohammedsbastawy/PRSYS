@@ -294,7 +294,11 @@ export function graphToApi(
 
   // ---- steps (approvals in walk order). Hidden legacy settings (quorum, due
   // days, comment policy, on-approve/on-reject) are carried through untouched.
+  // `id` (the saved WFStepID) is sent back so the API updates steps in place —
+  // without it every save would recreate+delete and hit the "has approval
+  // decisions" guard.
   const steps: Record<string, unknown>[] = approvalChain.map((a, i) => ({
+    ...(a.data.id ? { id: a.data.id } : {}),
     stepName: derivedStepName(a.data),
     stepOrder: i,
     approverType: a.data.approverType,
@@ -363,6 +367,18 @@ export function apiToGraph(steps: BuilderStep[], rules: BuilderRule[], canvasJso
           .map((r) => ({ id: String(r.id), source: String(r.source), sourceHandle: (r.sourceHandle as string) || undefined, target: String(r.target) }))
           .filter((e) => ids.has(e.source) && ids.has(e.target));
         if (!nodes.some((n) => n.kind === "start")) nodes.unshift(makeNode("start", "START", { x: 0, y: 0 }));
+        // reconcile step ids: the saved steps (by StepOrder) line up with the
+        // approval nodes in execution order. This self-heals the canvas when a
+        // save recreated steps (e.g. the very first canvas save of a legacy
+        // workflow) so the next save updates them in place instead of trying
+        // to delete rows that carry approval decisions.
+        const savedSteps = [...steps].sort((a, b) => a.StepOrder - b.StepOrder);
+        walk({ nodes, edges }).order
+          .filter((n) => n.kind === "approval")
+          .forEach((n, i) => {
+            const s = savedSteps[i];
+            if (s && s.WFStepID) n.data.id = String(s.WFStepID);
+          });
         return { nodes, edges };
       }
     } catch {

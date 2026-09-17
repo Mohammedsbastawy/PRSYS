@@ -31,6 +31,7 @@ import {
   graphToApi,
   makeNode,
   validateGraph,
+  walk,
   type GNodeKind,
   type Graph,
 } from "@/lib/workflow-graph";
@@ -725,12 +726,33 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
       });
-      const d = await res.json().catch(() => ({} as { error?: string; WFDefinitionID?: string }));
+      const d = await res.json().catch(() => ({} as { error?: string; WFDefinitionID?: string; Steps?: { WFStepID: string; StepOrder?: number }[] }));
       if (!res.ok) {
         setError(d.error || "Save failed");
         return;
       }
       const savedId = isNew ? d.WFDefinitionID : workflowId;
+      // Remember the saved WFStepIDs on the approval nodes (execution order ↔
+      // StepOrder) so the NEXT save updates steps in place instead of trying
+      // to recreate + delete them (blocked once a step has approval decisions).
+      const savedSteps = Array.isArray(d.Steps) ? [...d.Steps].sort((a, b) => (a.StepOrder ?? 0) - (b.StepOrder ?? 0)) : [];
+      let savedGraph = graph;
+      if (savedSteps.length > 0) {
+        const idByNodeId = new Map<string, string>();
+        walk(graph)
+          .order.filter((n) => n.kind === "approval")
+          .forEach((n, i) => {
+            const s = savedSteps[i];
+            if (s && s.WFStepID) idByNodeId.set(n.id, s.WFStepID);
+          });
+        if (idByNodeId.size > 0) {
+          savedGraph = {
+            ...graph,
+            nodes: graph.nodes.map((n) => (idByNodeId.has(n.id) ? { ...n, data: { ...n.data, id: idByNodeId.get(n.id) } } : n)),
+          };
+          setGraph(savedGraph);
+        }
+      }
       const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
       for (const tid of Array.from(assigned)) {
         if (!initialAssigned.has(tid) && savedId)
@@ -740,7 +762,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         if (!assigned.has(tid))
           await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: null }) });
       }
-      baseline.current = JSON.stringify({ name, description, status, graph });
+      baseline.current = JSON.stringify({ name, description, status, graph: savedGraph });
       setInitialAssigned(new Set(assigned));
       setSavedAt(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
       if (isNew && savedId) router.replace(`/workflows/${savedId}`);
