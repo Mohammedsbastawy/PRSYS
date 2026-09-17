@@ -149,16 +149,6 @@ const COMMENT_POLICIES = [
   { value: "ON_REJECT", label: "Comment on reject" },
   { value: "ALWAYS", label: "Comment always" },
 ];
-const REJECT_ACTIONS = [
-  { value: "RETURN_TO_REQUESTER", label: "Return it to the requester" },
-  { value: "REJECT_COMPLETELY", label: "Reject the request" },
-  { value: "RETURN_TO_PREVIOUS_STEP", label: "Send back one step" },
-];
-const APPROVE_ACTIONS = [
-  { value: "CONTINUE", label: "Go to the next node" },
-  { value: "APPROVE_COMPLETELY", label: "Approve & finish" },
-  { value: "JUMP_TO_STEP", label: "Jump to another node" },
-];
 
 const ACTION_TOOLS: ToolId[] = TOOLS.filter((t) => t.kind === "action").map((t) => t.id);
 
@@ -314,7 +304,7 @@ function AddMenu({
 }) {
   if (!open) return null;
   return (
-    <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-lg border border-surface-variant bg-surface-container-lowest p-1 shadow-pop">
+    <div className="absolute right-0 top-full z-50 mt-1 w-60 rounded-lg border border-surface-variant bg-surface-container-lowest p-1 shadow-tier2">
       <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-outline">Add a tool</div>
       {tools.map((id) => {
         const t = toolMeta(id);
@@ -421,6 +411,15 @@ function Port({
   depth: number;
 }) {
   const [menu, setMenu] = useState(false);
+  const menuWrapRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menu) return;
+    const h = (e: MouseEvent) => {
+      if (menuWrapRef.current && !menuWrapRef.current.contains(e.target as Node)) setMenu(false);
+    };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, [menu]);
   const kids = slotChildren(ctx.nodes, parentKey, slot);
   const toneCls =
     tone === "approve"
@@ -440,13 +439,23 @@ function Port({
           {kids.length > 0 && <span className="rounded-full bg-surface-container-lowest/70 px-1.5 text-[10px]">{kids.length}</span>}
         </span>
         {!ctx.ro && (
-          <button
-            type="button"
-            onClick={() => setMenu((m) => !m)}
-            className="rounded px-1 text-[11px] underline decoration-dotted hover:bg-surface-container-lowest/60"
-          >
-            add
-          </button>
+          <div ref={menuWrapRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setMenu((m) => !m)}
+              className="inline-flex items-center gap-0.5 rounded-full border border-current/40 bg-surface-container-lowest/80 px-2 py-0.5 text-[11px] font-bold hover:bg-surface-container-lowest"
+              title="Add a tool to this port"
+            >
+              <Icon name="add" className="text-[13px]" />
+              add
+            </button>
+            <AddMenu
+              open={menu}
+              onClose={() => setMenu(false)}
+              onPick={(t) => ctx.addToSlot(parentKey, slot, t)}
+              tools={ACTION_TOOLS}
+            />
+          </div>
         )}
       </div>
 
@@ -468,13 +477,6 @@ function Port({
       >
         {kids.length === 0 ? (ctx.drag ? "drop here" : "empty — drag a tool here or press add") : "·"}
       </div>
-
-      <AddMenu
-        open={menu}
-        onClose={() => setMenu(false)}
-        onPick={(t) => ctx.addToSlot(parentKey, slot, t)}
-        tools={ACTION_TOOLS}
-      />
     </div>
   );
 }
@@ -501,7 +503,7 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
     <div
       id={`node-${n.key}`}
       onClick={() => ctx.select(n.key)}
-      className={`${nested ? "" : "card"} ${nested ? "mb-1 rounded-lg border bg-surface-container-lowest" : "mb-2 overflow-hidden"} ${
+      className={`${nested ? "" : "card"} ${nested ? "mb-1 rounded-lg border bg-surface-container-lowest" : "mb-2"} ${
         ctx.selected === n.key ? "ring-2 ring-primary/30" : ""
       } ${issues.length > 0 ? "border-amber-300" : ""} ${!n.enabled && !isStart ? "opacity-70" : ""}`}
     >
@@ -637,7 +639,6 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
 }
 
 function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
-  const approvals = approvalNodes(ctx.nodes);
   return (
     <>
       <Field label="Who decides">
@@ -738,61 +739,9 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
         </Field>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="On approve">
-          <select
-            className="input !py-1 text-xs"
-            disabled={ctx.ro}
-            value={n.approveAction}
-            onChange={(e) =>
-              ctx.patch(n.key, {
-                approveAction: e.target.value,
-                approveTargetKey: e.target.value === "JUMP_TO_STEP" ? n.approveTargetKey : "",
-              })
-            }
-          >
-            <option value="">not set — go to the next node</option>
-            {APPROVE_ACTIONS.map((a) => (
-              <option key={a.value} value={a.value}>
-                {a.label}
-              </option>
-            ))}
-          </select>
-          {n.approveAction === "JUMP_TO_STEP" && (
-            <select
-              className="input mt-1 !py-1 text-xs"
-              disabled={ctx.ro}
-              value={n.approveTargetKey}
-              onChange={(e) => ctx.patch(n.key, { approveTargetKey: e.target.value })}
-            >
-              <option value="">— jump to which node? —</option>
-              {approvals.map((a, ai) => (
-                <option key={a.key} value={a.key} disabled={a.key === n.key}>
-                  {ai + 1}. {a.name || "Untitled approval"}
-                </option>
-              ))}
-            </select>
-          )}
-        </Field>
-        <Field label="On reject">
-          <select
-            className="input !py-1 text-xs"
-            disabled={ctx.ro}
-            value={n.rejectAction}
-            onChange={(e) => ctx.patch(n.key, { rejectAction: e.target.value })}
-          >
-            <option value="">not set — reject the request</option>
-            {REJECT_ACTIONS.map((a) => (
-              <option key={a.value} value={a.value}>
-                {a.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
       <p className="text-[10px] leading-relaxed text-outline">
-        Nothing here is preset: “not set” means the engine default shown in that box is what happens. The two ports
-        are optional too — drop a tool on them only if something should run after this decision.
+        Approving moves the request to the next node; rejecting ends it. Use the green and red ports below to run
+        tools after this decision — drop a tool there only if something should happen.
       </p>
     </>
   );
