@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Top Ambient Glow & Context Header -->
+<div class="relative overflow-hidden bg-surface-container-lowest rounded-xl shadow-md p-space-lg mb-space-lg">
+<div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-primary/5 blur-3xl pointer-events-none"></div>
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-md relative z-10">
+<div class="flex flex-col gap-space-xs max-w-3xl">
+<div class="flex flex-wrap items-center gap-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-primary">devices</span>
+            Hardware &amp; IT Equipment
+          </span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold tracking-wide">
+            TIER-3 ROUTING
+          </span>
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">history</span> Auto-saved 42s ago
+          </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold mt-1">
+          IT Hardware &amp; Engineering Workstation Requisition
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          Standard procurement form for developer machines, cloud infrastructure hardware, and peripheral equipment with automated 3-tier routing through Architecture, Security, and Finance.
+        </p>
+</div>
+<!-- Reference & Metadata Box -->
+<div class="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end justify-between gap-space-sm bg-surface-container-low p-space-md rounded-xl shrink-0 min-w-[280px]">
+<div class="flex flex-col lg:items-end">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Reference ID</span>
+<span class="font-label-lg text-label-lg font-bold text-on-surface tracking-tight mt-0.5">R-2026-0042</span>
+<span class="font-label-sm text-label-sm text-outline">(Auto-Generated on Submission)</span>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary-container animate-pulse"></span>
+<span class="font-label-md text-label-md font-bold px-2.5 py-1 rounded-full bg-secondary-fixed-dim text-on-secondary-fixed-variant">
+            DRAFT (Unsaved changes)
+          </span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Multi-Column Interactive Canvas -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg mb-space-lg">
+<!-- Left 8-Cols: Interactive Items Ledger -->
+<div class="xl:col-span-8 flex flex-col gap-space-lg">
+<!-- Line Items Section Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col">
+<div class="flex items-center justify-between pb-space-sm mb-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-7 h-7 rounded-lg bg-primary-fixed flex items-center justify-center text-primary font-bold font-label-md">
+              01
+            </div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Bill of Quantities &amp; Specifications</h2>
+</div>
+<div class="flex items-center gap-space-xs text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">inventory_2</span>
+<span>3 line items configured</span>
+</div>
+</div>
+<!-- Ledger Table Wrapper -->
+<div class="overflow-x-auto rounded-xl bg-surface-container-low p-1 mb-space-md">
+<table class="w-full text-left border-collapse" id="procurement-items-table">
+<thead>
+<tr class="bg-surface-container-high text-on-surface-variant font-label-md text-label-md">
+<th class="py-3 px-space-md rounded-l-lg font-semibold">SKU / DESCRIPTION</th>
+<th class="py-3 px-space-sm text-center font-semibold w-32">QTY</th>
+<th class="py-3 px-space-sm text-right font-semibold w-40">UNIT PRICE (EGP)</th>
+<th class="py-3 px-space-md text-right font-semibold w-44">LINE TOTAL (EGP)</th>
+<th class="py-3 px-space-xs text-center w-12 rounded-r-lg"><span class="sr-only">Actions</span></th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface">
+<!-- Item 1: MacBook Pro -->
+<tr class="bg-surface-container-lowest hover:bg-surface-bright transition-colors group">
+<td class="py-3.5 px-space-md align-top">
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Apple MacBook Pro 16" M3 Max</span>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">SKU: ITM-00188 · 36GB RAM, 1TB SSD, Space Black</span>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant">Asset Class: High-Perf Lab</span>
+<span class="font-label-sm text-label-sm text-tertiary flex items-center gap-0.5 font-medium">
+<span class="material-symbols-outlined text-[13px]">verified</span> Pre-Approved Spec
+                      </span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm align-top text-center">
+<div class="inline-flex items-center bg-surface-container-high rounded-lg p-0.5 shadow-sm">
+<button class="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-lowest rounded transition-all">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<input class="w-10 text-center bg-transparent font-label-md text-label-md font-bold focus:outline-none" type="number" value="5"/>
+<button class="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-lowest rounded transition-all">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</td>
+<td class="py-3.5 px-space-sm align-top text-right font-label-md text-label-md font-medium pt-4">
+                  184,500.00
+                </td>
+<td class="py-3.5 px-space-md align-top text-right font-label-md text-label-md font-bold text-on-surface pt-4">
+                  922,500.00
+                </td>
+<td class="py-3.5 px-space-xs align-top text-center pt-4">
+<button class="text-outline hover:text-error transition-colors p-1 rounded-lg hover:bg-error-container/40" title="Remove Line Item">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</td>
+</tr>
+<!-- Item 2: Dell Monitor -->
+<tr class="bg-surface-container-lowest hover:bg-surface-bright transition-colors group">
+<td class="py-3.5 px-space-md align-top">
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Dell UltraSharp 27" 4K USB-C Hub Monitor (U2723QE)</span>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">SKU: ITM-00204 · 90W PD, IPS Black, RJ45 Ethernet Pass</span>
+<div class="flex items-center gap-2 mt-1.5">
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface-variant">Asset Class: Dual-Display Ergonomics</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm align-top text-center">
+<div class="inline-flex items-center bg-surface-container-high rounded-lg p-0.5 shadow-sm">
+<button class="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-lowest rounded transition-all">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<input class="w-10 text-center bg-transparent font-label-md text-label-md font-bold focus:outline-none" type="number" value="10"/>
+<button class="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-lowest rounded transition-all">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</td>
+<td class="py-3.5 px-space-sm align-top text-right font-label-md text-label-md font-medium pt-4">
+                  34,200.00
+                </td>
+<td class="py-3.5 px-space-md align-top text-right font-label-md text-label-md font-bold text-on-surface pt-4">
+                  342,000.00
+                </td>
+<td class="py-3.5 px-space-xs align-top text-center pt-4">
+<button class="text-outline hover:text-error transition-colors p-1 rounded-lg hover:bg-error-container/40" title="Remove Line Item">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</td>
+</tr>
+<!-- Item 3: Validation Error State Demo -->
+<tr class="bg-error-container/20 hover:bg-error-container/30 transition-colors group">
+<td class="py-3.5 px-space-md align-top">
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Dell Latitude 5550 Core Ultra 7 (Docking Bundle)</span>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">SKU: ITM-00142 · 32GB LPDDR5, 512GB NVMe</span>
+<div class="flex items-center gap-1 text-error font-body-sm text-body-sm mt-1.5 font-medium">
+<span class="material-symbols-outlined text-[16px]">error</span>
+<span>Validation Issue: Quantity cannot be zero</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm align-top text-center">
+<div class="inline-flex items-center bg-surface-container-lowest shadow-sm rounded-lg p-0.5 shadow-[0_0_0_2px_#ba1a1a]">
+<button class="w-7 h-7 flex items-center justify-center text-outline hover:text-on-surface rounded transition-all">
+<span class="material-symbols-outlined text-[16px]">remove</span>
+</button>
+<input class="w-10 text-center bg-transparent font-label-md text-label-md font-bold text-error focus:outline-none" type="number" value="0"/>
+<button class="w-7 h-7 flex items-center justify-center text-on-surface hover:bg-surface-container-low rounded transition-all">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+</div>
+</td>
+<td class="py-3.5 px-space-sm align-top text-right font-label-md text-label-md font-medium pt-4">
+                  72,000.00
+                </td>
+<td class="py-3.5 px-space-md align-top text-right font-label-md text-label-md font-bold text-error pt-4">
+                  0.00
+                </td>
+<td class="py-3.5 px-space-xs align-top text-center pt-4">
+<button class="text-error hover:text-on-error hover:bg-error rounded p-1 transition-colors" title="Remove invalid row">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Add Item Selector Dropdown / Search Trigger -->
+<div class="relative mb-space-lg">
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-sm flex-1">
+<span class="material-symbols-outlined text-primary text-[22px]">manage_search</span>
+<div class="flex flex-col flex-1">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Quick Item Catalogue Lookup</span>
+<input class="w-full mt-1 bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm rounded-lg px-space-sm py-1.5 focus:outline-none shadow-sm" placeholder="Type SKU or hardware model (e.g., 'MacBook', 'Latitude', 'U2723QE')..." type="text"/>
+</div>
+</div>
+<button class="flex items-center justify-center gap-space-xs px-space-md py-2.5 rounded-lg bg-surface-container-highest hover:bg-surface-container text-on-surface font-headline-sm text-body-md transition-all font-semibold shrink-0">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>+ Add Item Row</span>
+</button>
+</div>
+<!-- Active Search Dropdown Suggestions (Simulation overlay) -->
+<div class="mt-2 bg-surface-container-lowest rounded-xl shadow-xl p-space-sm flex flex-col gap-1 z-20">
+<div class="font-label-sm text-label-sm text-outline px-space-sm py-1 uppercase tracking-wider font-semibold">Catalogue Matches (Recent Hardware Agreements)</div>
+<div class="flex items-center justify-between p-space-sm rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline">laptop_mac</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">ITM-00188 · Apple MacBook Pro 16" M3 Max</span>
+<span class="font-label-sm text-label-sm text-outline">Standard Dev Spec · 36GB / 1TB SSD · Raya IT Contract #EG-992</span>
+</div>
+</div>
+<span class="font-label-md text-label-md font-bold text-on-surface">184,500.00 EGP</span>
+</div>
+<div class="flex items-center justify-between p-space-sm rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors bg-surface-container/50">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline">desktop_windows</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">ITM-00204 · Dell UltraSharp 27" 4K USB-C Hub Monitor</span>
+<span class="font-label-sm text-label-sm text-outline">Precision Dual Array Ready · Dell Direct Egypt</span>
+</div>
+</div>
+<span class="font-label-md text-label-md font-bold text-on-surface">34,200.00 EGP</span>
+</div>
+<div class="flex items-center justify-between p-space-sm rounded-lg hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-outline">laptop</span>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">ITM-00142 · Dell Latitude 5550 (x5 Tier Lot)</span>
+<span class="font-label-sm text-label-sm text-outline">Core Ultra 7 / 32GB RAM · Mantrac Egypt</span>
+</div>
+</div>
+<span class="font-label-md text-label-md font-bold text-on-surface">72,000.00 EGP</span>
+</div>
+</div>
+</div>
+<!-- Financial Summary Totals Footer -->
+<div class="mt-auto pt-space-md bg-surface-container-low rounded-xl p-space-lg flex flex-col md:flex-row md:items-center justify-between gap-space-lg">
+<div class="flex flex-col gap-1 max-w-sm">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">account_balance_wallet</span>
+              Fiscal Envelope Compliance
+            </span>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+              Cost Center CC-104 has an approved Q4 hardware allocation of 2,400,000.00 EGP. This requisition accounts for 60.1% of remaining balance.
+            </p>
+</div>
+<div class="flex flex-col gap-2 min-w-[280px]">
+<div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+<span>Items Subtotal:</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">1,264,500.00 EGP</span>
+</div>
+<div class="flex items-center justify-between font-body-md text-body-md text-on-surface-variant">
+<span class="flex items-center gap-1">Egyptian VAT (14%):
+                <span class="material-symbols-outlined text-[14px] text-outline" title="Standard statutory tax rate">info</span>
+</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">177,030.00 EGP</span>
+</div>
+<div class="w-full h-px bg-surface-dim my-1"></div>
+<div class="flex items-baseline justify-between">
+<span class="font-headline-sm text-headline-sm font-bold text-on-surface">Grand Total:</span>
+<div class="flex flex-col items-end">
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">1,441,530.00 EGP</span>
+<span class="font-label-sm text-label-sm text-outline">Net Inclusive of Standard Delivery</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- General Delivery & Site Logistic Instructions -->
+<div class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col">
+<div class="flex items-center gap-space-sm pb-space-sm mb-space-sm">
+<div class="w-7 h-7 rounded-lg bg-primary-fixed flex items-center justify-center text-primary font-bold font-label-md">
+            02
+          </div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Site Delivery &amp; Operational Instructions</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<div class="flex flex-col gap-1.5">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Delivery Site / Destination Facility</label>
+<div class="flex items-center gap-2 p-space-sm rounded-lg bg-surface-container text-on-surface font-body-md text-body-md">
+<span class="material-symbols-outlined text-primary text-[20px]">location_on</span>
+<span>Cairo HQ - Campus B, Tech Hub Dock 4 (Smart Village)</span>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">On-Site Receiver / Point of Contact</label>
+<div class="flex items-center gap-space-sm p-space-sm rounded-lg bg-surface-container-low">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="Close up professional portrait of Ahmed Hassan, IT Logistics Lead, wearing modern corporate attire with slate warm studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZztqoW7VXrtDOXZkeuZ5Nr8cpPiAN5mvawDmjJt0KX2UXAUC_FwyFTbiKFEcz63iH9k4H-ItNENVaqHDA84IRe0j9x6xyvHZqCeaiuxuHeXxZv5LP50qdefpVzDYZcmhRiQs9uoi5UyTMTT2FYmeMJW_-v6g_t5ITRTYmYa6ng3caLv4iHzolnqR_nWhQdeFJ54Xp-wIHIBy_7e9Pnb3kvxkIGrzxlHDkHOF4eUfHlMEdPCNNYUAs7w"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Ahmed Hassan</span>
+<span class="font-label-sm text-label-sm text-outline">Logistics &amp; IT Receiving (+20 100 234 5678)</span>
+</div>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1.5 mt-space-md">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">General Warehouse Gate Pass &amp; Handling Notes</label>
+<textarea class="w-full p-space-sm rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none" rows="3">Authorized access for delivery truck required between 08:30 - 11:30 AM. Deliver pallets directly to IT Staging Room B-204. Unboxing, asset tag registration, and biometric serial scanning will be performed jointly with Vendor Technical Rep.</textarea>
+</div>
+</div>
+</div>
+<!-- Right 4-Cols: Routing, Governance & Attachments -->
+<div class="xl:col-span-4 flex flex-col gap-space-lg">
+<!-- Approvals & Workflow Configuration Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col">
+<div class="flex items-center gap-space-sm pb-space-sm mb-space-sm">
+<div class="w-7 h-7 rounded-lg bg-secondary-fixed flex items-center justify-center text-secondary font-bold font-label-md">
+            03
+          </div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Governance &amp; Routing</h2>
+</div>
+<div class="flex flex-col gap-space-md">
+<!-- Urgency Checkbox Toggle + Conditional Box -->
+<div class="p-space-sm rounded-xl bg-secondary-fixed/40 flex flex-col gap-space-xs">
+<label class="flex items-center gap-space-sm cursor-pointer select-none">
+<input checked="" class="w-4 h-4 rounded bg-primary text-primary focus:ring-primary accent-primary" type="checkbox"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-bold text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">bolt</span>
+                  Urgent Requisition Flag
+                </span>
+<span class="font-label-sm text-label-sm text-outline">Triggers SLA escalation (48h max response)</span>
+</div>
+</label>
+<!-- Visible Conditional Field -->
+<div class="mt-2 pt-2 bg-surface-container-lowest p-space-sm rounded-lg flex flex-col gap-1">
+<span class="font-label-sm text-label-sm font-bold text-primary uppercase tracking-wider">Reason for Urgency *</span>
+<p class="font-body-sm text-body-sm text-on-surface leading-snug">
+                Expedited onboarding for 5 senior platform engineers arriving on Oct 1st. Standard 14-day cycle would cause project delay and blocker for Q4 core banking cutover.
+              </p>
+</div>
+</div>
+<!-- Date Needed Picker -->
+<div class="flex flex-col gap-1">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Target Delivery Date</label>
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low text-on-surface">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">calendar_today</span>
+<span class="font-label-md text-label-md font-semibold">28 Sep 2026</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-medium">In 9 Days</span>
+</div>
+</div>
+<!-- Cost Center Selector -->
+<div class="flex flex-col gap-1">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Cost Center / Chargeable Entity</label>
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low text-on-surface">
+<div class="flex items-center gap-2 truncate">
+<span class="material-symbols-outlined text-outline text-[18px]">domain</span>
+<span class="font-body-md text-body-md font-medium truncate">CC-104 - IT Operations &amp; Infra</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">unfold_more</span>
+</div>
+</div>
+<!-- Approver / Direct Line Manager -->
+<div class="flex flex-col gap-1">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">1st Approver (Direct Line VP)</label>
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-space-sm min-w-0">
+<img class="w-9 h-9 rounded-full object-cover shrink-0" data-alt="Corporate headshot of Tarek Mansour, Director of Infrastructure, executive business portrait in slate office background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9eymUOAgI_KTSTsM8mmkclaMrHBN_TSWjojfLQCkwxY0PHZ-O5WT6WQRWarUKSSpTfEm7eUICgPs2WWRe5r6MjLmHq-IPL8u1NfIg0llMvhoTBB3WPAO27AE46ME7Nzmj0cBOUeG-PAnIzAkoXkH7_L4yS4L0irX4NmzYvtaPf0fi4ysaVPb4VcqhERW_iDr-tR9as7_eSn6oiXp9YdNsIfCUpX-6ASPO1e_dhkLxDhNeVPKQZHk7Ww"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Tarek Mansour</span>
+<span class="font-label-sm text-label-sm text-outline truncate">Director of Infrastructure</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed font-bold shrink-0">Ready</span>
+</div>
+</div>
+<!-- Preferred Vendors Multi-Select Chips -->
+<div class="flex flex-col gap-1.5">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Preferred Vendor Panel (Multiple)</label>
+<div class="flex flex-wrap gap-1.5">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed font-medium">
+                Raya IT (#EG-992)
+                <span class="material-symbols-outlined text-[13px] cursor-pointer">close</span>
+</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-medium">
+                Mantrac Egypt
+                <span class="material-symbols-outlined text-[13px] cursor-pointer">close</span>
+</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface font-medium">
+                Dell Direct Egypt
+                <span class="material-symbols-outlined text-[13px] cursor-pointer">close</span>
+</span>
+<button class="font-label-sm text-label-sm px-2 py-1 rounded-full bg-surface-container text-outline hover:text-on-surface transition-colors flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[14px]">add</span> Add Partner
+              </button>
+</div>
+</div>
+</div>
+</div>
+<!-- Attachments Dropzone Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col">
+<div class="flex items-center justify-between pb-space-sm mb-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-7 h-7 rounded-lg bg-primary-fixed flex items-center justify-center text-primary font-bold font-label-md">
+              04
+            </div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Supporting Documents</h2>
+</div>
+<span class="font-label-sm text-label-sm text-outline">2 Files attached</span>
+</div>
+<!-- Attached Files List -->
+<div class="flex flex-col gap-space-xs mb-space-sm">
+<!-- File 1 -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-8 h-8 rounded bg-error-container text-error flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">picture_as_pdf</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-medium text-on-surface truncate">vendor_quotation_raya_signed.pdf</span>
+<span class="font-label-sm text-label-sm text-outline">1.8 MB · Uploaded by E. Rostova</span>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-1 text-on-surface-variant hover:text-on-surface" title="Download">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-error" title="Remove">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+<!-- File 2 -->
+<div class="flex items-center justify-between p-space-sm rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors">
+<div class="flex items-center gap-space-sm min-w-0">
+<div class="w-8 h-8 rounded bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[18px]">table_view</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-medium text-on-surface truncate">technical_architecture_spec.xlsx</span>
+<span class="font-label-sm text-label-sm text-outline">640 KB · Specs &amp; Benchmarks</span>
+</div>
+</div>
+<div class="flex items-center gap-1 shrink-0">
+<button class="p-1 text-on-surface-variant hover:text-on-surface" title="Download">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+<button class="p-1 text-on-surface-variant hover:text-error" title="Remove">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Drag & Drop Zone Area -->
+<div class="p-space-lg rounded-xl bg-surface-container-low flex flex-col items-center justify-center text-center cursor-pointer hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-primary text-[28px] mb-1">cloud_upload</span>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Click to upload or drag files here</span>
+<span class="font-label-sm text-label-sm text-outline mt-0.5">PDF, XLSX, DOCX up to 25MB per file</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Form State Variants Showcase Section (Demonstration of Empty & Shimmering Loading states) -->
+<div class="flex flex-col bg-surface-container-lowest rounded-xl shadow-md p-space-lg mb-space-xl">
+<div class="flex items-center justify-between pb-space-sm mb-space-md">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant font-bold uppercase tracking-wider">
+            SYSTEM SPECIFICATION COMPONENT
+          </span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mt-1">Form State Variants (Sub-component Previews)</h3>
+</div>
+<span class="font-label-sm text-label-sm text-outline">PRSYS Dynamic Template Standard v2.4</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+<!-- Variant A: Empty State -->
+<div class="flex flex-col p-space-lg rounded-xl bg-surface-container-low">
+<div class="flex items-center justify-between mb-space-md">
+<span class="font-label-md text-label-md font-bold text-on-surface-variant">Variant A: Item Ledger Empty State</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-outline">Initial Launch</span>
+</div>
+<div class="flex flex-col items-center justify-center py-space-xl text-center">
+<div class="w-14 h-14 rounded-full bg-surface-container-high flex items-center justify-center text-outline mb-space-sm">
+<span class="material-symbols-outlined text-[28px]">production_quantity_limits</span>
+</div>
+<h4 class="font-headline-sm text-body-lg font-bold text-on-surface">No items added to requisition yet</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-xs mt-1">
+            Search the enterprise product catalogue or import line items via CSV template to populate the budget matrix.
+          </p>
+<div class="flex items-center gap-space-sm mt-space-md">
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container-highest hover:bg-surface-container text-on-surface font-label-md text-label-md font-semibold transition-all">
+              Upload CSV Spec
+            </button>
+<button class="px-space-md py-1.5 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold transition-all shadow-sm">
+              + Browse Catalogue
+            </button>
+</div>
+</div>
+</div>
+<!-- Variant B: Loading / Skeleton State -->
+<div class="flex flex-col p-space-lg rounded-xl bg-surface-container-low">
+<div class="flex items-center justify-between mb-space-md">
+<span class="font-label-md text-label-md font-bold text-on-surface-variant">Variant B: Shimmer / Catalogue Fetching State</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-outline">Network Latency</span>
+</div>
+<div class="flex flex-col gap-space-sm animate-pulse">
+<div class="flex items-center justify-between">
+<div class="h-4 bg-surface-container-highest rounded w-1/3"></div>
+<div class="h-4 bg-surface-container-highest rounded w-1/6"></div>
+</div>
+<div class="h-10 bg-surface-container-highest rounded-lg w-full"></div>
+<div class="space-y-2 mt-2">
+<div class="p-3 bg-surface-container-highest/60 rounded-lg flex items-center justify-between">
+<div class="space-y-1.5 w-1/2">
+<div class="h-3.5 bg-surface-container-highest rounded w-3/4"></div>
+<div class="h-2.5 bg-surface-container-highest rounded w-1/2"></div>
+</div>
+<div class="h-6 bg-surface-container-highest rounded w-16"></div>
+<div class="h-4 bg-surface-container-highest rounded w-20"></div>
+</div>
+<div class="p-3 bg-surface-container-highest/40 rounded-lg flex items-center justify-between">
+<div class="space-y-1.5 w-1/2">
+<div class="h-3.5 bg-surface-container-highest rounded w-2/3"></div>
+<div class="h-2.5 bg-surface-container-highest rounded w-1/3"></div>
+</div>
+<div class="h-6 bg-surface-container-highest rounded w-16"></div>
+<div class="h-4 bg-surface-container-highest rounded w-20"></div>
+</div>
+</div>
+<div class="pt-2 flex justify-end gap-2">
+<div class="h-8 bg-surface-container-highest rounded-lg w-28"></div>
+<div class="h-8 bg-surface-container-highest rounded-lg w-36"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Bottom Submission Bar -->
+<div class="sticky bottom-0 z-30 bg-surface-container-lowest/95 backdrop-blur-md -mx-space-lg px-space-lg py-space-md shadow-[0_-4px_20px_rgba(0,0,0,0.06)] flex flex-col sm:flex-row items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary-container animate-ping"></span>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Unsaved Modifications Detected</span>
+</div>
+<span class="hidden md:inline text-outline text-[14px]">|</span>
+<span class="hidden md:inline font-label-sm text-label-sm text-on-surface-variant">
+        Approval Route: <strong class="text-on-surface">T. Mansour (VP)</strong> → <strong class="text-on-surface">CISO Security</strong> → <strong class="text-on-surface">CFO Financial Release</strong>
+</span>
+</div>
+<div class="flex items-center gap-space-sm w-full sm:w-auto justify-end">
+<!-- Discard -->
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container-high hover:bg-surface-container text-on-surface font-headline-sm text-body-md transition-all font-semibold">
+        Discard Draft
+      </button>
+<!-- Save Draft -->
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-body-md transition-all font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>Save as Draft <span class="text-outline text-label-sm ml-0.5">Ctrl+S</span></span>
+</button>
+<!-- Primary Action: Submit for Approval -->
+<button class="px-space-lg py-2.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-body-md transition-all shadow-md hover:shadow-lg active:scale-95 font-bold flex items-center gap-space-xs">
+<span>Submit for Approval (3 Steps)</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div></main></div></body></html>

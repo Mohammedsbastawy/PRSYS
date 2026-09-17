@@ -259,7 +259,7 @@ export default function SlaPage() {
   if (!canManage) {
     return (
       <AppShell>
-        <div className="card mx-auto mt-10 max-w-md p-6 text-center text-sm text-ink-soft">
+        <div className="card mx-auto mt-10 max-w-md p-6 text-center text-sm text-on-surface-variant">
           You need the SLA_MANAGE permission to view this page.
         </div>
       </AppShell>
@@ -282,16 +282,16 @@ export default function SlaPage() {
       />
 
       {error && !editor && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-danger">{error}</div>
+        <div className="mb-4 rounded border border-error/25 bg-error-container/60 px-4 py-2 text-sm text-danger">{error}</div>
       )}
 
       {editor && (
         <div className="card mb-6 p-5">
-          <h2 className="mb-4 text-base font-semibold text-ink">
+          <h2 className="mb-4 text-base font-semibold text-on-surface">
             {editor.id ? "Edit policy" : "New policy"}
           </h2>
           {error && (
-            <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-danger">{error}</div>
+            <div className="mb-3 rounded border border-error/25 bg-error-container/60 px-3 py-2 text-sm text-danger">{error}</div>
           )}
           <div className="grid gap-3 md:grid-cols-2">
             <div>
@@ -317,7 +317,7 @@ export default function SlaPage() {
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[520px] text-sm">
               <thead>
-                <tr className="border-b border-surface-border text-left text-xs uppercase tracking-wide text-ink-faint">
+                <tr className="border-b border-surface-variant text-left text-xs uppercase tracking-wide text-outline">
                   <th className="py-2 pr-4 font-semibold">Priority</th>
                   <th className="py-2 pr-6 font-semibold">Response within (TTA)</th>
                   <th className="py-2 font-semibold">Resolve within (TTR)</th>
@@ -325,8 +325,8 @@ export default function SlaPage() {
               </thead>
               <tbody>
                 {PRIORITIES.map((p) => (
-                  <tr key={p} className="border-b border-surface-border/60">
-                    <td className="py-2 pr-4 font-medium text-ink">{p}</td>
+                  <tr key={p} className="border-b border-surface-variant/60">
+                    <td className="py-2 pr-4 font-medium text-on-surface">{p}</td>
                     <td className="py-2 pr-6 align-top">
                       <UnitField
                         value={editor.targets[p].response}
@@ -336,7 +336,7 @@ export default function SlaPage() {
                         onUnit={(u) => patchTarget(p, { responseUnit: u })}
                       />
                       {unitPreview(editor.targets[p].response, editor.targets[p].responseUnit) && (
-                        <span className="mt-1 block text-[11px] text-ink-faint">
+                        <span className="mt-1 block text-[11px] text-outline">
                           {unitPreview(editor.targets[p].response, editor.targets[p].responseUnit)}
                         </span>
                       )}
@@ -350,7 +350,7 @@ export default function SlaPage() {
                         onUnit={(u) => patchTarget(p, { resolveUnit: u })}
                       />
                       {unitPreview(editor.targets[p].resolve, editor.targets[p].resolveUnit) && (
-                        <span className="mt-1 block text-[11px] text-ink-faint">
+                        <span className="mt-1 block text-[11px] text-outline">
                           {unitPreview(editor.targets[p].resolve, editor.targets[p].resolveUnit)}
                         </span>
                       )}
@@ -359,14 +359,14 @@ export default function SlaPage() {
                 ))}
               </tbody>
             </table>
-            <p className="mt-2 text-[11px] text-ink-faint">
+            <p className="mt-2 text-[11px] text-outline">
               Leave a row empty to skip that priority (its requests fall back to MEDIUM, then any defined row).
               Targets are stored as minutes (max 365 days), so 2 days = 2880 min and existing policies reopen in
               the largest unit that fits them exactly.
             </p>
           </div>
 
-          <label className="mt-4 flex items-center gap-2 text-sm text-ink">
+          <label className="mt-4 flex items-center gap-2 text-sm text-on-surface">
             <input
               type="checkbox"
               className="h-4 w-4"
@@ -389,7 +389,7 @@ export default function SlaPage() {
                 setEditor(null);
                 setError("");
               }}
-              className="rounded border border-surface-border px-4 py-2 text-sm font-semibold text-ink-soft hover:border-primary hover:text-primary"
+              className="rounded border border-surface-variant px-4 py-2 text-sm font-semibold text-on-surface-variant hover:border-primary hover:text-primary"
             >
               Cancel
             </button>
@@ -401,7 +401,7 @@ export default function SlaPage() {
         {policies.map((p) => (
           <div key={p.id} className="card relative flex flex-col p-5">
             <div className="mb-1 flex items-start justify-between gap-2">
-              <h3 className="text-base font-semibold text-ink">
+              <h3 className="text-base font-semibold text-on-surface">
                 {p.name}
                 {p.isDefault && (
                   <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
@@ -414,7 +414,7 @@ export default function SlaPage() {
                   <Icon name="edit" className="text-[17px]" />
                 </button>
                 <button
-                  className="icon-btn !h-7 !w-7 text-danger hover:bg-red-50"
+                  className="icon-btn !h-7 !w-7 text-danger hover:bg-error-container"
                   onClick={() => setConfirmId(p.id)}
                   aria-label="Delete policy"
                 >
@@ -422,10 +422,10 @@ export default function SlaPage() {
                 </button>
               </span>
             </div>
-            {p.description && <p className="mb-2 text-xs text-ink-soft">{p.description}</p>}
+            {p.description && <p className="mb-2 text-xs text-on-surface-variant">{p.description}</p>}
             <table className="mt-1 w-full text-xs">
               <thead>
-                <tr className="border-b border-surface-border text-left text-[10px] uppercase tracking-wide text-ink-faint">
+                <tr className="border-b border-surface-variant text-left text-[10px] uppercase tracking-wide text-outline">
                   <th className="py-1 pr-2 font-semibold">Priority</th>
                   <th className="py-1 pr-2 font-semibold">Respond</th>
                   <th className="py-1 font-semibold">Resolve</th>
@@ -433,24 +433,24 @@ export default function SlaPage() {
               </thead>
               <tbody>
                 {p.targets.map((t) => (
-                  <tr key={t.priority} className="border-b border-surface-border/50 last:border-0">
-                    <td className="py-1 pr-2 font-medium text-ink">{t.priority}</td>
-                    <td className="py-1 pr-2 text-ink-soft">{fmtMinutes(t.responseMins)}</td>
-                    <td className="py-1 text-ink-soft">{fmtMinutes(t.resolveMins)}</td>
+                  <tr key={t.priority} className="border-b border-surface-variant/50 last:border-0">
+                    <td className="py-1 pr-2 font-medium text-on-surface">{t.priority}</td>
+                    <td className="py-1 pr-2 text-on-surface-variant">{fmtMinutes(t.responseMins)}</td>
+                    <td className="py-1 text-on-surface-variant">{fmtMinutes(t.resolveMins)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <p className="mt-3 text-[11px] text-ink-faint">
+            <p className="mt-3 text-[11px] text-outline">
               Used by {p.templateCount} form{p.templateCount === 1 ? "" : "s"}
             </p>
 
             {confirmId === p.id && (
-              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded bg-white/95 p-4 text-center">
-                <p className="text-sm font-medium text-ink">
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 rounded bg-surface-container-lowest/95 p-4 text-center">
+                <p className="text-sm font-medium text-on-surface">
                   Delete <b>{p.name}</b>?
                 </p>
-                <p className="text-xs text-ink-soft">
+                <p className="text-xs text-on-surface-variant">
                   Linked forms and past requests keep their data — forms fall back to the default policy.
                 </p>
                 <div className="flex gap-2">
@@ -462,7 +462,7 @@ export default function SlaPage() {
                   </button>
                   <button
                     onClick={() => setConfirmId(null)}
-                    className="rounded border border-surface-border px-3 py-1.5 text-xs font-semibold text-ink-soft"
+                    className="rounded border border-surface-variant px-3 py-1.5 text-xs font-semibold text-on-surface-variant"
                   >
                     Keep
                   </button>
@@ -474,7 +474,7 @@ export default function SlaPage() {
       </div>
 
       {policies.length === 0 && (
-        <div className="card mt-2 p-10 text-center text-sm text-ink-soft">
+        <div className="card mt-2 p-10 text-center text-sm text-on-surface-variant">
           No SLA policies yet — create one to start tracking response and resolution deadlines.
         </div>
       )}

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full gap-space-md">
+<!-- TOP APP BAR / CONTEXT HEADER -->
+<div class="w-full bg-surface-container-lowest shadow-sm rounded-xl px-space-lg py-3 flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[22px]">dynamic_form</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-sm">
+<input class="font-headline-sm text-headline-sm text-on-surface bg-transparent focus:outline-none focus:bg-surface-container-low px-1.5 py-0.5 rounded transition-colors w-72 md:w-96 truncate" type="text" value="IT Equipment &amp; Hardware Request"/>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold uppercase tracking-wider">
+            Draft
+          </span>
+<span class="font-label-sm text-label-sm text-outline hidden xl:inline">
+            • Rev 0.8
+          </span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">
+          Template ID: <span class="font-semibold text-on-surface-variant">TPL-2024-IT-0084</span> • Last saved 2 mins ago by Elena Rostova
+        </span>
+</div>
+</div>
+<!-- Navigation Tabs -->
+<div class="flex items-center bg-surface-container-high p-1 rounded-lg">
+<button class="px-space-md py-1.5 rounded-lg bg-surface-container-lowest text-primary font-headline-sm text-body-sm font-semibold shadow-sm flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">tune</span>
+<span>Fields &amp; Layout</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-body-sm font-semibold transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">lock_person</span>
+<span>Access &amp; Visibility</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-body-sm font-semibold transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">alt_route</span>
+<span>Workflow Mapping</span>
+</button>
+<button class="px-space-md py-1.5 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-body-sm font-semibold transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">settings</span>
+<span>Settings</span>
+</button>
+</div>
+<!-- Command Actions -->
+<div class="flex items-center gap-space-sm ml-auto">
+<button class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container transition-colors" title="Discard unsaved changes">
+<span class="material-symbols-outlined text-[18px]">undo</span>
+</button>
+<button class="px-space-md py-2 rounded-lg bg-surface-container text-on-surface font-headline-sm text-body-sm font-semibold hover:bg-surface-container-high transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Preview Form</span>
+</button>
+<button class="px-space-md py-2 rounded-lg bg-surface-container-low text-primary font-headline-sm text-body-sm font-semibold hover:bg-surface-container transition-all">
+        Save Draft
+      </button>
+<button class="px-space-md py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-body-sm font-semibold shadow-sm hover:bg-primary-container transition-all flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+<span>Publish Template</span>
+</button>
+</div>
+</div>
+<!-- MAIN THREE-PANEL CANVAS WORKSPACE -->
+<div class="grid grid-cols-12 gap-space-md items-start">
+<!-- LEFT PANEL: FIELD TYPES PALETTE (280px equivalent -> 3 cols desktop) -->
+<div class="col-span-12 lg:col-span-3 bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-md">
+<div class="flex items-center justify-between pb-space-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">widgets</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Field Palette</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-outline">18 Tools</span>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2 text-outline text-[16px]">search</span>
+<input class="w-full bg-surface-container-low text-on-surface placeholder:text-outline rounded-lg pl-8 pr-3 py-1.5 font-body-sm text-body-sm focus:outline-none" placeholder="Filter input blocks..." type="text"/>
+</div>
+<div class="flex flex-col gap-space-md max-h-[750px] overflow-y-auto pr-1">
+<!-- Category: Basic Inputs -->
+<div class="flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold px-1">Basic Inputs</span>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">title</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Single Line Text</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">notes</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Textarea / Paragraph</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">alternate_email</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Email Address</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">call</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Phone Number</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">link</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Web URL</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">cloud_upload</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">File Dropzone</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+</div>
+<!-- Category: Numbers & Currency -->
+<div class="flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold px-1">Numbers &amp; Currency</span>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">pin</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Quantity / Integer</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">payments</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Currency (EGP / USD)</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">percent</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Percentage / Rate</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+</div>
+<!-- Category: Selection Controls -->
+<div class="flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold px-1">Selection Controls</span>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">arrow_drop_down_circle</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Single Select Dropdown</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">check_box</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Multi-Select Checkboxes</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">toggle_on</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Boolean Toggle Switch</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+</div>
+<!-- Category: Organization & People -->
+<div class="flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold px-1">Organization &amp; People</span>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">badge</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">User Picker (Azure AD)</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">domain</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Department Picker</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="p-2 bg-surface-container-low hover:bg-surface-container rounded-lg cursor-grab active:cursor-grabbing flex items-center justify-between transition-all group shadow-sm">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px] group-hover:text-primary transition-colors">account_balance</span>
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Cost Center Picker</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+</div>
+<!-- Category: System Locked Blocks -->
+<div class="flex flex-col gap-1.5 pt-2">
+<div class="flex items-center justify-between px-1">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Built-in System Blocks</span>
+<span class="material-symbols-outlined text-outline text-[14px]">lock</span>
+</div>
+<div class="p-2 bg-surface-container-high rounded-lg flex items-center justify-between opacity-90 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">table_chart</span>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Bill of Quantities (BOQ)</span>
+<span class="font-label-sm text-label-sm text-primary font-bold">Core Module • Auto-Calculate</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-lowest text-outline">Locked</span>
+</div>
+<div class="p-2 bg-surface-container-high rounded-lg flex items-center justify-between opacity-90 shadow-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">description</span>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Requester Justification</span>
+<span class="font-label-sm text-label-sm text-outline">Standard Audit Trail</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-lowest text-outline">Locked</span>
+</div>
+</div>
+</div>
+</div>
+<!-- MIDDLE CANVAS: LIVE FORM COMPOSER (Flexible center stage -> 5 or 6 cols) -->
+<div class="col-span-12 lg:col-span-5 xl:col-span-6 flex flex-col gap-space-md">
+<!-- Canvas Header Indicator Bar -->
+<div class="bg-surface-container-lowest rounded-xl p-space-sm shadow-sm flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Live Layout Canvas</span>
+<span class="font-label-sm text-label-sm text-outline">| Drag to reorder</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-container" title="Desktop View">
+<span class="material-symbols-outlined text-[18px]">laptop</span>
+</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container" title="Tablet View">
+<span class="material-symbols-outlined text-[18px]">tablet</span>
+</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container" title="Mobile View">
+<span class="material-symbols-outlined text-[18px]">smartphone</span>
+</button>
+</div>
+</div>
+<!-- Form Canvas Work Area -->
+<div class="bg-surface-container rounded-xl p-space-lg shadow-inner flex flex-col gap-space-md min-h-[820px] relative">
+<!-- Form Top Banner / Presentation Card -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1.5 bg-primary"></div>
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-sm text-label-sm text-primary font-bold uppercase tracking-wider">Internal Procurement Workflow</span>
+<h2 class="font-headline-md text-headline-md text-on-surface mt-0.5">IT Hardware &amp; Workstation Requisition</h2>
+<p class="font-body-sm text-body-sm text-outline mt-1">Submit this requisition for new employee on-boarding, workstation refreshes, or high-compute research equipment.</p>
+</div>
+<div class="w-10 h-10 rounded-lg bg-surface-container-low flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">devices</span>
+</div>
+</div>
+</div>
+<!-- Canvas Drop Indicator (Ghost) -->
+<div class="py-1 px-space-md rounded-lg bg-primary/5 flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]">add_circle</span>
+<span class="font-label-sm text-label-sm text-primary font-medium">Drop section or field here</span>
+</div>
+<!-- FIELD 1: ACTIVE SELECTED FIELD (Dell Specs / Model) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-md ring-2 ring-primary relative group transition-all">
+<div class="absolute -top-3 left-4 bg-primary text-on-primary font-label-sm text-label-sm px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[12px]">edit</span>
+<span>Active Field: custom_text_model</span>
+</div>
+<div class="absolute top-3 right-3 flex items-center gap-1">
+<button class="p-1 rounded text-outline hover:text-primary hover:bg-surface-container-low transition-colors" title="Move Up">
+<span class="material-symbols-outlined text-[16px]">arrow_upward</span>
+</button>
+<button class="p-1 rounded text-outline hover:text-primary hover:bg-surface-container-low transition-colors" title="Move Down">
+<span class="material-symbols-outlined text-[16px]">arrow_downward</span>
+</button>
+<button class="p-1 rounded text-outline hover:text-error hover:bg-error-container/20 transition-colors" title="Remove">
+<span class="material-symbols-outlined text-[16px]">delete</span>
+</button>
+</div>
+<div class="mt-2 flex flex-col gap-1.5">
+<div class="flex items-center gap-1.5">
+<label class="font-headline-sm text-body-md font-semibold text-on-surface">Equipment Model / Part Reference</label>
+<span class="text-error font-bold">*</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline">State precise CPU, RAM, and GPU configurations if custom order.</p>
+<div class="w-full bg-surface-container-low rounded-lg p-2.5 flex items-center justify-between text-on-surface font-body-sm text-body-sm">
+<span class="text-on-surface">Dell Precision 5690 Core Ultra 7 165H / 32GB / RTX 2000 Ada</span>
+<span class="material-symbols-outlined text-outline text-[18px]">verified</span>
+</div>
+</div>
+</div>
+<!-- FIELD 2 & 3: TWO COLUMN ROW (Delivery Date & Cost Center) -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- Delivery Date Field -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm hover:shadow transition-all group relative cursor-pointer">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-1">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Target Delivery Date</span>
+<span class="text-error font-bold">*</span>
+</div>
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity text-[16px]">drag_indicator</span>
+</div>
+<div class="w-full bg-surface-container-low rounded-lg px-3 py-2 flex items-center justify-between text-on-surface font-body-sm text-body-sm">
+<span class="text-on-surface-variant">Select SLA fulfillment date...</span>
+<span class="material-symbols-outlined text-outline text-[18px]">calendar_month</span>
+</div>
+</div>
+<!-- Cost Center Picker Field -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm hover:shadow transition-all group relative cursor-pointer">
+<div class="flex items-center justify-between mb-1.5">
+<div class="flex items-center gap-1">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Chargeable Cost Center</span>
+<span class="text-error font-bold">*</span>
+</div>
+<span class="material-symbols-outlined text-outline opacity-0 group-hover:opacity-100 transition-opacity text-[16px]">drag_indicator</span>
+</div>
+<div class="w-full bg-surface-container-low rounded-lg px-3 py-2 flex items-center justify-between text-on-surface font-body-sm text-body-sm">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">CC-4010 [Enterprise AI Platform]</span>
+<span class="material-symbols-outlined text-outline text-[18px]">account_balance_wallet</span>
+</div>
+</div>
+</div>
+<!-- FIELD 4: CONDITIONAL FIELD (Urgent Flag with Badge) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm relative group cursor-pointer">
+<div class="flex items-center justify-between mb-2">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Urgent Flag &amp; Expedited Reason</span>
+<!-- Conditional Logic Badge -->
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">visibility</span>
+<span>Rule: Shown when Urgent == true</span>
+</span>
+</div>
+<span class="material-symbols-outlined text-outline text-[16px]">drag_indicator</span>
+</div>
+<div class="w-full bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface">Flag as Executive Escalation</span>
+<div class="w-9 h-5 bg-primary rounded-full p-0.5 flex items-center justify-end">
+<div class="w-4 h-4 bg-on-primary rounded-full shadow-sm"></div>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-2 rounded text-body-sm font-body-sm text-on-surface-variant">
+              Hardware critical for production launch on November 15. Standard 4-week lead time must be expedited through local partner.
+            </div>
+</div>
+</div>
+<!-- FIELD 5: SYSTEM CORE BLOCK (Bill of Quantities Table Preview) -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-col gap-space-sm relative">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">table_rows</span>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Bill of Quantities (Items Schedule)</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container-high text-primary font-bold">CORE SYSTEM</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Includes automatic tax calculations, line item grouping, and currency normalization</span>
+</div>
+</div>
+<button class="text-outline hover:text-on-surface p-1 rounded">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+<!-- Mini BOQ Render -->
+<div class="rounded-lg overflow-hidden bg-surface-container-low mt-1">
+<div class="grid grid-cols-12 bg-surface-container-high px-3 py-2 text-outline font-label-sm text-label-sm font-semibold uppercase tracking-wider">
+<span class="col-span-1">#</span>
+<span class="col-span-5">Item &amp; Description</span>
+<span class="col-span-2 text-right">Qty</span>
+<span class="col-span-2 text-right">Est. Unit (EGP)</span>
+<span class="col-span-2 text-right">Subtotal (EGP)</span>
+</div>
+<div class="grid grid-cols-12 px-3 py-2 items-center text-on-surface font-body-sm text-body-sm">
+<span class="col-span-1 font-label-sm text-label-sm text-outline">01</span>
+<span class="col-span-5 font-semibold text-on-surface">Dell Precision 5690 Mobile Station</span>
+<span class="col-span-2 text-right font-label-sm text-label-sm">2</span>
+<span class="col-span-2 text-right font-label-sm text-label-sm">84,500.00</span>
+<span class="col-span-2 text-right font-label-sm text-label-sm font-semibold">169,000.00</span>
+</div>
+<div class="grid grid-cols-12 px-3 py-2 items-center text-on-surface font-body-sm text-body-sm bg-surface-container-lowest/50">
+<span class="col-span-1 font-label-sm text-label-sm text-outline">02</span>
+<span class="col-span-5 font-semibold text-on-surface">Dell Thunderbolt 4 Dock WD22TB4</span>
+<span class="col-span-2 text-right font-label-sm text-label-sm">2</span>
+<span class="col-span-2 text-right font-label-sm text-label-sm">14,200.00</span>
+<span class="col-span-2 text-right font-label-sm text-label-sm font-semibold">28,400.00</span>
+</div>
+<div class="px-3 py-2 bg-surface-container-high/80 flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Estimated Total (Before VAT 14%)</span>
+<span class="font-label-sm text-label-sm font-bold text-primary">197,400.00 EGP</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANEL: FIELD CONFIGURATION & RULES INSPECTOR (320px equivalent -> 4 cols desktop) -->
+<div class="col-span-12 lg:col-span-4 xl:col-span-3 bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-md">
+<!-- Inspector Header & Subtabs -->
+<div class="flex flex-col gap-space-sm pb-space-xs">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">tune</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Field Inspector</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">custom_text_model</span>
+</div>
+<div class="grid grid-cols-3 gap-1 bg-surface-container-high p-1 rounded-lg">
+<button class="py-1 px-1 rounded-md bg-surface-container-lowest text-primary font-headline-sm text-body-sm font-semibold text-center shadow-xs">
+            Properties
+          </button>
+<button class="py-1 px-1 rounded-md text-on-surface-variant hover:text-on-surface font-headline-sm text-body-sm font-semibold text-center transition-colors">
+            Logic (1)
+          </button>
+<button class="py-1 px-1 rounded-md text-on-surface-variant hover:text-on-surface font-headline-sm text-body-sm font-semibold text-center transition-colors">
+            Validation
+          </button>
+</div>
+</div>
+<!-- Properties Scroll Area -->
+<div class="flex flex-col gap-space-md max-h-[750px] overflow-y-auto pr-1">
+<!-- Field Properties Block -->
+<div class="flex flex-col gap-3">
+<div class="flex flex-col gap-1">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Field Display Label</label>
+<input class="w-full bg-surface-container-low text-on-surface rounded-lg px-3 py-2 font-body-sm text-body-sm focus:outline-none focus:bg-surface-container" type="text" value="Equipment Model / Part Reference"/>
+</div>
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Field Key / Slug</label>
+<span class="font-label-sm text-label-sm text-outline">Auto-generated</span>
+</div>
+<div class="w-full bg-surface-container px-3 py-2 rounded-lg flex items-center justify-between font-label-sm text-label-sm text-outline">
+<span class="text-on-surface-variant font-semibold">equipment_part_ref</span>
+<span class="material-symbols-outlined text-[16px]">lock</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Placeholder Text</label>
+<input class="w-full bg-surface-container-low text-on-surface placeholder:text-outline rounded-lg px-3 py-2 font-body-sm text-body-sm focus:outline-none focus:bg-surface-container" type="text" value="e.g., Dell Latitude 7440 14-inch FHD+"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-headline-sm text-body-sm font-semibold text-on-surface">Help / Description Text</label>
+<textarea class="w-full bg-surface-container-low text-on-surface rounded-lg px-3 py-2 font-body-sm text-body-sm focus:outline-none focus:bg-surface-container resize-none" rows="2">State precise CPU, RAM, and GPU configurations if custom order.</textarea>
+</div>
+<div class="p-3 bg-surface-container-low rounded-lg flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Required Field</span>
+<span class="font-label-sm text-label-sm text-outline">Blocks form submission if empty</span>
+</div>
+<div class="w-10 h-5 bg-primary rounded-full p-0.5 flex items-center justify-end cursor-pointer">
+<div class="w-4 h-4 bg-on-primary rounded-full shadow-sm"></div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline font-semibold">Min Chars</label>
+<input class="bg-surface-container-low rounded-lg px-3 py-1.5 font-label-sm text-label-sm text-on-surface focus:outline-none" type="number" value="5"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline font-semibold">Max Chars</label>
+<input class="bg-surface-container-low rounded-lg px-3 py-1.5 font-label-sm text-label-sm text-on-surface focus:outline-none" type="number" value="120"/>
+</div>
+</div>
+</div>
+<!-- Conditional Logic Builder Section -->
+<div class="p-3 bg-surface-container rounded-xl flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[18px]">alt_route</span>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Conditional Display Rule</span>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">1 Rule Active</span>
+</div>
+<p class="font-label-sm text-label-sm text-outline">Show this field on the requester view only if:</p>
+<!-- Rule Box -->
+<div class="bg-surface-container-lowest p-2.5 rounded-lg flex flex-col gap-2 shadow-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline">IF TARGET FIELD</span>
+<span class="material-symbols-outlined text-outline text-[16px] cursor-pointer hover:text-error">close</span>
+</div>
+<select class="bg-surface-container-low text-on-surface rounded p-1.5 font-body-sm text-body-sm focus:outline-none">
+<option>Urgent Flag (Boolean)</option>
+<option>Cost Center Code</option>
+<option>Delivery Location</option>
+</select>
+<div class="grid grid-cols-2 gap-2">
+<select class="bg-surface-container-low text-on-surface rounded p-1.5 font-body-sm text-body-sm focus:outline-none">
+<option>Equals</option>
+<option>Not Equals</option>
+<option>Is Not Empty</option>
+</select>
+<div class="bg-surface-container-low rounded p-1.5 font-label-sm text-label-sm text-on-surface font-semibold flex items-center justify-center">
+                Checked (true)
+              </div>
+</div>
+</div>
+<button class="py-1 px-2 rounded-lg bg-surface-container-high text-primary font-headline-sm text-body-sm font-semibold hover:bg-surface-container-lowest transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Add OR / AND Condition</span>
+</button>
+</div>
+<!-- Field Actions Bottom -->
+<div class="pt-2 flex flex-col gap-2">
+<button class="w-full py-2 px-3 rounded-lg bg-surface-container-low text-on-surface font-headline-sm text-body-sm font-semibold hover:bg-surface-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">content_copy</span>
+<span>Duplicate Field</span>
+</button>
+<button class="w-full py-2 px-3 rounded-lg bg-error-container/40 text-error font-headline-sm text-body-sm font-semibold hover:bg-error-container transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+<span>Delete Field from Template</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- FOOTER SHORTCUT & STATE SUMMARY STRIP -->
+<div class="w-full bg-surface-container-lowest rounded-xl p-space-md shadow-sm flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-lg">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">check_circle</span>
+<span class="font-body-sm text-body-sm text-on-surface">Form schema validation: <strong class="text-tertiary">0 Errors, Valid</strong></span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">database</span>
+<span class="font-body-sm text-body-sm text-outline">Payload Size: <strong class="text-on-surface">14.2 KB</strong></span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[18px]">security</span>
+<span class="font-body-sm text-body-sm text-outline">Access Policy: <strong class="text-on-surface">Authenticated AD Domain Users</strong></span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<a class="font-headline-sm text-body-sm text-primary font-semibold hover:underline flex items-center gap-1" href="#">
+<span>View Form Audit Trail</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div></main></div></body></html>

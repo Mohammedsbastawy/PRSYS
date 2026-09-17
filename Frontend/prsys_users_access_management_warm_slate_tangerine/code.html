@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a aria-current="page" class="flex items-center justify-between px-space-sm py-2 transition-all bg-primary-container text-on-primary-container font-semibold rounded-lg" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-lg">
+<!-- Header & Navigation Hub -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<div class="flex items-center gap-space-xs font-label-sm text-label-sm text-outline uppercase tracking-wider mb-1">
+<span>Administration</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">Governance &amp; Identity</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Users &amp; Access Control</h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Enterprise directory federation, direct approval hierarchies, and system privilege matrix.</p>
+</div>
+<!-- Quick Metrics Strip -->
+<div class="flex items-center gap-space-sm bg-surface-container-low p-1.5 rounded-xl shadow-sm">
+<div class="px-space-md py-1.5 rounded-lg bg-surface-container-lowest shadow-sm flex items-center gap-space-sm">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">ACTIVE SYNC</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">Azure AD Connected</span>
+</div>
+</div>
+<div class="px-space-md py-1.5 rounded-lg bg-surface-container-lowest shadow-sm flex items-center gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline">ENTITLED USERS</span>
+<span class="font-label-md text-label-md text-on-surface font-semibold">148 Total</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Segmented Navigation Tabs -->
+<div class="flex items-center gap-1 bg-surface-container-high/60 p-1 rounded-xl w-fit">
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold shadow-sm transition-all">
+<span class="material-symbols-outlined text-[16px] text-primary">badge</span>
+<span>Users Directory</span>
+<span class="px-1.5 py-0.2 rounded-full bg-primary/10 text-primary font-label-sm text-label-sm">148</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all">
+<span class="material-symbols-outlined text-[16px]">domain</span>
+<span>Departments</span>
+<span class="px-1.5 py-0.2 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">8</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all">
+<span class="material-symbols-outlined text-[16px]">group_work</span>
+<span>User Groups</span>
+<span class="px-1.5 py-0.2 rounded-full bg-surface-variant text-on-surface-variant font-label-sm text-label-sm">14</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all">
+<span class="material-symbols-outlined text-[16px] text-outline">lock</span>
+<span>Roles &amp; Permissions Matrix</span>
+<span class="font-label-sm text-label-sm text-outline tracking-wider uppercase font-semibold">(Locked)</span>
+</button>
+</div>
+<!-- Primary Action & Multi-Filter Strip -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-space-md">
+<div class="flex flex-wrap items-center gap-space-sm flex-1">
+<!-- Search -->
+<div class="relative min-w-[280px] flex-1 max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest transition-all" placeholder="Search by name, email, employee ID (e.g. EG-492)..." type="text"/>
+</div>
+<!-- Filter: Department -->
+<div class="relative">
+<select class="appearance-none h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md cursor-pointer focus:outline-none">
+<option value="">All Departments (8)</option>
+<option value="it">IT &amp; Systems</option>
+<option value="prod">Production &amp; Ops</option>
+<option value="fac">Cairo Facilities</option>
+<option value="fin">Finance &amp; Treasury</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-outline text-[16px] pointer-events-none">expand_more</span>
+</div>
+<!-- Filter: Role -->
+<div class="relative">
+<select class="appearance-none h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md cursor-pointer focus:outline-none">
+<option value="">Role: All Types</option>
+<option value="super">SUPER_ADMIN</option>
+<option value="agent">AGENT (Procurement)</option>
+<option value="user">USER (Standard)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-outline text-[16px] pointer-events-none">expand_more</span>
+</div>
+<!-- Filter: Account Identity -->
+<div class="relative">
+<select class="appearance-none h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md cursor-pointer focus:outline-none">
+<option value="">Identity: Entra / Local</option>
+<option value="azure">Microsoft Entra ID</option>
+<option value="local">Local PRSYS Database</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-outline text-[16px] pointer-events-none">expand_more</span>
+</div>
+<!-- Filter: Status -->
+<div class="relative">
+<select class="appearance-none h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md cursor-pointer focus:outline-none">
+<option value="">Status: All Active &amp; Idle</option>
+<option value="active">Active Accounts Only</option>
+<option value="disabled">Disabled Accounts</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-outline text-[16px] pointer-events-none">expand_more</span>
+</div>
+</div>
+<!-- Action Button Group -->
+<div class="flex items-center gap-space-sm shrink-0">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-dim text-on-surface font-label-md text-label-md font-semibold flex items-center gap-space-xs transition-colors">
+<span class="material-symbols-outlined text-[18px]">cloud_sync</span>
+<span>Sync Azure AD</span>
+</button>
+<button class="h-10 px-space-lg rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-semibold shadow-md hover:shadow-lg flex items-center gap-space-xs transition-all active:scale-[0.98]" id="openModalBtn">
+<span class="material-symbols-outlined text-[18px]">person_add</span>
+<span>+ Create User</span>
+</button>
+</div>
+</div>
+<!-- Main Table & Side Modal Split -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- High Density Table (Span 8 or full depending on overlay context) -->
+<div class="xl:col-span-8 flex flex-col bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="p-space-md flex items-center justify-between bg-surface-container-low/40">
+<div class="flex items-center gap-space-sm">
+<span class="font-headline-sm text-body-lg font-semibold text-on-surface">Registered User Directory</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold tracking-tight">PAGE 1 OF 15</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Export CSV">
+<span class="material-symbols-outlined text-[18px]">file_download</span>
+</button>
+<button class="p-1.5 rounded-lg text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors" title="Filter Preset">
+<span class="material-symbols-outlined text-[18px]">view_column</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm text-on-surface border-collapse">
+<thead>
+<tr class="h-10 bg-surface-container-high/40 text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="px-space-md font-semibold">User Identity</th>
+<th class="px-space-sm font-semibold">System Role</th>
+<th class="px-space-sm font-semibold">Department</th>
+<th class="px-space-sm font-semibold">Reports To</th>
+<th class="px-space-sm font-semibold">Approval Groups</th>
+<th class="px-space-sm font-semibold">Auth Type</th>
+<th class="px-space-sm font-semibold text-center">Status</th>
+<th class="pr-space-md pl-space-xs text-right font-semibold">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high/40">
+<!-- Elena Rostova -->
+<tr class="h-11 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-space-md py-1">
+<div class="flex items-center gap-2.5">
+<img class="w-7 h-7 rounded-full object-cover shrink-0" data-alt="Professional female executive Elena Rostova with brown hair, warm confident corporate portrait, subtle studio lighting with slate and deep terracotta background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBl_iN6apKUbTdWiJe7FmilSV6Au4ozuibzbHyW_CSrhF9_x2ssApeasxb0fOiaVadGOWPkCBL2Dw2_0iX51z2KsxeYzgaeXVetTPxasn80lGry5e0VQ84Pb2IZha3bcMrDwUTOFli9hgBsfb1sFKyh6rFi7B4y9tzZaBvknY9cRX4HcyV_-XrB3--ZC93JpyJ6YGmM-XbhJ65zv5BKMpFxFD_3uXSCL9styvbVHGb_IYg6PGqv7UdRFg"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight truncate">Elena Rostova</span>
+<span class="font-label-sm text-label-sm text-outline truncate">e.rostova@prsys.eg</span>
+</div>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold bg-primary-fixed text-on-primary-fixed">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> SUPER_ADMIN
+                  </span>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap text-on-surface-variant font-body-sm">
+                  Procurement Ops
+                </td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-[9px] flex items-center justify-center font-bold">BR</span>
+<span class="font-body-sm text-on-surface text-[13px]">Board Exec</span>
+</div>
+</td>
+<td class="px-space-sm py-1">
+<div class="flex items-center gap-1">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant truncate max-w-[100px]">Capex Board</span>
+<span class="font-label-sm text-[10px] px-1 py-0.5 rounded bg-surface-container-high text-on-surface font-bold">+2</span>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-tertiary">cloud_done</span> Entra ID
+                  </span>
+</td>
+<td class="px-space-sm py-1 text-center whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+                  </span>
+</td>
+<td class="pr-space-md pl-space-xs py-1 text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Edit Permissions">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Reset Credentials">
+<span class="material-symbols-outlined text-[16px]">key</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Ahmed Hassan -->
+<tr class="h-11 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-space-md py-1">
+<div class="flex items-center gap-2.5">
+<img class="w-7 h-7 rounded-full object-cover shrink-0" data-alt="Portrait of Ahmed Hassan, an Egyptian lead DevOps engineer with glasses and sharp beard, professional workplace lighting, neutral slate ambient." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDM7heyu-gdXlO2aMA_4qVRZNFgDSdmp1cvIAXOVFCRNaM3n8a0oqklcAToNo9KKWmxURE8uhTM2IV0BCGb6K7pBvprjypisp3kAvaPYok1JEE4iwVuE3drkDHYNbnBvd3k_wqJuaOA7MDWacvAG3B6Fqdz6Vg1-ijCR5oVe9zEQt0j3-iIXNdG9kge6mc9hhKB85R_el_LmRsecWzkKdAhRhhsmZnyICqP7l6le7aFVxblZ_E61FgUtQ"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight truncate">Ahmed Hassan</span>
+<span class="font-label-sm text-label-sm text-outline truncate">a.hassan@prsys.eg</span>
+</div>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold bg-secondary-fixed text-on-secondary-fixed">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> AGENT
+                  </span>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap text-on-surface-variant font-body-sm">
+                  IT &amp; Systems
+                </td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-[9px] flex items-center justify-center font-bold">TM</span>
+<span class="font-body-sm text-on-surface text-[13px]">T. Mansour</span>
+</div>
+</td>
+<td class="px-space-sm py-1">
+<div class="flex items-center gap-1">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant truncate max-w-[100px]">IT Approvers</span>
+<span class="font-label-sm text-[10px] px-1 py-0.5 rounded bg-surface-container-high text-on-surface font-bold">+1</span>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-tertiary">cloud_done</span> Entra ID
+                  </span>
+</td>
+<td class="px-space-sm py-1 text-center whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+                  </span>
+</td>
+<td class="pr-space-md pl-space-xs py-1 text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Edit Permissions">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Reset Credentials">
+<span class="material-symbols-outlined text-[16px]">key</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Tarek Mansour -->
+<tr class="h-11 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-space-md py-1">
+<div class="flex items-center gap-2.5">
+<img class="w-7 h-7 rounded-full object-cover shrink-0" data-alt="Senior Egyptian technology director Tarek Mansour in crisp navy blazer, experienced leader demeanor, professional high-end office portrait." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_O63rrY5Mrxwsd6qmmM7HvMAkalU01pFByugoPRKRmUV7cAv5W46flTuV6CxgcsmsNWy1o4tgQ3chiNWfNjTP3aX0Yck7Edn2zH2eQmg5A63yfn7rGj0V3pxwL4HzBs2L97nX6OYto0rtvwXEfCEAERLHSgI5Z42pDjhM1HL_f7eAdA0PKt3Q9C1eCtae0BKfmUG5peVjhgs9Q0Iv9tGgBLkfMgJBGpysg-_J6LQQW0cvH0r2H25gog"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight truncate">Tarek Mansour</span>
+<span class="font-label-sm text-label-sm text-outline truncate">t.mansour@prsys.eg</span>
+</div>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold bg-primary-fixed text-on-primary-fixed">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span> SUPER_ADMIN
+                  </span>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap text-on-surface-variant font-body-sm">
+                  IT Infrastructure
+                </td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-[9px] flex items-center justify-center font-bold">ER</span>
+<span class="font-body-sm text-on-surface text-[13px]">E. Rostova</span>
+</div>
+</td>
+<td class="px-space-sm py-1">
+<div class="flex items-center gap-1">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant truncate max-w-[100px]">Infra Budget</span>
+<span class="font-label-sm text-[10px] px-1 py-0.5 rounded bg-surface-container-high text-on-surface font-bold">+3</span>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-tertiary">cloud_done</span> Entra ID
+                  </span>
+</td>
+<td class="px-space-sm py-1 text-center whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+                  </span>
+</td>
+<td class="pr-space-md pl-space-xs py-1 text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Edit Permissions">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Reset Credentials">
+<span class="material-symbols-outlined text-[16px]">key</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Mahmoud Zaki -->
+<tr class="h-11 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-space-md py-1">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-container-high text-on-surface flex items-center justify-center font-headline-sm text-body-sm font-semibold">MZ</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight truncate">Mahmoud Zaki</span>
+<span class="font-label-sm text-label-sm text-outline truncate">m.zaki@prsys.eg</span>
+</div>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium bg-surface-container-highest text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> USER
+                  </span>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap text-on-surface-variant font-body-sm">
+                  Plant Operations
+                </td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-[9px] flex items-center justify-center font-bold">HS</span>
+<span class="font-body-sm text-on-surface text-[13px]">H. Shaker</span>
+</div>
+</td>
+<td class="px-space-sm py-1">
+<div class="flex items-center gap-1">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant truncate max-w-[100px]">Cairo Ops</span>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-secondary">database</span> PRSYS Local
+                  </span>
+</td>
+<td class="px-space-sm py-1 text-center whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+                  </span>
+</td>
+<td class="pr-space-md pl-space-xs py-1 text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Edit Permissions">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Reset Credentials">
+<span class="material-symbols-outlined text-[16px]">key</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Hany Shaker -->
+<tr class="h-11 hover:bg-surface-container-low/50 transition-colors">
+<td class="px-space-md py-1">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-headline-sm text-body-sm font-semibold">HS</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight truncate">Hany Shaker</span>
+<span class="font-label-sm text-label-sm text-outline truncate">h.shaker@prsys.eg</span>
+</div>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-bold bg-secondary-fixed text-on-secondary-fixed">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> AGENT
+                  </span>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap text-on-surface-variant font-body-sm">
+                  Finance &amp; Treasury
+                </td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-[9px] flex items-center justify-center font-bold">ER</span>
+<span class="font-body-sm text-on-surface text-[13px]">E. Rostova</span>
+</div>
+</td>
+<td class="px-space-sm py-1">
+<div class="flex items-center gap-1">
+<span class="font-label-sm text-[10px] px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant truncate max-w-[100px]">Finance Tier 3</span>
+<span class="font-label-sm text-[10px] px-1 py-0.5 rounded bg-surface-container-high text-on-surface font-bold">+1</span>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-on-surface-variant">
+<span class="material-symbols-outlined text-[15px] text-tertiary">cloud_done</span> Entra ID
+                  </span>
+</td>
+<td class="px-space-sm py-1 text-center whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+                  </span>
+</td>
+<td class="pr-space-md pl-space-xs py-1 text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Edit Permissions">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Reset Credentials">
+<span class="material-symbols-outlined text-[16px]">key</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Nour El-Din -->
+<tr class="h-11 hover:bg-surface-container-low/50 transition-colors opacity-70">
+<td class="px-space-md py-1">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-surface-variant text-on-surface-variant flex items-center justify-center font-headline-sm text-body-sm font-semibold">NE</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight truncate">Nour El-Din</span>
+<span class="font-label-sm text-label-sm text-outline truncate">n.eldin@prsys.eg</span>
+</div>
+</div>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm font-medium bg-surface-container-highest text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> USER
+                  </span>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap text-on-surface-variant font-body-sm">
+                  Administration
+                </td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-[9px] flex items-center justify-center font-bold">TM</span>
+<span class="font-body-sm text-on-surface text-[13px]">T. Mansour</span>
+</div>
+</td>
+<td class="px-space-sm py-1">
+<span class="font-label-sm text-[10px] text-outline italic">No groups</span>
+</td>
+<td class="px-space-sm py-1 whitespace-nowrap">
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-outline">
+<span class="material-symbols-outlined text-[15px] text-outline">database</span> PRSYS Local
+                  </span>
+</td>
+<td class="px-space-sm py-1 text-center whitespace-nowrap">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-surface-container-highest text-outline font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-outline"></span> Disabled
+                  </span>
+</td>
+<td class="pr-space-md pl-space-xs py-1 text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 hover:bg-surface-container text-on-surface-variant hover:text-primary rounded transition-colors" title="Enable Account">
+<span class="material-symbols-outlined text-[16px]">lock_open</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer -->
+<div class="p-space-sm px-space-md bg-surface-container-low/40 flex items-center justify-between font-label-sm text-label-sm text-outline">
+<div class="flex items-center gap-space-sm">
+<span>Showing 1-6 of 148 Users</span>
+<span class="h-3 w-px bg-surface-dim"></span>
+<span>Selected: 0 items</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded bg-surface-container-lowest text-outline hover:text-on-surface disabled:opacity-40" disabled="">
+<span class="material-symbols-outlined text-[16px]">chevron_left</span>
+</button>
+<span class="px-2 py-0.5 rounded bg-primary text-on-primary font-bold">1</span>
+<button class="px-2 py-0.5 rounded hover:bg-surface-container text-on-surface">2</button>
+<button class="px-2 py-0.5 rounded hover:bg-surface-container text-on-surface">3</button>
+<span class="px-1">...</span>
+<button class="px-2 py-0.5 rounded hover:bg-surface-container text-on-surface">25</button>
+<button class="p-1 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container">
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Docked Contextual Inspector / User Editor (Slide-over Simulation) -->
+<div class="xl:col-span-4 bg-surface-container-lowest rounded-xl shadow-md p-space-lg flex flex-col gap-space-md relative overflow-hidden" id="inspectorPanel">
+<div class="flex items-center justify-between pb-space-sm border-b border-surface-container-high/60">
+<div class="flex items-center gap-space-xs">
+<span class="p-1.5 rounded-lg bg-primary-fixed text-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">manage_accounts</span>
+</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">User Configuration</h2>
+<span class="font-label-sm text-label-sm text-outline">DIRECT ACCESS &amp; RBAC PROFILE</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold">DRAFT</span>
+</div>
+<form class="flex flex-col gap-space-md" onsubmit="event.preventDefault();">
+<!-- Full Name -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant font-semibold mb-1">Full Legal Name</label>
+<div class="relative">
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all" type="text" value="Kareem Sherif"/>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-outline text-[18px]">badge</span>
+</div>
+</div>
+<!-- Work Email -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant font-semibold mb-1">Corporate Email Address</label>
+<div class="relative">
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest focus:ring-1 focus:ring-primary transition-all" type="email" value="k.sherif@prsys.eg"/>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-outline text-[18px]">mail</span>
+</div>
+</div>
+<!-- Role & Department 2-col -->
+<div class="grid grid-cols-2 gap-space-sm">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant font-semibold mb-1">System Role</label>
+<select class="w-full h-10 px-2 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none">
+<option value="USER">USER (Self Requester)</option>
+<option selected="" value="AGENT">AGENT (Buyer/Approver)</option>
+<option value="SUPER_ADMIN">SUPER_ADMIN (Full)</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant font-semibold mb-1">Department</label>
+<select class="w-full h-10 px-2 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none">
+<option value="it">IT Operations</option>
+<option value="finance">Finance &amp; Audit</option>
+<option selected="" value="procurement">Procurement Center</option>
+</select>
+</div>
+</div>
+<!-- Direct Line Manager -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant font-semibold mb-1">Direct Line Approver</label>
+<div class="flex items-center gap-space-xs p-2 rounded-lg bg-surface-container-low">
+<img class="w-6 h-6 rounded-full object-cover shrink-0" data-alt="Elena Rostova smiling with corporate posture in modern executive Cairo office." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBH3OzzxD8cgceho_ZRBoq8DHXYkEAfpxrCA-X7zI9Z6v-_mDYxjXYCBsaBOMQg2OFBeHYo1CpuVn5E2toerVJFYoDBNmjOH3yhLJnrSfmMZbMcL0U1AiF-mYiK9BU0YH4ZSdfi6sRhvRLPIl7QBmzhGzdDufJeK-pRhnQB1NUaCWoPGZm3drn3vcxcgpudBRPsKiGkQXjX61-U0ACoJL15fZOFi4_j86-n0ZbQEFVJHzR-Jj80tsVLNw"/>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface flex-1">Elena Rostova (VP Procurement)</span>
+<button class="text-primary font-label-sm text-label-sm font-bold hover:underline" type="button">Change</button>
+</div>
+</div>
+<!-- Account Type / Federation Switch -->
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant font-semibold mb-1">Security Identity Provider</label>
+<div class="grid grid-cols-2 gap-space-xs">
+<label class="flex items-center gap-space-xs p-2 rounded-lg bg-primary-fixed/30 cursor-pointer">
+<input checked="" class="text-primary" name="auth_id" type="radio"/>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-bold text-on-primary-fixed">Microsoft Entra</span>
+<span class="font-label-sm text-[10px] text-outline">SSO Synchronized</span>
+</div>
+</label>
+<label class="flex items-center gap-space-xs p-2 rounded-lg bg-surface-container-low cursor-pointer">
+<input class="text-primary" name="auth_id" type="radio"/>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">Local Auth</span>
+<span class="font-label-sm text-[10px] text-outline">PRSYS Database</span>
+</div>
+</label>
+</div>
+</div>
+<!-- Permissions Granular Preview -->
+<div class="p-space-sm rounded-lg bg-surface-container-high/40 flex flex-col gap-1.5">
+<span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Effective Dynamic Permissions</span>
+<div class="flex flex-wrap gap-1">
+<span class="font-label-sm text-[11px] px-2 py-0.5 rounded bg-surface-container-lowest text-tertiary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> REQUEST_APPROVE
+              </span>
+<span class="font-label-sm text-[11px] px-2 py-0.5 rounded bg-surface-container-lowest text-tertiary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> ASSIGN
+              </span>
+<span class="font-label-sm text-[11px] px-2 py-0.5 rounded bg-surface-container-lowest text-tertiary font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">check_circle</span> PO_REGISTER
+              </span>
+<span class="font-label-sm text-[11px] px-2 py-0.5 rounded bg-surface-container-lowest text-outline line-through flex items-center gap-1">
+                USER_MANAGE
+              </span>
+</div>
+</div>
+<!-- Action Submission buttons -->
+<div class="flex items-center justify-end gap-space-sm pt-space-xs">
+<button class="px-space-md py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high font-label-md text-label-md font-semibold transition-colors" type="button">
+              Cancel
+            </button>
+<button class="px-space-lg py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-semibold shadow transition-all" type="submit">
+              Save User Profile
+            </button>
+</div>
+</form>
+</div>
+</div>
+<!-- Bottom Read-Only Permissions Matrix Section -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high text-on-surface flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">shield_person</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">System Privilege &amp; RBAC Matrix</h3>
+<span class="font-label-sm text-label-sm text-outline">DEFINED ACCESS CONTROL LIST (READ-ONLY PREVIEW)</span>
+</div>
+</div>
+<div class="flex items-center gap-space-xs text-outline font-label-sm text-label-sm bg-surface-container-low px-space-md py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-[16px] text-secondary">info</span>
+<span>Role permissions are hard-bound to the immutable PostgreSQL schema security rules.</span>
+</div>
+</div>
+<!-- Matrix Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm border-collapse">
+<thead>
+<tr class="h-10 bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider">
+<th class="px-space-md font-semibold w-1/3">Security Capability / Scope Token</th>
+<th class="px-space-md text-center font-semibold bg-primary-fixed/20 text-on-primary-fixed">
+<div class="flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-primary">security</span>
+<span>SUPER_ADMIN</span>
+</div>
+</th>
+<th class="px-space-md text-center font-semibold bg-secondary-fixed/20 text-on-secondary-fixed">
+<div class="flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-secondary">support_agent</span>
+<span>AGENT (Buyer)</span>
+</div>
+</th>
+<th class="px-space-md text-center font-semibold bg-surface-container-high/50 text-on-surface-variant">
+<div class="flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px] text-outline">person</span>
+<span>USER (Standard)</span>
+</div>
+</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high/40 font-label-md text-label-md">
+<!-- Row 1 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>REQUEST_CREATE</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Initiate and draft purchase requisitions</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>REQUEST_APPROVE</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Authorize workflow step approvals</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>ASSIGN</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Assign line items and bids to procurement specialists</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>FULFILL</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Closeout deliverables and record receiving receipts</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+</tr>
+<!-- Row 5 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>PO_REGISTER</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Issue binding Purchase Orders directly into SAP/ERP</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+</tr>
+<!-- Row 6 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>USER_MANAGE</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Provision users, grant overrides, assign groups</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+</tr>
+<!-- Row 7 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>WF_MANAGE</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Alter stage routing graphs, conditional logic rules</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+</tr>
+<!-- Row 8 -->
+<tr class="h-10 hover:bg-surface-container-low/30 transition-colors">
+<td class="px-space-md text-on-surface font-semibold font-label-sm">
+<code>SLA_MANAGE</code>
+<span class="block font-body-sm text-body-sm text-outline font-normal">Update escalation policies and breach triggers</span>
+</td>
+<td class="px-space-md text-center bg-primary-fixed/5">
+<span class="material-symbols-outlined text-tertiary text-[20px]">check_box</span>
+</td>
+<td class="px-space-md text-center bg-secondary-fixed/5">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+<td class="px-space-md text-center">
+<span class="material-symbols-outlined text-outline text-[20px]">check_box_outline_blank</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

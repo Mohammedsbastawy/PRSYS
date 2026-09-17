@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-2 transition-all bg-primary-container text-on-primary-container font-semibold rounded-lg" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full gap-space-md select-none">
+<!-- Top Command Toolbar -->
+<header class="w-full bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-wrap items-center justify-between gap-space-md">
+<div class="flex items-center gap-space-md min-w-0">
+<div class="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[22px]">alt_route</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-sm">
+<h1 class="font-headline-sm text-headline-sm text-on-surface tracking-tight truncate">IT Hardware &amp; Equipment Approval Flow</h1>
+<button class="text-outline hover:text-primary transition-colors p-1" title="Edit flow title">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+</button>
+<span class="font-label-sm text-label-sm px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant uppercase tracking-wider font-semibold">
+            Active
+          </span>
+</div>
+<div class="flex items-center gap-space-sm font-label-sm text-label-sm text-outline mt-0.5">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+<span>Saved 2m ago</span>
+<span class="text-surface-dim">•</span>
+<span>Revision #18</span>
+<span class="text-surface-dim">•</span>
+<span class="text-on-surface-variant font-medium">Production Environment</span>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center bg-surface-container rounded-lg p-1 gap-1">
+<button class="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all" title="Undo (⌘Z)">
+<span class="material-symbols-outlined text-[18px]">undo</span>
+</button>
+<button class="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all" title="Redo (⌘Y)">
+<span class="material-symbols-outlined text-[18px]">redo</span>
+</button>
+<div class="w-px h-4 bg-surface-dim mx-0.5"></div>
+<button class="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all" title="Zoom in">
+<span class="material-symbols-outlined text-[18px]">zoom_in</span>
+</button>
+<span class="font-label-sm text-label-sm text-on-surface-variant px-1 font-semibold">100%</span>
+<button class="p-1.5 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-all" title="Zoom out">
+<span class="material-symbols-outlined text-[18px]">zoom_out</span>
+</button>
+</div>
+<button class="px-3 py-2 rounded-lg bg-surface-container-high text-on-surface font-body-sm text-body-sm hover:bg-surface-dim transition-colors flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">close</span>
+<span>Discard Changes</span>
+</button>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary font-body-sm text-body-sm font-semibold shadow-sm hover:bg-primary-container transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">rocket_launch</span>
+<span>Publish Workflow</span>
+</button>
+</div>
+</header>
+<!-- Three-Panel Visual Canvas Layout -->
+<div class="w-full grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+<!-- Left Panel: Tools Palette (Col 1-3) -->
+<aside class="lg:col-span-3 xl:col-span-3 bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-md max-h-[820px] overflow-y-auto">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-[18px] text-primary">category</span>
+<span class="font-headline-sm text-headline-sm">Node Palette</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">v2.4 Spec</span>
+</div>
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-2.5 top-2.5 text-outline text-[16px]">search</span>
+<input class="w-full h-9 pl-8 pr-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest transition-all" placeholder="/ to search nodes..." type="text"/>
+</div>
+<!-- Section: TRIGGERS / START -->
+<div class="flex flex-col gap-2">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold px-1">Triggers / Start</span>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2.5 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded bg-tertiary-container text-on-tertiary-container flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">play_circle</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Requester Submits</span>
+<span class="font-label-sm text-label-sm text-outline truncate">Form payload mapped</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface text-[18px]">drag_indicator</span>
+</div>
+</div>
+<!-- Section: APPROVAL STEPS -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between px-1">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Approval Steps</span>
+<span class="font-label-sm text-label-sm text-outline">4 Nodes</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2.5 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">supervisor_account</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Dept Manager Review</span>
+<span class="font-label-sm text-label-sm text-outline truncate">Quorum: Any 1 • SLA 24h</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface text-[18px]">drag_indicator</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2.5 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">terminal</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">IT Infrastructure Tier-1</span>
+<span class="font-label-sm text-label-sm text-outline truncate">Role-based group routing</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface text-[18px]">drag_indicator</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2.5 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">account_balance_wallet</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Finance &amp; Budget Clearance</span>
+<span class="font-label-sm text-label-sm text-outline truncate">Threshold &gt; 50k authorization</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface text-[18px]">drag_indicator</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2.5 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-7 h-7 rounded bg-surface-container-highest text-on-surface-variant flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-[16px]">verified_user</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Executive C-Level Auth</span>
+<span class="font-label-sm text-label-sm text-outline truncate">VP / CFO signatory</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline group-hover:text-on-surface text-[18px]">drag_indicator</span>
+</div>
+</div>
+<!-- Section: AUTOMATED ACTIONS -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between px-1">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">Automated Actions</span>
+<span class="font-label-sm text-label-sm text-outline">5 Presets</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary">flag</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Set Ticket Priority</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">P1-P4</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary">sync_saved_locally</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Update Ticket Status</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">PO_REG</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary">schedule</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Apply SLA Policy</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">4h SLA</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary">person_add</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Assign PO Specialist</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Round-robin</span>
+</div>
+<div class="group bg-surface-container-low hover:bg-surface-container p-2 rounded-lg cursor-grab active:cursor-grabbing transition-all flex items-center justify-between">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-[18px] text-primary">campaign</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Send Notification</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Slack/Mail</span>
+</div>
+</div>
+</aside>
+<!-- Middle: Visual Workflow Canvas (Col 4-8/9) -->
+<main class="lg:col-span-6 xl:col-span-6 bg-surface-container-lowest rounded-xl shadow-sm p-space-md relative min-h-[820px] overflow-hidden flex flex-col justify-between">
+<!-- Canvas Backdrop Dot Pattern via SVG Defs -->
+<div class="absolute inset-0 pointer-events-none opacity-40">
+<svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+<pattern height="24" id="canvas-grid" patternunits="userSpaceOnUse" width="24">
+<circle cx="2" cy="2" fill="#8e7166" opacity="0.3" r="1.2"></circle>
+</pattern>
+<rect fill="url(#canvas-grid)" height="100%" width="100%"></rect>
+</svg>
+</div>
+<!-- Interactive Curved Connector Lines -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none z-10" xmlns="http://www.w3.org/2000/svg">
+<!-- Node 1 to Node 2 -->
+<path d="M 285 70 C 285 100, 285 110, 285 140" fill="none" stroke="#3f661e" stroke-linecap="round" stroke-width="2.5"></path>
+<!-- Node 2 (True branch) to Node 3 -->
+<path d="M 240 215 C 240 250, 285 260, 285 290" fill="none" stroke="#a33900" stroke-dasharray="4 3" stroke-width="2.5"></path>
+<!-- Node 2 (False branch bypass) to Node 5 -->
+<path d="M 330 215 C 440 240, 460 480, 360 570" fill="none" stroke="#8e7166" stroke-dasharray="3 3" stroke-width="1.8"></path>
+<!-- Node 3 (Approved port) to Node 4 -->
+<path d="M 240 420 C 240 450, 285 450, 285 470" fill="none" stroke="#3f661e" stroke-width="2.5"></path>
+<!-- Node 3 (Rejected port) outbound indicator -->
+<path d="M 330 420 C 330 440, 390 440, 420 440" fill="none" stroke="#ba1a1a" stroke-width="2"></path>
+<!-- Node 4 to Node 5 -->
+<path d="M 285 540 C 285 555, 285 565, 285 580" fill="none" stroke="#a33900" stroke-width="2.5"></path>
+<!-- Node 5 to Node 6 -->
+<path d="M 285 645 C 285 660, 285 675, 285 690" fill="none" stroke="#3f661e" stroke-width="2.5"></path>
+</svg>
+<!-- Canvas Flow Nodes Layer -->
+<div class="relative z-20 flex flex-col items-center gap-space-md py-space-xs">
+<!-- Node 1: Start Trigger -->
+<div class="w-72 bg-surface-container-low rounded-xl p-3 shadow-sm flex items-center justify-between hover:shadow-md transition-all cursor-pointer">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-tertiary text-on-tertiary flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-[18px]">play_arrow</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-tertiary uppercase font-semibold">Start Event</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Requester Submits Form</span>
+</div>
+</div>
+<div class="w-3.5 h-3.5 rounded-full bg-tertiary flex items-center justify-center shadow-sm" title="Out: payload ready">
+<div class="w-1.5 h-1.5 rounded-full bg-surface"></div>
+</div>
+</div>
+<!-- Node 2: Condition / Filter Branch -->
+<div class="w-80 bg-surface-container-high rounded-xl p-3 shadow-sm flex flex-col gap-2 hover:shadow-md transition-all cursor-pointer mt-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-secondary">call_split</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-semibold">Conditional Split</span>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono">RULE #C-104</span>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface font-semibold bg-surface-container-lowest p-2 rounded">
+            Estimated Total &gt; 50,000 EGP
+          </div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-sm text-label-sm text-primary font-bold flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary inline-block"></span> [True: High Threshold]
+            </span>
+<span class="font-label-sm text-label-sm text-outline flex items-center gap-1">
+              [False: Fast-Track] <span class="w-2 h-2 rounded-full bg-outline inline-block"></span>
+</span>
+</div>
+</div>
+<!-- Node 3: Approval Node (SELECTED / HIGHLIGHTED) -->
+<div class="w-84 bg-surface-container-lowest rounded-xl p-4 shadow-xl ring-2 ring-primary ring-offset-2 flex flex-col gap-2.5 relative transition-all mt-4">
+<div class="absolute -top-3 left-4 bg-primary text-on-primary font-label-sm text-label-sm px-2 py-0.5 rounded-full uppercase font-bold tracking-wider shadow-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">check_circle</span> Active Selection
+          </div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary/15 text-primary flex items-center justify-center font-bold">
+<span class="material-symbols-outlined text-[20px]">how_to_reg</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">Step 01 Approval</span>
+<h4 class="font-body-md text-body-md font-bold text-on-surface">Direct Dept Manager Sign-Off</h4>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-semibold">24h SLA</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant bg-surface-container-low p-2 rounded">
+            Quorum Required: <span class="font-semibold text-on-surface">ANY (1 of 1 Approver)</span>. Escalates to VP Procurement on timeout.
+          </p>
+<div class="flex items-center justify-between pt-1 font-label-sm text-label-sm">
+<div class="flex items-center gap-1.5 text-tertiary font-bold">
+<span class="w-2.5 h-2.5 rounded-full bg-tertiary"></span>
+<span>If Approved → IT Review</span>
+</div>
+<div class="flex items-center gap-1.5 text-error font-bold">
+<span>If Rejected → Reject Flow</span>
+<span class="w-2.5 h-2.5 rounded-full bg-error"></span>
+</div>
+</div>
+</div>
+<!-- Node 4: Secondary Approval Node -->
+<div class="w-80 bg-surface-container-low rounded-xl p-3 shadow-sm flex flex-col gap-2 hover:shadow-md transition-all cursor-pointer mt-3">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">verified</span>
+<span class="font-label-sm text-label-sm uppercase font-semibold text-on-surface-variant">Step 02 Clearance</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">SLA: 48 Hours</span>
+</div>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">IT Director &amp; Architecture Clearance</span>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-outline">
+<span>Pool: Enterprise IT Council</span>
+<span class="text-tertiary font-semibold">Out → SAP Action</span>
+</div>
+</div>
+<!-- Node 5: ERP Action Node -->
+<div class="w-80 bg-surface-container rounded-xl p-3 shadow-sm flex items-center justify-between hover:shadow-md transition-all cursor-pointer mt-3">
+<div class="flex items-center gap-2.5 min-w-0">
+<div class="w-8 h-8 rounded bg-primary text-on-primary flex items-center justify-center font-bold shrink-0">
+<span class="material-symbols-outlined text-[18px]">memory</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold">Automated Hook</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface truncate">Trigger SAP / Oracle PO Registration</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-[18px]">bolt</span>
+</div>
+<!-- Node 6: Terminal Node -->
+<div class="w-72 bg-tertiary-container text-on-tertiary-container rounded-xl p-3 shadow-sm flex items-center justify-between mt-3">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-full bg-on-tertiary-container/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-[16px]">done_all</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm uppercase tracking-wider font-semibold opacity-80">Terminal State</span>
+<span class="font-body-sm text-body-sm font-bold truncate">COMPLETED &amp; Requester Notified</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+</div>
+<!-- Canvas Utility Footer Bar -->
+<div class="relative z-20 w-full pt-3 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm bg-surface-container-lowest/80 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-sm">
+<div class="flex items-center gap-3">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">touch_app</span> Pan: Space+Drag</span>
+<span>•</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">mouse</span> Multi-select: Shift+Click</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-tertiary font-semibold">All 6 nodes operational</span>
+<div class="w-2 h-2 rounded-full bg-tertiary animate-pulse"></div>
+</div>
+</div>
+</main>
+<!-- Right Panel: Context & Configuration Inspector (Col 9-12) -->
+<aside class="lg:col-span-3 xl:col-span-3 bg-surface-container-lowest rounded-xl shadow-sm p-space-md flex flex-col gap-space-md max-h-[820px] overflow-y-auto">
+<!-- Tab Navigation Header -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between border-b border-transparent">
+<span class="font-headline-sm text-headline-sm text-on-surface font-bold">Inspector</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-semibold">0 Issues</span>
+</div>
+<div class="grid grid-cols-3 gap-1 bg-surface-container p-1 rounded-lg">
+<button class="py-1 px-2 rounded-md bg-surface-container-lowest text-on-surface font-body-sm text-body-sm font-semibold shadow-xs">
+            Config
+          </button>
+<button class="py-1 px-2 rounded-md text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-colors">
+            Tree
+          </button>
+<button class="py-1 px-2 rounded-md text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm transition-colors flex items-center justify-center gap-1">
+<span>Audit</span>
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+</button>
+</div>
+</div>
+<!-- Config Form for Selected Node -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold">Step Title</label>
+<input class="w-full h-9 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm font-medium focus:outline-none focus:bg-surface-container transition-all" type="text" value="Direct Dept Manager Sign-Off"/>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold">Approver Entity</label>
+<div class="relative">
+<select class="w-full h-9 px-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm appearance-none focus:outline-none cursor-pointer">
+<option selected="">Requester's Department Manager</option>
+<option>Direct Line Supervisor</option>
+<option>Designated Cost-Center Owner</option>
+<option>Custom Role Group...</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2 text-outline pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-2">
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold">Quorum Rule</label>
+<div class="relative">
+<select class="w-full h-9 px-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm appearance-none focus:outline-none cursor-pointer">
+<option selected="">ANY (1 of 1)</option>
+<option>ALL (100%)</option>
+<option>Majority (&gt;50%)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2 text-outline pointer-events-none text-[16px]">expand_more</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold">SLA Due Target</label>
+<div class="relative">
+<select class="w-full h-9 px-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm appearance-none focus:outline-none cursor-pointer">
+<option selected="">24 Hours</option>
+<option>48 Hours</option>
+<option>4 Hours (Urgent)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2 text-outline pointer-events-none text-[16px]">expand_more</span>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between py-2 px-1 bg-surface-container-low rounded-lg">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Mandatory Comment</span>
+<span class="font-label-sm text-label-sm text-outline">Require reasoning on decision</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-dim peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold">Only If Condition</label>
+<div class="flex items-center bg-surface-container-low rounded-lg px-2.5 py-1.5 gap-2">
+<span class="font-mono font-label-sm text-label-sm text-primary font-semibold truncate">Request.TotalValue &gt;= 0 EGP</span>
+<button class="text-outline hover:text-on-surface ml-auto" title="Formula Builder">
+<span class="material-symbols-outlined text-[16px]">functions</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold">Action On Reject</label>
+<div class="relative">
+<select class="w-full h-9 px-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm appearance-none focus:outline-none cursor-pointer">
+<option selected="">Set Status: REJECTED &amp; Notify</option>
+<option>Return to Requester for Revision</option>
+<option>Escalate to Compliance Review</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2 text-outline pointer-events-none text-[18px]">expand_more</span>
+</div>
+</div>
+<div class="flex items-center justify-between py-2 px-1 bg-surface-container-low rounded-lg mt-1">
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Pause Node Execution</span>
+<span class="font-label-sm text-label-sm text-outline">Bypasses during maintenance</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox"/>
+<div class="w-9 h-5 bg-surface-dim peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-surface after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-surface after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+<!-- Inspector Footer Action Buttons -->
+<div class="flex items-center gap-2 pt-2 mt-auto">
+<button class="flex-1 py-2 rounded-lg bg-surface-container text-on-surface font-body-sm text-body-sm font-medium hover:bg-surface-container-high transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">history</span>
+<span>Diff Log</span>
+</button>
+<button class="p-2 rounded-lg bg-error-container text-on-error-container hover:opacity-90 transition-opacity" title="Delete Step">
+<span class="material-symbols-outlined text-[18px]">delete</span>
+</button>
+</div>
+</aside>
+</div>
+</div></main></div></body></html>

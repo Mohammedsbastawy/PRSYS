@@ -86,7 +86,7 @@ export default function WorkflowsPage() {
         }
       />
       {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <div className="mb-4 rounded border border-error/25 bg-error-container/60 px-4 py-3 text-sm font-medium text-on-error-container">
           {error}
         </div>
       )}
@@ -99,13 +99,13 @@ export default function WorkflowsPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-ink">{w.Name}</h3>
+                    <h3 className="font-semibold text-on-surface">{w.Name}</h3>
                     <StatusBadge status={w.Status} />
                   </div>
                   {w.Description && (
-                    <p className="mt-1 text-sm text-ink-soft">{w.Description}</p>
+                    <p className="mt-1 text-sm text-on-surface-variant">{w.Description}</p>
                   )}
-                  <p className="mt-1 text-xs text-ink-faint">
+                  <p className="mt-1 text-xs text-outline">
                     Used by {inUse} template{inUse === 1 ? "" : "s"}
                     {w.Templates && w.Templates.length > 0 && (
                       <>: {w.Templates.map((t) => t.Name).join(", ")}</>
@@ -119,7 +119,7 @@ export default function WorkflowsPage() {
                   {canManage &&
                     (confirming ? (
                       <span className="inline-flex items-center gap-2">
-                        <span className="font-medium text-ink-soft">Delete?</span>
+                        <span className="font-medium text-on-surface-variant">Delete?</span>
                         <button
                           onClick={() => remove(w.WFDefinitionID)}
                           className="font-bold text-danger hover:underline"
@@ -128,7 +128,7 @@ export default function WorkflowsPage() {
                         </button>
                         <button
                           onClick={() => setConfirmId(null)}
-                          className="text-ink-soft hover:underline"
+                          className="text-on-surface-variant hover:underline"
                         >
                           No
                         </button>
@@ -149,17 +149,17 @@ export default function WorkflowsPage() {
                 {(w.Steps || []).map((s, i) => (
                   <span key={s.WFStepID} className="flex items-center gap-2">
                     <span
-                      className="rounded bg-surface-muted px-2 py-1 text-ink-soft"
+                      className="rounded bg-surface-container px-2 py-1 text-on-surface-variant"
                       title={describeStepTarget(s)}
                     >
                       {i + 1}. {s.StepName}{" "}
-                      <span className="text-xs text-ink-faint">({describeStepTarget(s)})</span>
+                      <span className="text-xs text-outline">({describeStepTarget(s)})</span>
                     </span>
-                    {i < (w.Steps || []).length - 1 && <span className="text-ink-faint">→</span>}
+                    {i < (w.Steps || []).length - 1 && <span className="text-outline">→</span>}
                   </span>
                 ))}
                 {(w.Steps || []).length === 0 && (
-                  <span className="text-sm italic text-ink-faint">
+                  <span className="text-sm italic text-outline">
                     No steps — requests are auto-approved
                   </span>
                 )}
@@ -167,7 +167,7 @@ export default function WorkflowsPage() {
             </div>
           );
         })}
-        {wfs.length === 0 && <p className="text-ink-faint">No workflows yet</p>}
+        {wfs.length === 0 && <p className="text-outline">No workflows yet</p>}
       </div>
     </AppShell>
   );

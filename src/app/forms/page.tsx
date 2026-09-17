@@ -108,13 +108,13 @@ export default function FormsPage() {
         }
       />
       {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <div className="mb-4 rounded border border-error/25 bg-error-container/60 px-4 py-3 text-sm font-medium text-on-error-container">
           {error}
         </div>
       )}
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-surface-muted text-left text-xs uppercase text-ink-soft">
+          <thead className="bg-surface-container text-left text-xs uppercase text-on-surface-variant">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Category</th>
@@ -125,41 +125,41 @@ export default function FormsPage() {
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-border">
+          <tbody className="divide-y divide-surface-variant">
             {forms.map((f) => {
               const inUse = f._count?.Requests ?? 0;
               const confirming = confirmId === f.FormTemplateID;
               return (
-                <tr key={f.FormTemplateID} className="hover:bg-surface-muted">
+                <tr key={f.FormTemplateID} className="hover:bg-surface-container-low">
                   <td className="px-4 py-3">
-                    <span className="block font-medium text-ink">{f.Name}</span>
+                    <span className="block font-medium text-on-surface">{f.Name}</span>
                     {(f.OwnerDEP?.Name || f.OwnerGroup?.Name) && (
-                      <span className="block text-xs text-ink-soft">
+                      <span className="block text-xs text-on-surface-variant">
                         Owner: {f.OwnerDEP?.Name || f.OwnerGroup?.Name}
                       </span>
                     )}
                     {f.IdPrefix && (
-                      <span className="block font-mono text-xs text-ink-soft">
+                      <span className="block font-mono text-xs text-on-surface-variant">
                         ID: {formatRequestId({ prefix: f.IdPrefix, separator: f.IdSeparator ?? "", padding: f.IdPadding ?? 0, includeYear: f.IdIncludeYear ?? false }, new Date().getFullYear(), 1)} ...
                       </span>
                     )}
                     {f.Description && (
-                      <span className="block max-w-[280px] truncate text-xs text-ink-soft">
+                      <span className="block max-w-[280px] truncate text-xs text-on-surface-variant">
                         {f.Description}
                       </span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-ink-soft">{f.Category?.Name || "—"}</td>
-                  <td className="px-4 py-3 text-ink-soft">{f.Workflow?.Name || "—"}</td>
-                  <td className="px-4 py-3 text-ink-soft">{f.Fields?.length || 0}</td>
-                  <td className="px-4 py-3 text-ink-soft">{inUse}</td>
+                  <td className="px-4 py-3 text-on-surface-variant">{f.Category?.Name || "—"}</td>
+                  <td className="px-4 py-3 text-on-surface-variant">{f.Workflow?.Name || "—"}</td>
+                  <td className="px-4 py-3 text-on-surface-variant">{f.Fields?.length || 0}</td>
+                  <td className="px-4 py-3 text-on-surface-variant">{inUse}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={f.Status} />
                   </td>
                   <td className="px-4 py-3 text-right">
                     {confirming ? (
                       <span className="inline-flex items-center gap-2 text-xs">
-                        <span className="font-medium text-ink-soft">Delete?</span>
+                        <span className="font-medium text-on-surface-variant">Delete?</span>
                         <button
                           onClick={() => remove(f.FormTemplateID)}
                           className="font-bold text-danger hover:underline"
@@ -168,7 +168,7 @@ export default function FormsPage() {
                         </button>
                         <button
                           onClick={() => setConfirmId(null)}
-                          className="font-semibold text-ink-soft hover:underline"
+                          className="font-semibold text-on-surface-variant hover:underline"
                         >
                           No
                         </button>
@@ -207,7 +207,7 @@ export default function FormsPage() {
             })}
             {forms.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-ink-faint">
+                <td colSpan={7} className="px-4 py-8 text-center text-outline">
                   No form templates yet
                 </td>
               </tr>

@@ -43,13 +43,13 @@ export function templateIcon(name: string): string {
 
 /* ---------- Initials avatar ---------- */
 const AVATAR_COLORS = [
-  "bg-blue-600",
-  "bg-teal-600",
-  "bg-purple-600",
-  "bg-orange-600",
-  "bg-rose-600",
-  "bg-cyan-700",
-  "bg-indigo-600",
+  "bg-[#a33900]",
+  "bg-[#904d00]",
+  "bg-[#3f661e]",
+  "bg-[#cc4900]",
+  "bg-[#6e3900]",
+  "bg-[#2b5008]",
+  "bg-[#7f2b00]",
 ];
 
 export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
@@ -71,22 +71,55 @@ export function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md"
   );
 }
 
-/* ---------- Status pill ---------- */
+/* ---------- Status pill (Warm Slate & Tangerine semantic chips) ---------- */
 export function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    DRAFT: "bg-gray-100 text-gray-700",
-    ACTIVE: "bg-green-100 text-green-800",
-    PENDING_APPROVAL: "bg-amber-100 text-amber-800",
-    CLARIFICATION_REQUESTED: "bg-orange-100 text-orange-800",
-    APPROVED: "bg-blue-100 text-blue-800",
-    PO_REGISTERED: "bg-purple-100 text-purple-800",
-    FULFILLED: "bg-teal-100 text-teal-800",
-    REJECTED: "bg-red-100 text-red-800",
-    CANCELLED: "bg-gray-100 text-gray-500",
-    COMPLETED: "bg-green-100 text-green-800",
+    DRAFT: "bg-surface-container text-on-surface-variant",
+    ACTIVE: "bg-tertiary-fixed text-on-tertiary-fixed",
+    PENDING_APPROVAL: "bg-secondary-fixed text-on-secondary-fixed",
+    CLARIFICATION_REQUESTED: "bg-secondary-container/30 text-on-secondary-container",
+    APPROVED: "bg-primary-fixed text-on-primary-fixed",
+    PO_REGISTERED: "bg-surface-container-high text-on-surface",
+    FULFILLED: "bg-tertiary-fixed/60 text-on-tertiary-fixed-variant",
+    REJECTED: "bg-error-container text-on-error-container",
+    CANCELLED: "bg-surface-container text-outline",
+    COMPLETED: "bg-tertiary-fixed text-on-tertiary-fixed",
   };
-  const cls = map[status] || "bg-gray-100 text-gray-700";
-  return <span className={`badge ${cls}`}>{status.replace(/_/g, " ")}</span>;
+  const cls = map[status] || "bg-surface-container text-on-surface-variant";
+  return (
+    <span className={`badge ${cls}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dotColor(status)}`} />
+      {status.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+function dotColor(status: string): string {
+  const map: Record<string, string> = {
+    DRAFT: "bg-outline",
+    ACTIVE: "bg-tertiary",
+    PENDING_APPROVAL: "bg-secondary",
+    CLARIFICATION_REQUESTED: "bg-secondary-container",
+    APPROVED: "bg-primary",
+    PO_REGISTERED: "bg-on-surface-variant",
+    FULFILLED: "bg-tertiary",
+    REJECTED: "bg-error",
+    CANCELLED: "bg-outline",
+    COMPLETED: "bg-tertiary",
+  };
+  return map[status] || "bg-outline";
+}
+
+/* ---------- Priority chip ---------- */
+export function PriorityBadge({ priority }: { priority: string }) {
+  const map: Record<string, string> = {
+    LOW: "bg-surface-container text-on-surface-variant",
+    MEDIUM: "bg-secondary-fixed text-on-secondary-fixed",
+    HIGH: "bg-secondary-container/40 text-on-secondary-container",
+    URGENT: "bg-error-container text-on-error-container",
+  };
+  const cls = map[priority] || "bg-surface-container text-on-surface-variant";
+  return <span className={`badge ${cls}`}>{priority}</span>;
 }
 
 /* ---------- Workflow progress stepper (mockup: dots + labeled nodes) ---------- */
@@ -100,7 +133,7 @@ export function WorkflowProgress({
   status: string;
 }) {
   if (status === "DRAFT")
-    return <span className="badge bg-gray-100 font-medium text-gray-600">Draft</span>;
+    return <span className="badge bg-surface-container font-medium text-on-surface-variant">Draft</span>;
   if (status === "CANCELLED") return <StatusBadge status={status} />;
 
   const rejected = status === "REJECTED";
@@ -124,11 +157,11 @@ export function WorkflowProgress({
         return (
           <Fragment key={i}>
             {i > 0 && (
-              <div className={`mx-0.5 mt-[5px] h-0.5 min-w-[16px] flex-1 ${i <= activeIdx ? "bg-primary" : "bg-gray-200"}`} />
+              <div className={`mx-0.5 mt-[5px] h-0.5 min-w-[16px] flex-1 ${i <= activeIdx ? "bg-primary" : "bg-surface-container-highest"}`} />
             )}
             <div className="flex shrink-0 flex-col items-center gap-1">
               {rejected && isActive ? (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-red-600">
+                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-error">
                   <Icon name="close" className="text-[11px] font-bold text-white" />
                 </span>
               ) : done && i === last ? (
@@ -138,19 +171,19 @@ export function WorkflowProgress({
               ) : isDone ? (
                 <span className="h-2.5 w-2.5 rounded-full bg-primary" style={{ marginTop: 3, marginBottom: 3 }} />
               ) : isActive ? (
-                <span className="h-3.5 w-3.5 rounded-full border-[2.5px] border-primary bg-white" />
+                <span className="h-3.5 w-3.5 rounded-full border-[2.5px] border-primary bg-surface-container-lowest" />
               ) : (
-                <span className="h-2.5 w-2.5 rounded-full bg-gray-200" style={{ marginTop: 3, marginBottom: 3 }} />
+                <span className="h-2.5 w-2.5 rounded-full bg-surface-container-highest" style={{ marginTop: 3, marginBottom: 3 }} />
               )}
               {showLabel && (
                 <span
                   title={s}
                   className={`max-w-[120px] truncate text-[11px] leading-tight ${
                     rejected && isActive
-                      ? "font-semibold text-red-600"
+                      ? "font-semibold text-error"
                       : isActive
                         ? "font-semibold text-primary-dark"
-                        : "text-ink-faint"
+                        : "text-outline"
                   }`}
                 >
                   {rejected && isActive ? "Rejected" : done && i === last ? finalLabel : s}
@@ -174,7 +207,7 @@ export function DotsStatus({ total, current }: { total: number; current: number 
         <span
           key={i}
           className={`rounded-full ${
-            i < c ? "h-2 w-2 bg-primary" : i === c ? "h-2.5 w-2.5 bg-primary ring-2 ring-primary/25" : "h-2 w-2 bg-gray-200"
+            i < c ? "h-2 w-2 bg-primary" : i === c ? "h-2.5 w-2.5 bg-primary ring-2 ring-primary/25" : "h-2 w-2 bg-surface-container-highest"
           }`}
         />
       ))}
@@ -184,39 +217,60 @@ export function DotsStatus({ total, current }: { total: number; current: number 
 
 /* ---------- Page header ---------- */
 export function PageHeader({
+  kicker,
   title,
   subtitle,
   action,
 }: {
+  kicker?: string;
   title: string;
   subtitle?: string;
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex items-end justify-between">
-      <div>
-        <h1 className="text-2xl font-bold text-ink">{title}</h1>
-        {subtitle && <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>}
+    <div className="mb-6 flex flex-col gap-space-md md:flex-row md:items-end md:justify-between">
+      <div className="space-y-1">
+        {kicker && (
+          <div className="flex items-center gap-space-xs">
+            <span className="font-label-sm text-label-sm uppercase font-bold tracking-wider text-primary">{kicker}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <span className="font-label-sm text-label-sm font-medium text-outline">PRSYS Workspace</span>
+          </div>
+        )}
+        <h1 className="font-headline-lg text-headline-lg font-semibold tracking-tight text-on-surface">{title}</h1>
+        {subtitle && <p className="font-body-md text-body-md text-on-surface-variant max-w-2xl">{subtitle}</p>}
       </div>
-      {action}
+      {action && <div className="flex shrink-0 items-center gap-space-sm">{action}</div>}
     </div>
   );
 }
 
-/* ---------- Stat card ---------- */
+/* ---------- Stat card (KPI) ---------- */
 export function StatCard({
   label,
   value,
-  color = "text-ink",
+  color = "text-on-surface",
+  icon,
+  sub,
 }: {
   label: string;
   value: number | string;
   color?: string;
+  icon?: string;
+  sub?: ReactNode;
 }) {
   return (
-    <div className="card p-4">
-      <div className={`text-3xl font-bold ${color}`}>{value}</div>
-      <div className="mt-1 text-sm text-ink-soft">{label}</div>
+    <div className="card group relative overflow-hidden p-space-lg transition-all hover:shadow-tier2">
+      <div className="flex items-start justify-between">
+        <span className="font-label-sm text-label-sm uppercase font-semibold text-outline">{label}</span>
+        {icon && (
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface-container-high text-on-surface-variant transition-colors group-hover:bg-primary-fixed group-hover:text-primary">
+            <Icon name={icon} className="text-[20px]" />
+          </div>
+        )}
+      </div>
+      <div className={`mt-space-sm font-headline-xl text-headline-xl font-bold ${color}`}>{value}</div>
+      {sub && <div className="mt-space-md font-body-sm text-body-sm text-on-surface-variant">{sub}</div>}
     </div>
   );
 }
@@ -239,8 +293,8 @@ export function Pagination({
   const from = total !== undefined && pageSize ? (page - 1) * pageSize + 1 : null;
   const to = total !== undefined && pageSize ? Math.min(page * pageSize, total) : null;
   return (
-    <div className="flex items-center justify-between border-t border-surface-border bg-white px-4 py-3">
-      <div className="text-sm text-ink-soft">
+    <div className="flex items-center justify-between border-t border-surface-variant bg-surface-container-lowest px-4 py-3">
+      <div className="font-label-md text-label-md text-on-surface-variant">
         {from !== null && to !== null && total !== undefined ? (
           <>
             Showing {from}-{to} of {total} entries
@@ -253,7 +307,7 @@ export function Pagination({
         <button className="icon-btn !h-8 !w-8" disabled={page <= 1} onClick={() => onChange(page - 1)} aria-label="Previous page">
           <Icon name="chevron_left" />
         </button>
-        <span className="min-w-[24px] text-center text-sm font-medium text-ink">{page}</span>
+        <span className="min-w-[24px] text-center font-label-md text-label-md font-semibold text-on-surface">{page}</span>
         <button
           className="icon-btn !h-8 !w-8"
           disabled={page >= totalPages}
@@ -290,10 +344,10 @@ export function Modal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className={`animate-dropdown relative max-h-[90vh] w-full overflow-y-auto rounded-lg bg-white shadow-xl ${wide ? "max-w-3xl" : "max-w-lg"}`}>
-        <div className="flex items-center justify-between border-b border-surface-border px-5 py-3">
-          <h3 className="font-semibold text-ink">{title}</h3>
+      <div className="absolute inset-0 bg-on-surface/45 backdrop-blur-[4px]" onClick={onClose} />
+      <div className={`animate-dropdown relative max-h-[90vh] w-full overflow-y-auto rounded-2xl bg-surface-container-lowest shadow-tier3 ${wide ? "max-w-3xl" : "max-w-lg"}`}>
+        <div className="flex items-center justify-between border-b border-surface-variant px-5 py-4">
+          <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">{title}</h3>
           <button className="icon-btn !h-8 !w-8" onClick={onClose} aria-label="Close">
             <Icon name="close" />
           </button>
@@ -317,12 +371,12 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
-      <span className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted text-ink-faint">
+    <div className="flex flex-col items-center gap-2 px-4 py-12 text-center">
+      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface-container text-outline">
         <Icon name={icon} className="text-[26px]" />
       </span>
-      <div className="font-semibold text-ink">{title}</div>
-      {hint && <div className="max-w-sm text-sm text-ink-soft">{hint}</div>}
+      <div className="font-headline-sm text-body-md font-semibold text-on-surface">{title}</div>
+      {hint && <div className="max-w-sm text-sm text-on-surface-variant">{hint}</div>}
       {action && <div className="mt-2">{action}</div>}
     </div>
   );
@@ -365,7 +419,7 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
           {i > 0 && (
             <div
               className={`mx-1 mt-[13px] h-0.5 min-w-[24px] flex-1 ${
-                nodes[i - 1].state === "done" ? "bg-primary" : "bg-gray-200"
+                nodes[i - 1].state === "done" ? "bg-primary" : "bg-surface-container-highest"
               }`}
             />
           )}
@@ -375,36 +429,36 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
                 <Icon name="check" className="text-[16px] font-bold text-white" />
               </span>
             ) : n.state === "current" ? (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border-[2.5px] border-primary bg-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border-[2.5px] border-primary bg-surface-container-lowest">
                 <span className="h-2.5 w-2.5 rounded-full bg-primary" />
               </span>
             ) : n.state === "rejected" ? (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-error">
                 <Icon name="close" className="text-[16px] font-bold text-white" />
               </span>
             ) : n.state === "skipped" ? (
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-gray-300 bg-gray-50">
-                <Icon name="minimize" className="text-[16px] text-ink-faint" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-dashed border-surface-container-highest bg-surface-container-low">
+                <Icon name="minimize" className="text-[16px] text-outline" />
               </span>
             ) : (
-              <span className="h-7 w-7 rounded-full border-2 border-gray-200 bg-white" />
+              <span className="h-7 w-7 rounded-full border-2 border-surface-variant bg-surface-container-lowest" />
             )}
             <span
               className={`text-xs leading-tight ${
                 n.state === "todo" || n.state === "skipped"
-                  ? "text-ink-faint"
+                  ? "text-outline"
                   : n.state === "rejected"
-                    ? "font-semibold text-red-600"
+                    ? "font-semibold text-error"
                     : n.state === "current"
                       ? "font-semibold text-primary-dark"
-                      : "font-medium text-ink"
+                      : "font-medium text-on-surface"
               }`}
             >
               {n.name}
             </span>
             {n.sub && (
               <span
-                className={`text-[11px] leading-tight ${n.alert ? "font-semibold text-red-600" : "text-ink-faint"}`}
+                className={`text-[11px] leading-tight ${n.alert ? "font-semibold text-error" : "text-outline"}`}
               >
                 {n.sub}
               </span>
@@ -442,7 +496,7 @@ export function ToastStack({ toasts }: { toasts: ToastMsg[] }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="animate-dropdown flex items-start gap-2 rounded-md border px-4 py-3 text-sm shadow-lg bg-white"
+          className="animate-dropdown flex items-start gap-2 rounded-md border px-4 py-3 text-sm shadow-tier2 bg-surface-container-lowest"
           style={{
             borderColor: t.type === "success" ? "#bbf7d0" : "#fecaca",
           }}
@@ -452,7 +506,7 @@ export function ToastStack({ toasts }: { toasts: ToastMsg[] }) {
             className={`text-[20px] ${t.type === "success" ? "text-success" : "text-danger"}`}
             filled
           />
-          <div className="flex-1 text-ink">{t.text}</div>
+          <div className="flex-1 text-on-surface">{t.text}</div>
         </div>
       ))}
     </div>
@@ -484,14 +538,14 @@ export function ConfirmModal({
   return (
     <Modal open={open} onClose={busy ? () => {} : onClose} title={title}>
       <div className="space-y-4">
-        <div className="text-sm text-ink-soft">{message}</div>
+        <div className="text-sm text-on-surface-variant">{message}</div>
         {note && (
-          <div className="flex items-start gap-2 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <div className="flex items-start gap-2 rounded border border-secondary-fixed-dim bg-secondary-fixed px-3 py-2 text-xs text-on-secondary-fixed-variant">
             <Icon name="warning" className="mt-px text-[16px]" />
             <span>{note}</span>
           </div>
         )}
-        <div className="flex justify-end gap-2 border-t border-surface-border pt-4">
+        <div className="flex justify-end gap-2 border-t border-surface-variant pt-4">
           <button className="btn-secondary" onClick={onClose} disabled={busy}>
             Cancel
           </button>
@@ -531,12 +585,12 @@ export function RowMenu({ items }: { items: RowMenuItem[] }) {
         <Icon name="more_vert" />
       </button>
       {open && (
-        <div className="animate-dropdown absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-md border border-surface-border bg-white py-1 shadow-lg">
+        <div className="animate-dropdown absolute right-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-xl border border-surface-variant bg-surface-container-lowest py-1 shadow-lg">
           {items.map((it, i) => (
             <button
               key={i}
-              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-muted ${
-                it.danger ? "text-danger" : "text-ink"
+              className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-surface-container-low ${
+                it.danger ? "text-danger" : "text-on-surface"
               }`}
               onClick={() => {
                 setOpen(false);
@@ -572,7 +626,7 @@ export function Field({
         {required && <span className="text-danger"> *</span>}
       </label>
       {children}
-      {hint && <p className="mt-1 text-xs text-ink-faint">{hint}</p>}
+      {hint && <p className="mt-1 text-xs text-outline">{hint}</p>}
     </div>
   );
 }
@@ -581,7 +635,7 @@ export function Field({
 export function FormError({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+    <div className="flex items-start gap-2 rounded border border-transparent bg-error-container px-3 py-2 text-xs text-on-error-container">
       <Icon name="error" className="mt-px text-[16px]" />
       <span>{message}</span>
     </div>

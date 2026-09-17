@@ -583,7 +583,7 @@ export default function RequestForm({
   if (!isEdit && loading) {
     return (
       <AppShell>
-        <div className="py-10 text-center text-sm text-ink-soft">Loading your access...</div>
+        <div className="py-10 text-center text-sm text-on-surface-variant">Loading your access...</div>
       </AppShell>
     );
   }
@@ -619,7 +619,7 @@ export default function RequestForm({
             />
           </div>
         ) : template === undefined && !editError ? (
-          <div className="py-10 text-center text-sm text-ink-soft">Loading form...</div>
+          <div className="py-10 text-center text-sm text-on-surface-variant">Loading form...</div>
         ) : editError ? (
           <div className="card">
             <EmptyState
@@ -661,33 +661,33 @@ export default function RequestForm({
           </div>
         ) : (
           <>
-            <div className="mb-6 flex items-end justify-between border-b border-surface-border pb-4">
+            <div className="mb-6 flex items-end justify-between border-b border-surface-variant pb-4">
               {isEdit ? (
                 <div>
-                  <h1 className="text-3xl font-bold text-ink">Edit Request</h1>
-                  <p className="mt-1 text-sm text-ink-soft">
+                  <h1 className="text-3xl font-bold text-on-surface">Edit Request</h1>
+                  <p className="mt-1 text-sm text-on-surface-variant">
                     {loadedReq?.tracking}
                     {template ? ` · ${template.Name}` : ""}
                   </p>
                 </div>
               ) : (
                 <div>
-                  <h1 className="text-3xl font-bold text-ink">{template.Name}</h1>
-                  <p className="mt-1 text-sm text-ink-soft">
+                  <h1 className="text-3xl font-bold text-on-surface">{template.Name}</h1>
+                  <p className="mt-1 text-sm text-on-surface-variant">
                     {template.Description || template.Category?.Name || "Fill in the details below"}
                   </p>
                 </div>
               )}
               <Link
                 href={isEdit ? `/requests/${editRequestId}` : "/requests/new"}
-                className="flex items-center gap-1 text-sm text-ink-soft transition-colors hover:text-ink"
+                className="flex items-center gap-1 text-sm text-on-surface-variant transition-colors hover:text-on-surface"
               >
                 <Icon name="close" className="text-[16px]" /> Cancel
               </Link>
             </div>
 
             {error && (
-              <div className="mb-4 flex items-start gap-2 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              <div className="mb-4 flex items-start gap-2 rounded border border-error/25 bg-error-container/60 px-4 py-3 text-sm text-on-error-container">
                 <Icon name="error" className="mt-0.5 text-[18px]" />
                 <span>{error}</span>
               </div>
@@ -695,8 +695,8 @@ export default function RequestForm({
 
             <div className="card overflow-hidden">
               {/* Request Details */}
-              <div className="border-b border-surface-border p-6 md:p-8">
-                <h2 className="mb-5 border-l-2 border-primary pl-3 text-lg font-semibold text-ink">
+              <div className="border-b border-surface-variant p-6 md:p-8">
+                <h2 className="mb-5 border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">
                   Request Details
                 </h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -767,8 +767,8 @@ export default function RequestForm({
                       return (
                         <div key={f.FormFieldID} className="md:col-span-2">
                           <div className="border-l-2 border-primary pl-3">
-                            <div className="text-base font-bold text-ink">{f.Label}</div>
-                            {cfg.help && <p className="mt-0.5 text-xs text-ink-soft">{cfg.help}</p>}
+                            <div className="text-base font-bold text-on-surface">{f.Label}</div>
+                            {cfg.help && <p className="mt-0.5 text-xs text-on-surface-variant">{cfg.help}</p>}
                           </div>
                         </div>
                       );
@@ -801,12 +801,12 @@ export default function RequestForm({
                         {f.FieldType === "file" ? (
                           <div>
                             {existingFieldFiles.length > 0 && (
-                              <div className="mb-2 divide-y divide-surface-border rounded border border-surface-border">
+                              <div className="mb-2 divide-y divide-surface-variant rounded border border-surface-variant">
                                 {existingFieldFiles.map((fl) => (
                                   <div key={fl.id} className="flex items-center gap-3 px-3 py-2">
-                                    <Icon name="description" className="text-[18px] text-ink-faint" />
-                                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{fl.name}</span>
-                                    <span className="text-xs text-ink-faint">{fmtSize(fl.size)}</span>
+                                    <Icon name="description" className="text-[18px] text-outline" />
+                                    <span className="min-w-0 flex-1 truncate text-[13px] text-on-surface">{fl.name}</span>
+                                    <span className="text-xs text-outline">{fmtSize(fl.size)}</span>
                                     <button
                                       type="button"
                                       className="icon-btn !h-7 !w-7 text-danger"
@@ -823,8 +823,8 @@ export default function RequestForm({
                             <label
                               className={`flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed px-4 py-4 text-sm font-medium transition-colors ${
                                 invalid
-                                  ? "border-danger bg-red-50 text-red-700"
-                                  : "border-surface-border bg-surface text-ink-soft hover:border-primary hover:text-primary-dark"
+                                  ? "border-danger bg-error-container/60 text-on-error-container"
+                                  : "border-surface-variant bg-surface-container-low text-on-surface-variant hover:border-primary hover:text-primary-dark"
                               }`}
                             >
                               <Icon name="attach_file" className="text-[20px]" />
@@ -849,12 +849,12 @@ export default function RequestForm({
                               />
                             </label>
                             {filePicked.length > 0 && (
-                              <div className="mt-2 divide-y divide-surface-border rounded border border-surface-border">
+                              <div className="mt-2 divide-y divide-surface-variant rounded border border-surface-variant">
                                 {filePicked.map((fl, i) => (
                                   <div key={`${fl.name}-${i}`} className="flex items-center gap-3 px-3 py-2">
-                                    <Icon name="description" className="text-[18px] text-ink-faint" />
-                                    <span className="min-w-0 flex-1 truncate text-[13px] text-ink">{fl.name}</span>
-                                    <span className="text-xs text-ink-faint">{fmtSize(fl.size)}</span>
+                                    <Icon name="description" className="text-[18px] text-outline" />
+                                    <span className="min-w-0 flex-1 truncate text-[13px] text-on-surface">{fl.name}</span>
+                                    <span className="text-xs text-outline">{fmtSize(fl.size)}</span>
                                     <button
                                       type="button"
                                       className="icon-btn !h-7 !w-7 text-danger"
@@ -872,13 +872,13 @@ export default function RequestForm({
                                 ))}
                               </div>
                             )}
-                            <p className="mt-1 text-xs text-ink-faint">
+                            <p className="mt-1 text-xs text-outline">
                               {fileAccept.length > 0 ? `Allowed: ${fileAccept.map((a) => `.${a}`).join(", ")} · ` : ""}
                               Max {fileMB} MB per file
                             </p>
                           </div>
                         ) : f.FieldType === "checkbox" ? (
-                          <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-ink">
+                          <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-on-surface">
                             <input
                               type="checkbox"
                               className="h-4 w-4"
@@ -916,7 +916,7 @@ export default function RequestForm({
                         ) : f.FieldType === "radio" ? (
                           <div className="space-y-1.5 pt-1">
                             {cfg.options.map((o) => (
-                              <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                              <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-on-surface">
                                 <input
                                   type="radio"
                                   name={f.FormFieldID}
@@ -928,13 +928,13 @@ export default function RequestForm({
                               </label>
                             ))}
                             {cfg.options.length === 0 && (
-                              <p className="text-xs italic text-ink-faint">No options defined</p>
+                              <p className="text-xs italic text-outline">No options defined</p>
                             )}
                           </div>
                         ) : f.FieldType === "multiselect" ? (
-                          <div className="space-y-1.5 rounded border border-surface-border p-3 pt-2">
+                          <div className="space-y-1.5 rounded border border-surface-variant p-3 pt-2">
                             {cfg.options.map((o) => (
-                              <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                              <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-on-surface">
                                 <input
                                   type="checkbox"
                                   className="h-4 w-4"
@@ -945,7 +945,7 @@ export default function RequestForm({
                               </label>
                             ))}
                             {cfg.options.length === 0 && (
-                              <p className="text-xs italic text-ink-faint">No options defined</p>
+                              <p className="text-xs italic text-outline">No options defined</p>
                             )}
                           </div>
                         ) : f.FieldType === "user" ? (
@@ -990,7 +990,7 @@ export default function RequestForm({
                                 {...numAttrs}
                               />
                               {curDef && (
-                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-soft">
+                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-on-surface-variant">
                                   {curDef.symbol}
                                 </span>
                               )}
@@ -1014,7 +1014,7 @@ export default function RequestForm({
                           />
                         )}
                         {cfg.help && (
-                          <p className="mt-1 text-xs text-ink-faint">{cfg.help}</p>
+                          <p className="mt-1 text-xs text-outline">{cfg.help}</p>
                         )}
                       </div>
                     );
@@ -1024,9 +1024,9 @@ export default function RequestForm({
 
               {/* Items */}
               {bc.items.show && (
-              <div className="border-b border-surface-border p-6 md:p-8">
+              <div className="border-b border-surface-variant p-6 md:p-8">
                 <div className="mb-5 flex items-center justify-between">
-                  <h2 className="border-l-2 border-primary pl-3 text-lg font-semibold text-ink">Items</h2>
+                  <h2 className="border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">Items</h2>
                   <button type="button" className="btn-secondary !py-1.5" onClick={addCustomRow}>
                     <Icon name="add" className="text-[18px]" /> Add item
                   </button>
@@ -1036,7 +1036,7 @@ export default function RequestForm({
                   <div className="relative mb-4">
                     <label className="label">Search Oracle Item Catalog (Item Code or Name)</label>
                     <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline">
                         <Icon name="search" className="text-[20px]" />
                       </span>
                       <input
@@ -1054,9 +1054,9 @@ export default function RequestForm({
                     {cOpen && cq.trim().length >= 2 && (
                       <div className="dropdown left-0 right-0">
                         {cSearching ? (
-                          <div className="px-4 py-3 text-sm text-ink-soft">Searching catalog...</div>
+                          <div className="px-4 py-3 text-sm text-on-surface-variant">Searching catalog...</div>
                         ) : cHits.length === 0 ? (
-                          <div className="px-4 py-3 text-sm text-ink-soft">
+                          <div className="px-4 py-3 text-sm text-on-surface-variant">
                             No catalog matches — use &quot;Add item&quot; for a custom entry
                           </div>
                         ) : (
@@ -1064,22 +1064,22 @@ export default function RequestForm({
                             <button
                               key={h.ItemCatalogCacheID}
                               type="button"
-                              className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-surface"
+                              className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-surface-container-low"
                               onMouseDown={(e) => e.preventDefault()}
                               onClick={() => addCatalogRow(h)}
                             >
                               <span className="min-w-0">
-                                <span className="block truncate text-sm text-ink">
+                                <span className="block truncate text-sm text-on-surface">
                                   <span className="font-semibold">[{h.ItemCode}]</span> {h.ItemName}
                                 </span>
-                                <span className="block text-xs text-ink-faint">
+                                <span className="block text-xs text-outline">
                                   {h.OrganizationCode}
                                   {h.LastPurchasedPrice !== null
                                     ? ` · Last price ${h.LastPurchasedPrice}`
                                     : ""}
                                 </span>
                               </span>
-                              <span className="shrink-0 text-sm text-ink-soft">{h.Uom}</span>
+                              <span className="shrink-0 text-sm text-on-surface-variant">{h.Uom}</span>
                             </button>
                           ))
                         )}
@@ -1089,11 +1089,11 @@ export default function RequestForm({
                 )}
 
                 {rows.length === 0 ? (
-                  <div className="rounded border border-dashed border-surface-border bg-surface px-4 py-6 text-center text-sm text-ink-soft">
+                  <div className="rounded border border-dashed border-surface-variant bg-surface-container-low px-4 py-6 text-center text-sm text-on-surface-variant">
                     No items yet — search the catalog above or add a custom item.
                   </div>
                 ) : (
-                  <div className="overflow-x-auto rounded border border-surface-border">
+                  <div className="overflow-x-auto rounded border border-surface-variant">
                     <table className="tbl w-full min-w-[720px]">
                       <thead>
                         <tr>
@@ -1109,15 +1109,15 @@ export default function RequestForm({
                           const bad = invalidRows.includes(r.key);
                           const uomOpts = UOMS.includes(r.uom) ? UOMS : [r.uom, ...UOMS];
                           return (
-                            <tr key={r.key} className={bad ? "!bg-red-50" : ""}>
+                            <tr key={r.key} className={bad ? "!bg-error-container/60" : ""}>
                               <td>
                                 <input
-                                  className="input !border-transparent !px-0 font-medium hover:!border-surface-border focus:!border-primary"
+                                  className="input !border-transparent !px-0 font-medium hover:!border-surface-variant focus:!border-primary"
                                   placeholder="Item name / description"
                                   value={r.name}
                                   onChange={(e) => updateRow(r.key, { name: e.target.value })}
                                 />
-                                <div className="text-xs text-ink-faint">
+                                <div className="text-xs text-outline">
                                   {r.code ? (
                                     <>
                                       {r.code}
@@ -1187,21 +1187,21 @@ export default function RequestForm({
               {/* Attachments */}
               {bc.attachments.show && (
               <div className="p-6 md:p-8">
-                <h2 className="mb-1 border-l-2 border-primary pl-3 text-lg font-semibold text-ink">
+                <h2 className="mb-1 border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">
                   Attachments
                 </h2>
-                <p className="mb-4 text-[13px] text-ink-soft">
+                <p className="mb-4 text-[13px] text-on-surface-variant">
                   Quotations, specifications or supporting documents (max 10 MB each).
                 </p>
                 {existingAtts.filter((a) => !a.fieldId).length > 0 && (
-                  <div className="mb-3 divide-y divide-surface-border rounded border border-surface-border">
+                  <div className="mb-3 divide-y divide-surface-variant rounded border border-surface-variant">
                     {existingAtts
                       .filter((a) => !a.fieldId)
                       .map((a) => (
                         <div key={a.id} className="flex items-center gap-3 px-4 py-2.5">
-                          <Icon name="description" className="text-[20px] text-ink-faint" />
-                          <span className="min-w-0 flex-1 truncate text-sm text-ink">{a.name}</span>
-                          <span className="text-xs text-ink-faint">{fmtSize(a.size)}</span>
+                          <Icon name="description" className="text-[20px] text-outline" />
+                          <span className="min-w-0 flex-1 truncate text-sm text-on-surface">{a.name}</span>
+                          <span className="text-xs text-outline">{fmtSize(a.size)}</span>
                           <button
                             type="button"
                             className="icon-btn !h-7 !w-7 text-danger"
@@ -1215,7 +1215,7 @@ export default function RequestForm({
                       ))}
                   </div>
                 )}
-                <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-surface-border bg-surface px-4 py-5 text-sm font-medium text-ink-soft transition-colors hover:border-primary hover:text-primary-dark">
+                <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-surface-variant bg-surface-container-low px-4 py-5 text-sm font-medium text-on-surface-variant transition-colors hover:border-primary hover:text-primary-dark">
                   <Icon name="attach_file" className="text-[20px]" />
                   Choose files...
                   <input
@@ -1230,12 +1230,12 @@ export default function RequestForm({
                   />
                 </label>
                 {files.length > 0 && (
-                  <div className="mt-3 divide-y divide-surface-border rounded border border-surface-border">
+                  <div className="mt-3 divide-y divide-surface-variant rounded border border-surface-variant">
                     {files.map((f, i) => (
                       <div key={`${f.name}-${i}`} className="flex items-center gap-3 px-4 py-2.5">
-                        <Icon name="description" className="text-[20px] text-ink-faint" />
-                        <span className="min-w-0 flex-1 truncate text-sm text-ink">{f.name}</span>
-                        <span className="text-xs text-ink-faint">{fmtSize(f.size)}</span>
+                        <Icon name="description" className="text-[20px] text-outline" />
+                        <span className="min-w-0 flex-1 truncate text-sm text-on-surface">{f.name}</span>
+                        <span className="text-xs text-outline">{fmtSize(f.size)}</span>
                         <button
                           type="button"
                           className="icon-btn !h-7 !w-7 text-danger"

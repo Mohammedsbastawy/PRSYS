@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full gap-space-lg">
+<!-- Contextual Breadcrumb & Live Monospace Stat Tape -->
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-space-sm pb-space-xs">
+<div class="flex items-center gap-2">
+<a class="font-label-md text-label-md text-outline hover:text-primary transition-colors flex items-center gap-1" href="#">
+<span class="material-symbols-outlined text-[16px]">rule</span>
+        Approvals
+      </a>
+<span class="text-outline text-[12px] select-none">/</span>
+<span class="font-label-md text-label-md text-primary font-semibold">Requisition Queue</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2 px-space-sm py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm shadow-sm">
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+<span>1 BREACH DETECTED</span>
+<span class="text-outline">·</span>
+<span class="text-secondary font-bold">TOTAL QUEUED: $482,900</span>
+</div>
+<div class="hidden lg:flex items-center gap-1 font-label-sm text-label-sm text-outline">
+<span class="material-symbols-outlined text-[15px]">sync</span>
+<span>AUTO-REFRESH: 60s</span>
+</div>
+</div>
+</div>
+<!-- Hero / Decision Center Title Banner (Structured without duplicate H1) -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-low p-space-lg shadow-sm">
+<div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-primary-fixed-dim/20 blur-3xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div class="flex flex-col max-w-3xl">
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary text-on-primary font-semibold uppercase tracking-wider">Executive Gateway</span>
+<span class="font-label-sm text-label-sm text-outline">AUTHORITY LEVEL: TIER-IV ($500K)</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Approvals &amp; Decision Center</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">
+          Review, authorize, or request clarification on departmental requisitions awaiting your executive sign-off.
+        </p>
+</div>
+<!-- Quick Metrics Strip -->
+<div class="flex items-center gap-space-sm self-start md:self-auto shrink-0">
+<div class="bg-surface-container-lowest px-space-md py-2 rounded-lg shadow-sm">
+<div class="font-label-sm text-label-sm text-outline">MEDIAN SLA</div>
+<div class="font-headline-sm text-headline-sm text-on-surface font-semibold">3.8 hrs</div>
+</div>
+<div class="bg-surface-container-lowest px-space-md py-2 rounded-lg shadow-sm">
+<div class="font-label-sm text-label-sm text-outline">CLEARANCE RATE</div>
+<div class="font-headline-sm text-headline-sm text-tertiary font-semibold">94.2%</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Primary Interactive Canvas: Queue + Slide-over Drawer Pane -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
+<!-- Left/Main Column: Tabs, Filters, Dense Approvals Table -->
+<div class="xl:col-span-8 flex flex-col gap-space-md min-w-0">
+<!-- Nav Tabs -->
+<div class="flex items-center gap-space-xs p-1 rounded-xl bg-surface-container w-fit shadow-inner">
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg bg-surface-container-lowest text-primary font-headline-sm text-body-md shadow-sm font-semibold transition-all" id="tab-pending">
+<span>Pending for Me</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-primary-container text-on-primary-container font-bold">4</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-body-md transition-all">
+<span>Assigned &amp; Delegated</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">2</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-body-md transition-all">
+<span>Decided &amp; History</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant">86</span>
+</button>
+</div>
+<!-- Filter & Bulk Action Toolbar -->
+<div class="bg-surface-container-lowest p-space-md rounded-xl shadow-sm flex flex-col gap-space-sm">
+<div class="flex flex-col lg:flex-row gap-space-sm items-stretch lg:items-center justify-between">
+<!-- Search field -->
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">filter_alt</span>
+<input class="w-full h-10 pl-9 pr-4 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest shadow-inner" placeholder="Search by requisition ref, requester name, department..." type="text"/>
+</div>
+<!-- Select dropdowns -->
+<div class="flex flex-wrap items-center gap-space-xs">
+<div class="relative">
+<select class="appearance-none h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md focus:outline-none cursor-pointer">
+<option>Dept: All</option>
+<option>IT Infrastructure</option>
+<option>Heavy Production</option>
+<option>Facilities &amp; Real Estate</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-outline text-[16px] pointer-events-none">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md focus:outline-none cursor-pointer">
+<option>Priority: All</option>
+<option>Urgent</option>
+<option>High</option>
+<option>Medium</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-outline text-[16px] pointer-events-none">expand_more</span>
+</div>
+<div class="relative">
+<select class="appearance-none h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md focus:outline-none cursor-pointer">
+<option>SLA: All</option>
+<option>Overdue Breached</option>
+<option>Due Today</option>
+<option>Safe Buffer</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-2.5 text-outline text-[16px] pointer-events-none">expand_more</span>
+</div>
+</div>
+</div>
+<!-- Secondary Batch Strip -->
+<div class="flex flex-wrap items-center justify-between pt-space-xs gap-space-sm">
+<div class="flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant">
+<input class="w-4 h-4 rounded accent-primary cursor-pointer" id="select-all" type="checkbox"/>
+<label class="cursor-pointer select-none" for="select-all">Select All 4 Requisitions</label>
+<span class="text-outline">·</span>
+<span class="text-primary font-semibold">1 Selected</span>
+</div>
+<div class="flex items-center gap-space-xs">
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary-fixed text-on-secondary-fixed font-headline-sm text-body-sm font-semibold hover:bg-secondary-fixed-dim transition-all shadow-sm">
+<span class="material-symbols-outlined text-[16px]">done_all</span>
+<span>Batch Approve (Selected)</span>
+</button>
+<button class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant font-headline-sm text-body-sm hover:text-on-surface transition-all">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Batch Export CSV</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Approvals Table Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-left table-fixed min-w-[760px]">
+<thead>
+<tr class="bg-surface-container-high text-on-surface-variant font-label-md text-label-md">
+<th class="w-12 px-4 py-3 text-center">
+<span class="sr-only">Select</span>
+</th>
+<th class="w-56 px-3 py-3">REQUISITION &amp; REF</th>
+<th class="w-44 px-3 py-3">REQUESTER</th>
+<th class="w-48 px-3 py-3">STAGE / QUORUM</th>
+<th class="w-32 px-3 py-3 text-right">TOTAL VALUE</th>
+<th class="w-36 px-3 py-3">SLA REMAINING</th>
+<th class="w-36 px-4 py-3 text-right">DECISION</th>
+</tr>
+</thead>
+<tbody class="font-body-sm text-body-sm divide-y-0">
+<!-- Row 1: Breached / Overdue (Dell Latitude) - ACTIVE INSPECTION -->
+<tr class="group hover:bg-surface-container-low transition-colors bg-surface-container-lowest relative shadow-[inset_4px_0_0_0_#ba1a1a]">
+<td class="px-4 py-3 text-center align-middle">
+<input checked="" class="w-4 h-4 rounded accent-primary cursor-pointer" type="checkbox"/>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm font-bold text-primary">R-2026-0041</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-error-container text-on-error-container font-bold">URGENT</span>
+</div>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Dell Latitude 5550 Fleet (x5)</span>
+<span class="font-label-sm text-label-sm text-outline">CAPEX · IT Refresh</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex items-center gap-2 min-w-0">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-sm" data-alt="Corporate headshot of Ahmed Hassan, IT systems architect, wearing modern charcoal linen shirt against warm studio background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4RCMhRSfMeok3ZSF9sdOhD9LtV4jOnbw7tFB4gaXzyo0XN2DVF6H7X1EL4vG3ddRaQfWQu69XF_OI23wCuMZS3ws-04n7GI7Ir9a5N-vAZf_xTH6PfjGUavzQQYSBuCBVlR2r47magRAbAOYec0RMe_cxq8GYmaKtG9WbAmDJPY--V3BINA1d0GhSwpQWYAWW3qUJ-4UdTVyWVxjw8AF0mJoxX1vYBrMczcVMoRrCSf_OUk_ZZ7-OPg"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-medium text-on-surface truncate">Ahmed Hassan</span>
+<span class="font-label-sm text-label-sm text-outline truncate">IT Infrastructure</span>
+</div>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium truncate">Step 2: Dept Mgr Sign-Off</span>
+<span class="font-label-sm text-label-sm text-outline">1 of 1 needed · Quorum OK</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle text-right">
+<div class="font-label-md text-label-md font-bold text-on-surface">185,000 EGP</div>
+<div class="font-label-sm text-label-sm text-outline font-normal">≈ $3,820 USD</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[13px]">warning</span>
+<span>BREACHED (-1h 14m)</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-2.5 py-1.5 rounded-lg bg-primary text-on-primary font-headline-sm text-body-sm font-semibold hover:bg-primary-container hover:text-on-primary-container shadow-sm transition-all" title="Authorize">
+                      Approve
+                    </button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-error hover:bg-error-container transition-all" title="Reject Requisition">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all" title="Review In Drawer">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Warning / High Priority (Heavy Industrial Conveyor) -->
+<tr class="group hover:bg-surface-container-low transition-colors bg-surface-container-lowest relative">
+<td class="px-4 py-3 text-center align-middle">
+<input class="w-4 h-4 rounded accent-primary cursor-pointer" type="checkbox"/>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm font-bold text-primary">R-2026-0039</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-secondary-fixed text-on-secondary-fixed font-bold">HIGH</span>
+</div>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Pneumatic Valves &amp; Sealant Kit</span>
+<span class="font-label-sm text-label-sm text-outline">OPEX · Line 4 Maintenance</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex items-center gap-2 min-w-0">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-sm" data-alt="Portrait of Tariq Mansour, industrial plant operations director, with safety eyewear and beige collared industrial shirt" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAc6mRxvMGsKXYyZT5yN9F5z_SDUoV2fHi2mIO8muFAxkgucDBDwgB-DCQSlEX5lZtxZysSBZraqPgdVnLa0Rr49m_lsU-9QeXjtpf-s-uxNztrzq8r4QVp_glTP7igI3lrbYG4AVWhVkOSd9wJ0ykCwijDs8VdNijpxqKknxmSRQUO1lCD8lBjddh0YhdDg_cYS3J1eilhtP90UCEOdD4kKSEcE6VdwhQTMxbB5pe_RSu36Zcuha_74w"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-medium text-on-surface truncate">Tariq Mansour</span>
+<span class="font-label-sm text-label-sm text-outline truncate">Heavy Production</span>
+</div>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium truncate">Step 3: Executive VP Sign-Off</span>
+<span class="font-label-sm text-label-sm text-outline">2 of 2 signed</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle text-right">
+<div class="font-label-md text-label-md font-bold text-on-surface">42,800 EGP</div>
+<div class="font-label-sm text-label-sm text-outline font-normal">≈ $885 USD</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-secondary-fixed-dim/40 text-on-secondary-fixed-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[13px]">alarm</span>
+<span>Due in 2h 45m</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-2.5 py-1.5 rounded-lg bg-primary text-on-primary font-headline-sm text-body-sm font-semibold hover:bg-primary-container hover:text-on-primary-container shadow-sm transition-all">
+                      Approve
+                    </button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-error hover:bg-error-container transition-all">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Safe Buffer (HVAC Overhaul) -->
+<tr class="group hover:bg-surface-container-low transition-colors bg-surface-container-lowest relative">
+<td class="px-4 py-3 text-center align-middle">
+<input class="w-4 h-4 rounded accent-primary cursor-pointer" type="checkbox"/>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm font-bold text-primary">R-2026-0034</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant font-bold">MEDIUM</span>
+</div>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">HVAC Central Chiller Overhaul</span>
+<span class="font-label-sm text-label-sm text-outline">CAPEX · Facilities</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex items-center gap-2 min-w-0">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-sm" data-alt="Portrait of Mariam Zayed, facilities and physical infrastructure manager, warm natural morning office lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC5w0PMF1bwp97rZe9EEj3KBCLaTV0sAv84gOQ53KNZwFtvrNf2gdZWLpELL_UmXvmDAENB_iby1BqXoWCoJcjF-aRIJXLWR_nBI1GciufqhOUWIabLbcHRbeQHnfnMrnsOSrimKfJL70Dgb_o-x0RbqHXfK8zhI4SlcfjdkPeOLwIxpBFA3MdWgCc3Ra8gSA_8mrq6OOHZDaShuNlXo11GgOV-dKoXDtUbF4-buB0o3a8bEJt6Svkqyw"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-medium text-on-surface truncate">Mariam Zayed</span>
+<span class="font-label-sm text-label-sm text-outline truncate">Facilities &amp; RE</span>
+</div>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium truncate">Step 2: Operations Audit</span>
+<span class="font-label-sm text-label-sm text-outline">1 of 2 pending</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle text-right">
+<div class="font-label-md text-label-md font-bold text-on-surface">230,000 EGP</div>
+<div class="font-label-sm text-label-sm text-outline font-normal">≈ $4,750 USD</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-tertiary-fixed text-on-tertiary-fixed font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[13px]">check_circle</span>
+<span>Due in 18h</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-2.5 py-1.5 rounded-lg bg-primary text-on-primary font-headline-sm text-body-sm font-semibold hover:bg-primary-container hover:text-on-primary-container shadow-sm transition-all">
+                      Approve
+                    </button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-error hover:bg-error-container transition-all">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- Row 4: Safe Slate (Security Monitoring Tier) -->
+<tr class="group hover:bg-surface-container-low transition-colors bg-surface-container-lowest relative">
+<td class="px-4 py-3 text-center align-middle">
+<input class="w-4 h-4 rounded accent-primary cursor-pointer" type="checkbox"/>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm font-bold text-primary">R-2026-0028</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant font-bold">MEDIUM</span>
+</div>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">SOC SIEM Log Retention Extension</span>
+<span class="font-label-sm text-label-sm text-outline">OPEX · InfoSec</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex items-center gap-2 min-w-0">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-sm" data-alt="Portrait of Khaled Nour, senior cybersecurity operations lead, modern architectural background with subtle ambient tangerine tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA9B56HHGzobtNS1HmWLW1jATyY12SkXdngZREcNzS-EsTtjvmv_3vW9HUTGVH83sHjZ1hvp-EfureC7vVTtuhcRjQZeAS2s5sz32c8_SikP4cAqsm9FJNdzgrdHlRwZ6liZXwBJ09HOLKcnAvA5qMp9fYnhFXudEDiGooBrP_oe48NXrnSjKBBzB6LiBNGAy_gC5iYzXXXZ5KOGO4TAhssWm0cZQCJ2WyA6r0qZqBN1Nad5XGO7_5Z9A"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-medium text-on-surface truncate">Khaled Nour</span>
+<span class="font-label-sm text-label-sm text-outline truncate">IT Security</span>
+</div>
+</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="flex flex-col">
+<span class="text-on-surface font-medium truncate">Step 1: Budget Verification</span>
+<span class="font-label-sm text-label-sm text-outline">1 of 1 needed</span>
+</div>
+</td>
+<td class="px-3 py-3 align-middle text-right">
+<div class="font-label-md text-label-md font-bold text-on-surface">25,100 EGP</div>
+<div class="font-label-sm text-label-sm text-outline font-normal">≈ $520 USD</div>
+</td>
+<td class="px-3 py-3 align-middle">
+<div class="inline-flex items-center gap-1 px-2 py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-semibold">
+<span class="material-symbols-outlined text-[13px]">schedule</span>
+<span>Due in 31h</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-2.5 py-1.5 rounded-lg bg-primary text-on-primary font-headline-sm text-body-sm font-semibold hover:bg-primary-container hover:text-on-primary-container shadow-sm transition-all">
+                      Approve
+                    </button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-error hover:bg-error-container transition-all">
+<span class="material-symbols-outlined text-[18px]">close</span>
+</button>
+<button class="px-2 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant hover:bg-surface-container-highest transition-all">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Micro-Footer Pagination / Tally -->
+<div class="px-space-md py-3 bg-surface-container-low flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm font-label-sm text-label-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span>Showing 4 of 4 active items</span>
+<span class="text-outline">·</span>
+<span class="text-outline">Sorted by SLA Urgency (Ascending)</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-outline hover:text-on-surface transition-colors shadow-sm disabled:opacity-40" disabled="">Previous</button>
+<span class="px-2 font-bold text-primary">1</span>
+<button class="px-2.5 py-1 rounded bg-surface-container-lowest text-outline hover:text-on-surface transition-colors shadow-sm disabled:opacity-40" disabled="">Next</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Quick Inspection / Slide-over Drawer for R-2026-0041 -->
+<div class="xl:col-span-4 flex flex-col gap-space-md">
+<div class="bg-surface-container-lowest rounded-xl shadow-md p-space-md relative overflow-hidden">
+<!-- Header of Inspector -->
+<div class="flex items-start justify-between pb-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-error-container text-on-error-container font-bold">BREACHED ACTION</span>
+<span class="font-label-sm text-label-sm font-bold text-outline uppercase tracking-wider">Active Inspection</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-bold mt-1">R-2026-0041</h3>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Dell Latitude 5550 Fleet (x5)</span>
+</div>
+<button class="p-1 text-outline hover:text-on-surface rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors" title="Pin Pane">
+<span class="material-symbols-outlined text-[18px]">push_pin</span>
+</button>
+</div>
+<!-- Workflow Tracker: 2 of 4 Steps Completed -->
+<div class="bg-surface-container-low p-space-sm rounded-lg my-space-xs flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-on-surface-variant font-semibold">WORKFLOW PROGRESS</span>
+<span class="text-primary font-bold">2 of 4 Steps Completed</span>
+</div>
+<!-- Stepper Graphic with SVG Indicator -->
+<div class="relative w-full py-1">
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden flex">
+<div class="w-1/2 bg-primary rounded-full transition-all duration-500"></div>
+</div>
+<div class="flex justify-between items-center mt-2 font-label-sm text-label-sm">
+<div class="flex items-center gap-1 text-tertiary font-bold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Requester</span>
+</div>
+<div class="flex items-center gap-1 text-tertiary font-bold">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span>Budget Office</span>
+</div>
+<div class="flex items-center gap-1 text-primary font-bold">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+<span>Exec VP</span>
+</div>
+<div class="text-outline">
+<span>Procurement</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Summary of Line Items -->
+<div class="flex flex-col gap-2 pt-space-xs">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Bill of Materials</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">3 Items Loaded</span>
+</div>
+<div class="bg-surface-container-low rounded-lg p-space-xs flex flex-col gap-1.5 font-body-sm text-body-sm">
+<div class="flex items-center justify-between px-2 py-1 bg-surface-container-lowest rounded shadow-xs">
+<div class="flex flex-col min-w-0 pr-2">
+<span class="font-medium text-on-surface truncate">Dell Latitude 5550 (Core Ultra 7, 32GB)</span>
+<span class="font-label-sm text-label-sm text-outline">Qty: 5 · Part: #DELL-5550-BTO</span>
+</div>
+<span class="font-label-md text-label-md font-semibold text-on-surface shrink-0">165,000 EGP</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1 bg-surface-container-lowest rounded shadow-xs">
+<div class="flex flex-col min-w-0 pr-2">
+<span class="font-medium text-on-surface truncate">Dell WD22TB4 Thunderbolt 4 Docks</span>
+<span class="font-label-sm text-label-sm text-outline">Qty: 5 · Part: #ACC-WD22</span>
+</div>
+<span class="font-label-md text-label-md font-semibold text-on-surface shrink-0">15,000 EGP</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1 bg-surface-container-lowest rounded shadow-xs">
+<div class="flex flex-col min-w-0 pr-2">
+<span class="font-medium text-on-surface truncate">Onsite ProSupport 3-Year Extended</span>
+<span class="font-label-sm text-label-sm text-outline">Qty: 5 · Service Pack</span>
+</div>
+<span class="font-label-md text-label-md font-semibold text-on-surface shrink-0">5,000 EGP</span>
+</div>
+<div class="flex items-center justify-between px-2 py-1.5 text-on-surface font-semibold bg-surface-container-high rounded">
+<span>Total Requisition Value</span>
+<span class="font-label-lg text-label-lg text-primary font-bold">185,000 EGP</span>
+</div>
+</div>
+</div>
+<!-- Requester Justification Note -->
+<div class="flex flex-col gap-1 pt-space-xs">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Requester Justification</span>
+<div class="p- space-xs p-3 rounded-lg bg-surface-container-low text-on-surface-variant font-body-sm text-body-sm leading-relaxed">
+<span class="font-semibold text-on-surface">"Urgent onboarding batch:</span> Three incoming ML infrastructure engineers joining next Sunday. Current pool laptops lack 32GB RAM required for localized container testing. Cost budgeted under IT CAPEX FY26-Q1."
+            <div class="mt-2 flex items-center gap-2 font-label-sm text-label-sm text-outline">
+<span class="material-symbols-outlined text-[14px]">attachment</span>
+<span>2 Attachments: Quote_Dell_Final.pdf (1.2MB), Tech_Specs.xlsx (84KB)</span>
+</div>
+</div>
+</div>
+<!-- Decision Remark Textarea & Fast Actions -->
+<div class="flex flex-col gap-2 pt-space-sm">
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold flex items-center justify-between" for="decision-remark">
+<span>Executive Remark</span>
+<span class="font-normal lowercase text-outline">optional for approve</span>
+</label>
+<textarea class="w-full p-2.5 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest shadow-inner resize-none" id="decision-remark" placeholder="Add optional approval remark or condition (mandatory for rejection)..." rows="2"></textarea>
+<div class="flex flex-col gap-2 pt-1">
+<button class="w-full py-2.5 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md font-semibold hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.25)] flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span>Confirm Executive Approval</span>
+</button>
+<div class="grid grid-cols-2 gap-2">
+<button class="py-2 px-2 rounded-lg bg-surface-container-high text-error font-headline-sm text-body-sm font-semibold hover:bg-error-container hover:text-on-error-container transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">block</span>
+<span>Reject with Note</span>
+</button>
+<button class="py-2 px-2 rounded-lg bg-surface-container-high text-on-surface-variant font-headline-sm text-body-sm font-semibold hover:bg-surface-container-highest hover:text-on-surface transition-colors flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">contact_support</span>
+<span>Clarify</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Secondary Section: Previews of "Zero Pending Approvals" and "Shimmer Loading State" -->
+<div class="pt-space-md flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider font-semibold">State Previews &amp; Fallbacks</span>
+<div class="h-px flex-1 bg-surface-container-highest"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-space-lg">
+<!-- Empty State Card -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col items-center justify-center text-center relative overflow-hidden">
+<div class="w-12 h-12 rounded-full bg-tertiary-container/20 text-tertiary flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-[28px]">task_alt</span>
+</div>
+<div class="font-label-sm text-label-sm text-tertiary font-bold tracking-wider uppercase mb-1">Queue Synchronized</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">All Caught Up!</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant max-w-sm mt-1 mb-4">
+          No requisitions currently pending your authorization. New items routing to your signature will trigger push notifications.
+        </p>
+<div class="flex items-center gap-2">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface-variant font-headline-sm text-body-sm hover:text-on-surface transition-colors">
+            View Archived Decisions
+          </button>
+<button class="px-3 py-1.5 rounded-lg bg-surface-container text-primary font-headline-sm text-body-sm font-semibold hover:bg-surface-container-high transition-colors">
+            Delegate Next 48h
+          </button>
+</div>
+</div>
+<!-- Shimmer Loading State Preview Card -->
+<div class="bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col gap-space-md relative overflow-hidden">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-primary animate-ping"></span>
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Live Feed Re-syncing</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline font-mono">SIMULATION</span>
+</div>
+<!-- Skeleton Rows -->
+<div class="flex flex-col gap-3">
+<div class="h-10 w-full rounded-lg bg-surface-container-high animate-pulse flex items-center px-4 justify-between">
+<div class="w-32 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-20 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-16 h-3.5 bg-surface-container-highest rounded"></div>
+</div>
+<div class="h-10 w-full rounded-lg bg-surface-container-high animate-pulse flex items-center px-4 justify-between">
+<div class="w-40 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-24 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-16 h-3.5 bg-surface-container-highest rounded"></div>
+</div>
+<div class="h-10 w-full rounded-lg bg-surface-container-high animate-pulse flex items-center px-4 justify-between">
+<div class="w-28 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-20 h-3.5 bg-surface-container-highest rounded"></div>
+<div class="w-16 h-3.5 bg-surface-container-highest rounded"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-outline font-label-sm text-label-sm">
+<span>Syncing ERP connector endpoint...</span>
+<span>Latency: 28ms</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const selectAllCheckbox = document.getElementById('select-all');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', function(e) {
+        const rowCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
+        rowCheckboxes.forEach(cb => cb.checked = e.target.checked);
+      });
+    }
+
+    const tabPending = document.getElementById('tab-pending');
+    if (tabPending) {
+      tabPending.addEventListener('click', function() {
+        tabPending.classList.add('bg-surface-container-lowest', 'text-primary', 'shadow-sm', 'font-semibold');
+      });
+    }
+  })();
+</script></main></div></body></html>

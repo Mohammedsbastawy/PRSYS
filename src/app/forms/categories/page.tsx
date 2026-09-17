@@ -168,7 +168,7 @@ export default function FormCategoriesPage() {
       </div>
       <PageHeader title="Form Categories" subtitle="Group request forms in the catalog" />
       {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <div className="mb-4 rounded border border-error/25 bg-error-container/60 px-4 py-3 text-sm font-medium text-on-error-container">
           {error}
         </div>
       )}
@@ -190,7 +190,7 @@ export default function FormCategoriesPage() {
 
       <div className="card overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-surface-muted text-left text-xs uppercase text-ink-soft">
+          <thead className="bg-surface-container text-left text-xs uppercase text-on-surface-variant">
             <tr>
               <th className="w-16 px-4 py-3">Order</th>
               <th className="px-4 py-3">Name</th>
@@ -198,14 +198,14 @@ export default function FormCategoriesPage() {
               {canManage && <th className="w-56 px-4 py-3 text-right">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-border">
+          <tbody className="divide-y divide-surface-variant">
             {cats.map((c, i) => {
               const inUse = c._count?.Templates ?? c.Templates?.length ?? 0;
               const confirming = confirmId === c.FormCategoryID;
               const renaming = renameId === c.FormCategoryID;
               return (
-                <tr key={c.FormCategoryID} className="hover:bg-surface-muted">
-                  <td className="px-4 py-3 text-ink-soft">{i + 1}</td>
+                <tr key={c.FormCategoryID} className="hover:bg-surface-container-low">
+                  <td className="px-4 py-3 text-on-surface-variant">{i + 1}</td>
                   <td className="px-4 py-3">
                     {renaming ? (
                       <span className="flex items-center gap-2">
@@ -227,21 +227,21 @@ export default function FormCategoriesPage() {
                         </button>
                         <button
                           onClick={() => setRenameId(null)}
-                          className="text-xs font-semibold text-ink-soft hover:underline"
+                          className="text-xs font-semibold text-on-surface-variant hover:underline"
                         >
                           Cancel
                         </button>
                       </span>
                     ) : (
-                      <span className="font-medium text-ink">{c.Name}</span>
+                      <span className="font-medium text-on-surface">{c.Name}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-ink-soft">{inUse}</td>
+                  <td className="px-4 py-3 text-on-surface-variant">{inUse}</td>
                   {canManage && (
                     <td className="px-4 py-3 text-right">
                       {confirming ? (
                         <span className="inline-flex items-center gap-2 text-xs">
-                          <span className="font-medium text-ink-soft">Delete?</span>
+                          <span className="font-medium text-on-surface-variant">Delete?</span>
                           <button
                             onClick={() => remove(c.FormCategoryID)}
                             className="font-bold text-danger hover:underline"
@@ -250,7 +250,7 @@ export default function FormCategoriesPage() {
                           </button>
                           <button
                             onClick={() => setConfirmId(null)}
-                            className="font-semibold text-ink-soft hover:underline"
+                            className="font-semibold text-on-surface-variant hover:underline"
                           >
                             No
                           </button>
@@ -299,7 +299,7 @@ export default function FormCategoriesPage() {
             })}
             {cats.length === 0 && (
               <tr>
-                <td colSpan={canManage ? 4 : 3} className="px-4 py-8 text-center text-ink-faint">
+                <td colSpan={canManage ? 4 : 3} className="px-4 py-8 text-center text-outline">
                   No categories yet
                 </td>
               </tr>

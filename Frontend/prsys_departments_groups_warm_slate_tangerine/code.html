@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Breadcrumb & Top Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm mb-space-sm">
+<nav class="flex items-center gap-1.5 font-label-md text-label-md text-on-surface-variant">
+<span>Administration</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">Organizational Structure</span>
+</nav>
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-high text-on-surface font-label-md text-label-md shadow-sm">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>8 Active Departments</span>
+<span class="text-outline">/</span>
+<span>14 Work Groups</span>
+</div>
+</div>
+<!-- Page Header Title block with asymmetric numeric meta badge -->
+<div class="flex flex-col lg:flex-row lg:items-end justify-between gap-space-md mb-space-lg">
+<div class="flex flex-col gap-1 max-w-3xl">
+<h1 class="font-headline-lg text-headline-lg tracking-tight text-on-surface font-bold flex items-center gap-3">
+<span>Departments &amp; Access Groups</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed tracking-wider uppercase font-semibold">Live Directory</span>
+</h1>
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+        Manage organizational units, designated department approver managers, and cross-functional user groups linked to procurement workflows and governance policies.
+      </p>
+</div>
+<!-- Quick Stat Pill Group -->
+<div class="flex items-center gap-3 shrink-0">
+<div class="flex items-center gap-2 bg-surface-container-lowest px-3 py-2 rounded-xl shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-surface-container-high flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[18px]">verified_user</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">SLA Enforcement</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">100% Bound</span>
+</div>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-lowest px-3 py-2 rounded-xl shadow-sm">
+<div class="w-8 h-8 rounded-lg bg-tertiary-fixed flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[18px]">sync_saved_locally</span>
+</div>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Entra ID Sync</span>
+<span class="font-label-md text-label-md text-on-surface font-bold">4m ago</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Tab Switcher & Command Action Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-md bg-surface-container-low p-2 rounded-xl mb-space-md">
+<div class="inline-flex rounded-lg bg-surface-container-high p-1 shadow-sm" id="viewTabs">
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-lowest text-primary font-headline-sm text-body-md font-semibold shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">domain</span>
+<span>Departments</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed">8</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-body-md font-medium transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">hub</span>
+<span>Access &amp; Approval Groups</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-surface-variant text-on-surface-variant">14</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-container-lowest hover:bg-surface-container-high text-on-surface font-label-md text-label-md shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[18px] text-outline">cloud_sync</span>
+<span>Sync Entra ID Org</span>
+</button>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-body-md font-medium shadow-[0_2px_8px_rgba(163,57,0,0.25)] hover:shadow-lg transition-all active:scale-95" onclick="document.getElementById('deptDrawer').classList.remove('translate-x-full')" type="button">
+<span class="material-symbols-outlined text-[18px]">add</span>
+<span>+ New Department</span>
+</button>
+</div>
+</div>
+<!-- Filter & Search Toolbar -->
+<div class="bg-surface-container-lowest rounded-xl p-space-sm shadow-sm mb-space-md flex flex-wrap items-center gap-3">
+<!-- Search Query -->
+<div class="relative flex-1 min-w-[260px]">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">search</span>
+<input class="w-full h-10 pl-9 pr-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest shadow-inner" placeholder="Filter department name, identifier code, or manager..." type="text"/>
+</div>
+<!-- Manager Selector Filter -->
+<div class="relative min-w-[180px]">
+<select class="w-full h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none appearance-none cursor-pointer shadow-inner">
+<option value="">All Approver Managers</option>
+<option value="tarek">Tarek Mansour</option>
+<option value="mahmoud">Mahmoud Zaki</option>
+<option value="mariam">Mariam Zayed</option>
+<option value="hany">Hany Shaker</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-outline text-[18px] pointer-events-none">expand_more</span>
+</div>
+<!-- Member Count Filter -->
+<div class="relative min-w-[150px]">
+<select class="w-full h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none appearance-none cursor-pointer shadow-inner">
+<option value="">Any Member Count</option>
+<option value="1-15">1 - 15 members</option>
+<option value="16-40">16 - 40 members</option>
+<option value="41+">41+ members</option>
+</select>
+<span class="material-symbols-outlined absolute right-2.5 top-2.5 text-outline text-[18px] pointer-events-none">tune</span>
+</div>
+<!-- Clear Filter Ghost Action -->
+<button class="p-2 text-outline hover:text-on-surface transition-colors" title="Reset Filters" type="button">
+<span class="material-symbols-outlined text-[20px]">filter_alt_off</span>
+</button>
+</div>
+<!-- Primary Expandable Departments Data Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden mb-space-xl">
+<div class="overflow-x-auto">
+<table class="w-full text-left table-fixed">
+<thead class="bg-surface-container-high font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+<tr>
+<th class="w-12 px-3 py-3 text-center"></th>
+<th class="w-72 px-4 py-3">Department Name &amp; Code</th>
+<th class="w-64 px-4 py-3">Designated Approver / Manager</th>
+<th class="w-36 px-4 py-3 text-right">Active Members</th>
+<th class="w-72 px-4 py-3">Linked Workflows</th>
+<th class="w-28 px-4 py-3 text-center">Status</th>
+<th class="w-24 px-4 py-3 text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high text-body-sm font-body-sm">
+<!-- ROW 1: EXPANDED ROW (IT INFRASTRUCTURE) -->
+<tr class="bg-surface-container-low/40 hover:bg-surface-container-low transition-colors">
+<td class="px-3 py-3 text-center align-middle">
+<button class="w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary transition-all" id="toggleRow1" onclick="document.getElementById('drawerRow1').classList.toggle('hidden'); document.getElementById('iconRow1').classList.toggle('rotate-90')" type="button">
+<span class="material-symbols-outlined text-[18px] rotate-90 transition-transform duration-200" id="iconRow1">chevron_right</span>
+</button>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-primary-fixed flex items-center justify-center text-primary shrink-0 font-headline-sm text-body-md font-bold">
+<span class="material-symbols-outlined text-[20px]">terminal</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-bold text-on-surface truncate">IT Infrastructure &amp; Operations</span>
+<span class="font-label-sm text-label-sm text-outline">DEPT-IT-01 · CC-8012</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-2.5">
+<img class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" data-alt="Corporate headshot portrait of Tarek Mansour, male VP of Technology with warm executive lighting in charcoal suit against neutral slate office background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCStTB7lL4wL6u0GKMSEG6SMW3kY3f7k01WLtxeH3TC_6DtL3r8nBPpwxDapQQ_DjK9Jvbr1uxfw_CQOuVke4TYsQwKl8nU1uVKyqyYNgUXzrS8MOzKHPhaThF82IebTSSWyh2sV-jI0fMLmTynLfqLCiCD8xr-zsfn_e7hqQ6L-GU49ulMrmUWAMGJxUQ4hezbxCYeYrBlzVMjVGKuvG_LXavgpspp_IzR_g5tyXSgBwulWGIdIRFH4g"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Tarek Mansour</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">VP Technology &amp; Infra</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<span class="font-label-md text-label-md font-bold px-2 py-1 rounded bg-surface-container text-on-surface">34 Members</span>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex flex-wrap gap-1.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-medium">IT Hardware Approval</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-medium">Software License Grant</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-center">
+<span class="inline-flex items-center gap-1.5 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+              </span>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Edit Department" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="More Options" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- EXPANDED ROSTER DRAWER -->
+<tr id="drawerRow1">
+<td class="p-0" colspan="7">
+<div class="bg-surface-container-low p-space-md border-l-4 border-primary">
+<!-- Inner header banner -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm mb-space-md">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[22px]">badge</span>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-bold">Department Members Roster</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Assigned personnel with routing permissions and requisition delegate status.</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-2.5 top-2 text-outline text-[16px]">search</span>
+<input class="w-full h-8 pl-8 pr-2 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-sm" placeholder="Quick find member..." type="text"/>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-label-md text-label-md font-semibold shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>+ Assign Member</span>
+</button>
+</div>
+</div>
+<!-- Sub-table of members -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm overflow-hidden mb-space-sm">
+<table class="w-full text-left">
+<thead class="bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
+<tr>
+<th class="px-4 py-2.5">User Identity</th>
+<th class="px-4 py-2.5">PRSYS System Role</th>
+<th class="px-4 py-2.5">Approval Delegate</th>
+<th class="px-4 py-2.5">Assigned Date</th>
+<th class="px-4 py-2.5 text-right">Reassign</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high font-body-sm text-body-sm">
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-4 py-2.5">
+<div class="flex items-center gap-2.5">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-xs" data-alt="Portrait photo of Tarek Mansour in crisp corporate profile lighting, grey hair, glasses, authoritative expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBh9OIYebMkN2dn-RyWRxm_IzR39nRZeQLBR03dKAN-XaSlqz_kOrGNO4v55Gg7ZFu7-W8RqKTJkE5QrKFlfBZQ2B7_s7zuZiR91eFZyJhZrIe6byjqosAa8PlRYdlN6zo5XNqI0vxwQ-1HLx0dHOglr6AKN1_hEoIUPo5LGHqeUNNR77ybwx3bStpiSYqtWRFt6E9emg_r88LZUh2sFcD0x_FKjvMO_KfI8_ClCxRhzCFpdXCpCDHHNA"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Tarek Mansour</span>
+<span class="font-label-sm text-label-sm text-outline">t.mansour@org.internal</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">Super Admin</span>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold inline-flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">star</span> Dept Head
+                          </span>
+</td>
+<td class="px-4 py-2.5 font-label-md text-label-md text-on-surface-variant">14 Jan 2022</td>
+<td class="px-4 py-2.5 text-right">
+<button class="text-outline font-label-md text-label-md cursor-not-allowed opacity-50" title="Cannot reassign designated head" type="button">Locked</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-4 py-2.5">
+<div class="flex items-center gap-2.5">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-xs" data-alt="Professional studio portrait of Salma Farouk, senior engineer wearing glasses with warm studio fill light." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDcgxIZiE1h0EKsmBoM4yfD6mdKFlC9bsqHI9LkbNs7B2y4pCCvR0lA3wQ2Cvb6sI93Ckkf1Dfaf69gyRyUUmW21WaWNauj6IPw4Xpok7oolTO_qQzl4jMen4qFgDsqznq7ju5dFv0e52z2eLA2WtsBWKzfTNeUXI-F-pC3NLcLVpLKVPIHonwtpsxfsuX0J8rfOPzSyKpaJFVCFY6h3wsU_281M6Lzy6B-kh7W_Pjt5zLcuuUAYnauDg"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Salma Farouk</span>
+<span class="font-label-sm text-label-sm text-outline">s.farouk@org.internal</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">Principal Cloud Architect</span>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">Tier 1 Alternate</span>
+</td>
+<td class="px-4 py-2.5 font-label-md text-label-md text-on-surface-variant">08 May 2023</td>
+<td class="px-4 py-2.5 text-right">
+<button class="text-primary hover:underline font-label-md text-label-md font-semibold" type="button">Move Out</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-4 py-2.5">
+<div class="flex items-center gap-2.5">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-xs" data-alt="Headshot of Karim Nabil, male procurement specialist in modern white shirt, natural daylight." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBmkm2YJecGTy6RUzOqlCw4kot2cdrOuBD5DiSdALS1LteZ7XXS7-vpFGFCOKM8EhYwkEroRTQcowape6_13zeYwF4Jsd86X-XXCK-IJE3pb_Mb59ani6LvwYThojgJ9463vTpeaMIsFv6B-IL2lbxMsCDquCKRRXWBAE6Zby6PwW37rZx3EbsusaXRPpy32xTkISDKk0MInYrShoN85us5N78BeY9Z93NSgjHh1YtdsrffySFDmhikwg"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Karim Nabil</span>
+<span class="font-label-sm text-label-sm text-outline">k.nabil@org.internal</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-medium">Procurement Specialist</span>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">Standard Requester</span>
+</td>
+<td class="px-4 py-2.5 font-label-md text-label-md text-on-surface-variant">21 Nov 2023</td>
+<td class="px-4 py-2.5 text-right">
+<button class="text-primary hover:underline font-label-md text-label-md font-semibold" type="button">Move Out</button>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low/50 transition-colors">
+<td class="px-4 py-2.5">
+<div class="flex items-center gap-2.5">
+<img class="w-7 h-7 rounded-full object-cover shrink-0 shadow-xs" data-alt="Corporate headshot of Nour Eldin, female DevSecOps engineer with thoughtful demeanor in modern workspace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD519HwvLyQmsEpwE2D_-HYvTrlJa3BpTZASmHZB2xC33R8l9TbNjozwX-FoIjvywRb9oeTW2Ro1C2dD2sLJXxKxjIHZ263xPUOn5qRZadPxwYeMErtGCqRmMes82FQCUaMSzem8AqN9pIpa_ByCzJzFZNXygf5rmkYS2mlXjYgibUkflLGp2-hurB7S6Opdrx57_CFZWfU2-wt-yflybO8ZYOzprbzFuCN38Kz4H_UEL_nttnkgiYNAQ"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Nour Eldin</span>
+<span class="font-label-sm text-label-sm text-outline">n.eldin@org.internal</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-medium">DevSecOps Engineer</span>
+</td>
+<td class="px-4 py-2.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">Standard Requester</span>
+</td>
+<td class="px-4 py-2.5 font-label-md text-label-md text-on-surface-variant">04 Feb 2024</td>
+<td class="px-4 py-2.5 text-right">
+<button class="text-primary hover:underline font-label-md text-label-md font-semibold" type="button">Move Out</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Protective deletion warning banner -->
+<div class="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-surface-container-high text-on-surface-variant font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px] text-secondary">info</span>
+<span>Safety Policy: Department cannot be purged or deleted while 34 active users or pending approval requisitions are bound to this code.</span>
+</div>
+</div>
+</td>
+</tr>
+<!-- ROW 2: HEAVY PRODUCTION & PLANTS -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-3 py-3 text-center align-middle">
+<button class="w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-secondary shrink-0 font-headline-sm text-body-md font-bold">
+<span class="material-symbols-outlined text-[20px]">factory</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-bold text-on-surface truncate">Heavy Production &amp; Plants</span>
+<span class="font-label-sm text-label-sm text-outline">DEPT-PRD-02 · CC-4100</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-2.5">
+<img class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" data-alt="Portrait photo of Mahmoud Zaki, male operations director in dark suit with clean warm studio backdrop." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_FEL77x2fjdhunC8oV_fJkxZUXrlnl-iOVT2U3osGhQsIHoLcZ7_eAVNoDvP4IybmgyrAKr9hPQT1qb3OXmHUwgy2-i7jojXm1UFOZhtkcVdY7XJngXrKEbCV8Lqa7JTeadOQX4lQrZ5WYEOQzcgXSOsModjA3qKuyfAv3O6E7wZVwGKGNyzqimktfr2Bm1gSU1rUm-2TdEoC_GWJnElIp75l8u0hkZRPVrOgN1MZMoNJxFx3Q6MciA"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Mahmoud Zaki</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Director of Manufacturing</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<span class="font-label-md text-label-md font-bold px-2 py-1 rounded bg-surface-container text-on-surface">52 Members</span>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex flex-wrap gap-1.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-medium">Capex Equipment PO</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">Consumable Restock</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-center">
+<span class="inline-flex items-center gap-1.5 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+              </span>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Edit Department" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="More Options" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 3: FACILITIES & REAL ESTATE -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-3 py-3 text-center align-middle">
+<button class="w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-tertiary shrink-0 font-headline-sm text-body-md font-bold">
+<span class="material-symbols-outlined text-[20px]">apartment</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-bold text-on-surface truncate">Facilities &amp; Real Estate</span>
+<span class="font-label-sm text-label-sm text-outline">DEPT-FAC-03 · CC-2050</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-2.5">
+<img class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" data-alt="Portrait photo of Mariam Zayed, female real estate director in sharp professional attire, looking directly at camera with subtle smile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-M7E2W7g5VcQ-nWmXPk06ggVJ6jbW9d-PGRfib4r_WRGew7T8O_gdNvvmTe-ZrOYdYRInGiVwj4o3-uUD35ZB1WBOGkgn_ZehP2zHhgQr3bfbkLZIlRUJ9BY8xGxjH-eqtEBCbLz4SZV9UkJCt2OSz7d0T9xe7EZX2mLa1Wm_peZ7Uk9kjeyDKvkWMJeR8RK4O_zvOIvwgc6yr_QZJfdIq8vBGFK3EjpzeJd7UGv4AsYuHFx_yJZs_Q"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Mariam Zayed</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Head of Corporate Real Estate</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<span class="font-label-md text-label-md font-bold px-2 py-1 rounded bg-surface-container text-on-surface">18 Members</span>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex flex-wrap gap-1.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-medium">Site Lease Approval</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">Utilities Maint</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-center">
+<span class="inline-flex items-center gap-1.5 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+              </span>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Edit Department" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="More Options" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+<!-- ROW 4: FINANCE & TREASURY -->
+<tr class="hover:bg-surface-container-low/30 transition-colors">
+<td class="px-3 py-3 text-center align-middle">
+<button class="w-6 h-6 rounded-md bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary transition-all" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-primary-container shrink-0 font-headline-sm text-body-md font-bold">
+<span class="material-symbols-outlined text-[20px]">account_balance</span>
+</div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-bold text-on-surface truncate">Finance &amp; Treasury</span>
+<span class="font-label-sm text-label-sm text-outline">DEPT-FIN-04 · CC-1000</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex items-center gap-2.5">
+<img class="w-8 h-8 rounded-full object-cover shrink-0 shadow-sm" data-alt="Portrait photo of Hany Shaker, male financial controller in navy blazer with glasses and warm slate studio background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoHRY_6PZXihYKfPZaNU8NoDCQGLXR2JGrTgmYMd1Tlv3-I17K-XEreCHSvMvJCJTqH5yS71oi3nKJ5gokw-NqDaNYcMoP-zvHKnjQ3jTn_f17cbuqiLzAFLvJFEcYdZriWvBxj7MawmQJhcswEwq7AAN3Thwg5xXuIJUVTzKRprgBDbsIGvVqhZC7zZa1jzWoSu4sq3qQC_LCw-ZROcNLGY9_Fq3DcL3z8lX-ud0O4Aik8zNg-C_rIQ"/>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Hany Shaker</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Chief Financial Officer</span>
+</div>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<span class="font-label-md text-label-md font-bold px-2 py-1 rounded bg-surface-container text-on-surface">12 Members</span>
+</td>
+<td class="px-4 py-3 align-middle">
+<div class="flex flex-wrap gap-1.5">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-medium">Budget Release Signoff</span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-medium">Audit Review</span>
+</div>
+</td>
+<td class="px-4 py-3 align-middle text-center">
+<span class="inline-flex items-center gap-1.5 font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span> Active
+              </span>
+</td>
+<td class="px-4 py-3 align-middle text-right">
+<div class="flex items-center justify-end gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-primary transition-colors" title="Edit Department" type="button">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</button>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="More Options" type="button">
+<span class="material-symbols-outlined text-[18px]">more_vert</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Data Table Pagination / Metadata Footer -->
+<div class="bg-surface-container-low px-space-md py-3 flex flex-wrap items-center justify-between gap-space-sm font-label-md text-label-md text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span>Showing 4 of 8 Total Departments</span>
+<span class="text-outline">·</span>
+<span class="text-primary font-semibold">116 Total System Users</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="p-1.5 rounded hover:bg-surface-container-high text-outline disabled:opacity-40" disabled="" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<span class="px-2.5 py-1 rounded bg-surface-container-lowest text-primary font-bold shadow-xs">1</span>
+<button class="px-2.5 py-1 rounded hover:bg-surface-container-high text-on-surface" type="button">2</button>
+<button class="p-1.5 rounded hover:bg-surface-container-high text-on-surface" type="button">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Secondary Section: Access & Approval Groups Preview Box -->
+<div class="flex flex-col gap-space-md mb-space-xl">
+<div class="flex flex-wrap items-center justify-between gap-space-sm">
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[20px]">groups</span>
+<h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">Approval Groups &amp; Role Bundles</h2>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Cross-functional dynamic groups attached to escalation steps inside approval workflows.</p>
+</div>
+<button class="font-label-md text-label-md text-primary font-semibold hover:underline flex items-center gap-1" type="button">
+<span>Manage All 14 Groups</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</button>
+</div>
+<!-- Groups Bento / Triple Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Group Card 1 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex flex-col gap-2.5 mb-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold tracking-wide uppercase">Tier 4 Authority</span>
+<span class="font-label-sm text-label-sm text-outline">GRP-CPX-09</span>
+</div>
+<h3 class="font-headline-sm text-body-lg font-bold text-on-surface">Capex Board Approvers</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Autonomous multi-signoff committee for capital expenditures exceeding $150,000 USD.</p>
+</div>
+<div class="flex flex-col gap-3 pt-3 border-t border-surface-container-high">
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2 overflow-hidden">
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of senior corporate executive with silver hair in formal attire." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAa78oPJTCs01O0FV_OzOucitafkVf7LLX1Ih287CxiVl-IoNMxcAxYt9ts4T1PKJYfB-L9i9V6LgGIsWICS6Jjvbdt7iTIPhxkMvGcSIlKeAoxCxYcIdhu7JHlzWgDm7dro9o5T4M8tlRYIbBaOAHksv3c7rQoP-axo-C0Q3azd9j__nOUa3dAmeaMA5HoHa8RiTYzUyQsxy34goLKVqHMXHVZfCXGQN5O2b6xMI3Iyj0RYoMTJPzFrg"/>
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of middle-aged executive woman with glasses in smart corporate blazer." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDhPcjUk7qdmavFwtV29YunAmKI-ReqaVMRl48_rEfUM6GZkFylzaehCqjoNx9LW20k_Zl_Zz526l1kqsEpIpsuZpUDF09SrRXcgcyeZ7csOPDCBj6hhugnFPvipuubD6dPAzzeLS65ey5B9N1-2HDPQBcBNWOr21Dp2wWgMfpyh9dgHThVhCDI96HewZXsQtQ7_WREBkmD2apJhsvTWVHQmbqwsHuSuRhouSzWBx40Nx5osDk7XgSRtQ"/>
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of male operations manager in contemporary executive office setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3koXeRjyYbPaWdS143ty0EtcJBu_OlAWO3MUxliODMoCj2eBbD_BvZ0IUS8LEtY8nchzss-PlY9Gdj8zOaxvCO8vsx2Xa-VZRrcUSyqDvbRD0g0iM4acphWDkPERnH8lyiG0HNeXP-JISBC3Vc3xohXmhBmIhif0riTMvDovrS1j2gTwn57YlNOKehCui_FWZheYifWIwddWFuV09Edb5JXB0MsnxEK7tTnEfEeJYMFN2cSExWj7uwQ"/>
+<div class="inline-flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-surface bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">+3</div>
+</div>
+<span class="font-label-sm text-label-sm text-outline font-medium">6 Executives</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium">Used In: Step 3 Final Sign</span>
+<button class="text-primary hover:text-primary-container p-1" title="Group Settings" type="button">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Group Card 2 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex flex-col gap-2.5 mb-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold tracking-wide uppercase">Regional Ops</span>
+<span class="font-label-sm text-label-sm text-outline">GRP-ALX-02</span>
+</div>
+<h3 class="font-headline-sm text-body-lg font-bold text-on-surface">Alexandria Plant Supervisors</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">On-site technical plant leads empowered to verify and sign off maintenance spare parts requests.</p>
+</div>
+<div class="flex flex-col gap-3 pt-3 border-t border-surface-container-high">
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2 overflow-hidden">
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of manufacturing site engineer wearing safety hardhat and high-visibility vest." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAnD7YV76ELHlLcGaD0NyTyfZBsluqUmi1yS35jBHrWgWN_4qDQtoGpmekFPQEwZBYPE4dxE5GzMObL1Nkj6SgIMaL9AE-YpPP6WocZ9xj7jHPrbtU13gPhofi-X5sERFDbBZvET9Wn5IZW2uJfFHyUFeCfzILduNaXyma3GGmx--KfmDGHNymnz6BKTjXBNskcbCZtkOyD7rYCMSVuKBak7eQp52WRuBzp5QzaM3lxVmcAxPYdTNvB6Q"/>
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of industrial technical engineer in clean industrial plant environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSXJ2nxUxnwFp7Ijc-OL3pw0pZ-5ArBktxemoE3uvGu3IHSY_IZEC_9T1dPvimymYZQABC9zSwP9iEujqjoJYjOqbqKsHKG3jinf41lGBQ7R7loYSi1tbXhWHQz153GvChyuznmqRYeQKQG-wsQQZkEXclY642iZ3caDHeaVROJX0tC9yXFfwZ0t_vlNAmiDInF5TKGaQSOFA78F6iBFV4KjQBAWILplRdc-EQUz1alAEojMg4zofKZw"/>
+<div class="inline-flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-surface bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">+7</div>
+</div>
+<span class="font-label-sm text-label-sm text-outline font-medium">9 Supervisors</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-medium">Used In: Step 1 Plant Gate</span>
+<button class="text-primary hover:text-primary-container p-1" title="Group Settings" type="button">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Group Card 3 -->
+<div class="bg-surface-container-lowest rounded-xl p-space-md shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
+<div class="flex flex-col gap-2.5 mb-space-md">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-bold tracking-wide uppercase">SecOps Gate</span>
+<span class="font-label-sm text-label-sm text-outline">GRP-SEC-11</span>
+</div>
+<h3 class="font-headline-sm text-body-lg font-bold text-on-surface">Cairo IT Security Reviewers</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Mandatory compliance reviewers for third-party cloud software, SaaS, and infrastructure procurement.</p>
+</div>
+<div class="flex flex-col gap-3 pt-3 border-t border-surface-container-high">
+<div class="flex items-center justify-between">
+<div class="flex -space-x-2 overflow-hidden">
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of cybersecurity specialist in tech office with dual monitors in background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCwCNVThkuC_9BdNAdLI7VxmdRDFJpRAOTTpS4jn5kv26pr6T9EVvKbGP37rFOh2fkz-DLaOZOW2_rcKMt9pWDfSEfaiVxlG_d_9IcDtSP3_WqzYwan-QQtkSLgscoNB1FMNJea0R_iYf5HO4-8GQP6mSw4XjHDr2LZXl1b4aa_feX6xsqbnEPlDunHq7lKmveEcIiMuaOAjQU6xJpn4ZPVf0mu5rZtNtTIgMrUQVqPFVJkNG3g0z3p4w"/>
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of female compliance auditor with laptop in modern open plan workspace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIRvhFJzZO_8FCc3Ze8poMm4dqe0ZEaXQFo72SRDADp-y8zMmrDU0QGkESlCz3Q3YCCzvFuEU-ZJB8ScnZvUEU64r3827DZJwRzwWMDPBJ9ZxtYX0bGUTRAaiySbDYXs69Bm8KwoBVYVdapll_p7FcgnZYG3tnmCQzumIzlsGQpSW367hKpipCWW2dEKzPrskm4SPyRAChlqW-d2-06P68clT0Y-aazHbtYQLTx8RG6pVTOuugnka4MQ"/>
+<img class="inline-block h-7 w-7 rounded-full ring-2 ring-surface object-cover" data-alt="Portrait of IT security engineer smiling in modern minimalist workspace." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDTwY_FAzyNbAVpJCt0xBXBrMEWwntIFa7J7ujapfVV4QlLm6Mhm54I372oion27esak6nXaYcxBfugvKkIGZHHPZra5zvFMNskzJlMeR9xhoK_grLenD0ayVGpV7B0PdgDX5lOrVqpMXRyryL1I3Ryxa0TSrgCTDbTZs3QqUKhy4Vc-L2oEHEXNS09smWg-PVPOwR2IWom_JkRg_HFiSTUSeMn86CMlhi9uDBb8Eydc1I-jA7QsEOPSg"/>
+<div class="inline-flex h-7 w-7 items-center justify-center rounded-full ring-2 ring-surface bg-surface-container-high text-on-surface font-label-sm text-label-sm font-bold">+2</div>
+</div>
+<span class="font-label-sm text-label-sm text-outline font-medium">5 Analysts</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-medium">Used In: Step 2 SecReview</span>
+<button class="text-primary hover:text-primary-container p-1" title="Group Settings" type="button">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- SLIDE-OUT DRAWER / MODAL: Create & Edit Department -->
+<div class="fixed inset-y-0 right-0 w-full max-w-md bg-surface-container-lowest shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col justify-between" id="deptDrawer">
+<!-- Drawer Header -->
+<div class="p-space-lg bg-surface-container-low flex items-center justify-between shadow-xs">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary text-on-primary flex items-center justify-center shadow-sm">
+<span class="material-symbols-outlined text-[22px]">domain_add</span>
+</div>
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">Create Department</h3>
+<span class="font-label-sm text-label-sm text-outline uppercase tracking-wider">Organizational Unit</span>
+</div>
+</div>
+<button class="p-1.5 rounded-lg hover:bg-surface-container-high text-on-surface-variant transition-colors" onclick="document.getElementById('deptDrawer').classList.add('translate-x-full')" type="button">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<!-- Drawer Body Form -->
+<div class="p-space-lg overflow-y-auto flex-1 flex flex-col gap-space-md">
+<!-- Dept Name -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between">
+<span>Department Name</span>
+<span class="text-primary">*</span>
+</label>
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest shadow-inner" placeholder="e.g. Quality Assurance &amp; Testing" type="text"/>
+</div>
+<!-- Dept Identifier Code -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between">
+<span>Department Code</span>
+<span class="text-outline font-normal">Auto-formatted</span>
+</label>
+<div class="relative">
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-label-md text-label-md uppercase tracking-wider shadow-inner" type="text" value="DEPT-QAT-05"/>
+<span class="material-symbols-outlined absolute right-3 top-2.5 text-tertiary text-[18px]">verified</span>
+</div>
+</div>
+<!-- Cost Center Mapping -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between">
+<span>SAP ERP Cost Center</span>
+<span class="text-primary">*</span>
+</label>
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-label-md text-label-md shadow-inner" placeholder="e.g. CC-3390-QA" type="text"/>
+<span class="font-label-sm text-label-sm text-outline">Bound to general financial ledger for auto-budget deductions.</span>
+</div>
+<!-- Designated Approver / Manager Selector -->
+<div class="flex flex-col gap-1.5">
+<label class="font-label-md text-label-md text-on-surface font-semibold flex items-center justify-between">
+<span>Designated Approver Manager</span>
+<span class="text-primary">*</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-2.5 text-outline text-[18px]">person_search</span>
+<input class="w-full h-10 pl-9 pr-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest shadow-inner" placeholder="Search user by name or corporate email..." type="text"/>
+</div>
+<!-- Suggested matched manager item -->
+<div class="mt-1 p-2 rounded-lg bg-surface-container flex items-center justify-between">
+<div class="flex items-center gap-2">
+<img class="w-7 h-7 rounded-full object-cover shadow-xs" data-alt="Portrait photo of Ramy Ghoneim, senior operations manager in grey business casual shirt." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBBHWh0es4vv628UJ2bWR3S5nxR0RmoMwa9q7T4kFnRgcRCtjF2POjOPCLyxi-wDu3W4hsYXUa3-LFjm58oQ-up0kdfP6PoSba463yLj-hnV46xofhuUwfWx-Q6OlTJ_EVIYW5vM_3yrx6aybz0WV4GZdnxD1rxZQxcS6NN1uuMxrAV4dAIqI_w1Zn76CWhKdpC6h919vWrb2_fc3_FusRjuQFgnVQWATXR-kxId7XixgGK42C9qs_kmQ"/>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Ramy Ghoneim</span>
+<span class="font-label-sm text-label-sm text-outline">r.ghoneim@org.internal</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed font-bold">Selected</span>
+</div>
+</div>
+<!-- Routing Priority & Default SLA -->
+<div class="grid grid-cols-2 gap-3 pt-2">
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface font-semibold">Sign-off SLA</label>
+<select class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none shadow-inner">
+<option>24 Hours</option>
+<option selected="">48 Hours</option>
+<option>72 Hours</option>
+</select>
+</div>
+<div class="flex flex-col gap-1">
+<label class="font-label-md text-label-md text-on-surface font-semibold">Auto-Escalation</label>
+<select class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none shadow-inner">
+<option selected="">VP Tech</option>
+<option>COO Desk</option>
+<option>CFO</option>
+</select>
+</div>
+</div>
+<!-- Sync with Azure Entra Flag -->
+<div class="flex items-start gap-3 p-3 rounded-xl bg-surface-container mt-2">
+<input checked="" class="mt-1 w-4 h-4 rounded text-primary focus:ring-primary" id="entraSyncCheck" type="checkbox"/>
+<label class="flex flex-col cursor-pointer" for="entraSyncCheck">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Bi-directional Entra ID Sync</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Automatically mirror additions, terminations, and departmental reorganizations from Azure Active Directory.</span>
+</label>
+</div>
+</div>
+<!-- Drawer Footer Actions -->
+<div class="p-space-lg bg-surface-container-low flex items-center justify-end gap-3 shadow-md">
+<button class="px-4 py-2 rounded-lg bg-surface-container-high hover:bg-surface-container text-on-surface font-headline-sm text-body-md font-medium transition-all" onclick="document.getElementById('deptDrawer').classList.add('translate-x-full')" type="button">
+        Cancel
+      </button>
+<button class="px-5 py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-body-md font-semibold shadow-[0_2px_8px_rgba(163,57,0,0.25)] hover:shadow-lg transition-all active:scale-95" onclick="document.getElementById('deptDrawer').classList.add('translate-x-full')" type="button">
+        Save &amp; Bind Unit
+      </button>
+</div>
+</div>
+</div>
+<script>
+  // Simple tab click micro-interaction
+  const tabs = document.querySelectorAll('#viewTabs button');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => {
+        t.className = 'flex items-center gap-2 px-4 py-2 rounded-lg text-on-surface-variant hover:text-on-surface font-headline-sm text-body-md font-medium transition-all';
+        const badge = t.querySelector('span:last-child');
+        if (badge) badge.className = 'font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-surface-variant text-on-surface-variant';
+      });
+      tab.className = 'flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-container-lowest text-primary font-headline-sm text-body-md font-semibold shadow-sm transition-all';
+      const activeBadge = tab.querySelector('span:last-child');
+      if (activeBadge) activeBadge.className = 'font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed';
+    });
+  });
+</script></main></div></body></html>

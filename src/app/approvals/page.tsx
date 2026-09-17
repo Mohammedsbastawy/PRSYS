@@ -69,13 +69,13 @@ function daysLabel(n: number): string {
 }
 
 function agingClass(n: number): string {
-  if (n >= 14) return "bg-red-100 font-semibold text-red-700";
-  if (n >= 7) return "bg-amber-100 font-semibold text-amber-800";
-  return "text-ink";
+  if (n >= 14) return "bg-error-container font-semibold text-on-error-container";
+  if (n >= 7) return "bg-amber-100 font-semibold text-on-secondary-fixed-variant";
+  return "text-on-surface";
 }
 
 function dotClass(i: number, current: number, muted: boolean): string {
-  if (muted) return i <= current && current >= 0 ? "bg-gray-400" : "bg-gray-200";
+  if (muted) return i <= current && current >= 0 ? "bg-gray-400" : "bg-surface-container-highest";
   if (i < current) return "bg-primary";
   if (i === current) return "bg-primary ring-2 ring-blue-200";
   return "bg-gray-300";
@@ -92,7 +92,7 @@ function StepDots({
   muted?: boolean;
   title?: string;
 }) {
-  if (total <= 0) return <span className="text-xs text-ink-faint">—</span>;
+  if (total <= 0) return <span className="text-xs text-outline">—</span>;
   return (
     <span className="inline-flex items-center gap-1.5" title={title}>
       {Array.from({ length: total }, (_, i) => (
@@ -115,7 +115,7 @@ function Pager({
   const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const to = Math.min(total, page * PAGE_SIZE);
   return (
-    <div className="flex items-center justify-between border-t border-surface-border px-4 py-3 text-sm text-ink-soft">
+    <div className="flex items-center justify-between border-t border-surface-variant px-4 py-3 text-sm text-on-surface-variant">
       <span>
         Showing {from}–{to} of {total} entries
       </span>
@@ -128,7 +128,7 @@ function Pager({
         >
           <Icon name="chevron_left" className="text-[20px]" />
         </button>
-        <span className="min-w-[2rem] text-center font-semibold text-ink">{page}</span>
+        <span className="min-w-[2rem] text-center font-semibold text-on-surface">{page}</span>
         <button
           className="icon-btn !h-8 !w-8 disabled:opacity-40"
           disabled={page >= pages}
@@ -214,7 +214,7 @@ export default function ApprovalsPage() {
   if (!user) {
     return (
       <AppShell>
-        <div className="py-16 text-center text-sm text-ink-soft">Loading...</div>
+        <div className="py-16 text-center text-sm text-on-surface-variant">Loading...</div>
       </AppShell>
     );
   }
@@ -224,9 +224,9 @@ export default function ApprovalsPage() {
       <AppShell>
         <PageHeader title="Approvals" subtitle="Decide on requests waiting for you" />
         <div className="card flex flex-col items-center gap-2 px-4 py-12 text-center">
-          <Icon name="lock" className="text-[32px] text-ink-faint" />
-          <div className="font-semibold text-ink">No approval permission</div>
-          <div className="text-sm text-ink-soft">
+          <Icon name="lock" className="text-[32px] text-outline" />
+          <div className="font-semibold text-on-surface">No approval permission</div>
+          <div className="text-sm text-on-surface-variant">
             Your account cannot approve requests. Contact your administrator if this is a mistake.
           </div>
         </div>
@@ -252,7 +252,7 @@ export default function ApprovalsPage() {
         }
       />
 
-      <div className="mb-4 flex gap-1 border-b border-surface-border">
+      <div className="mb-4 flex gap-1 border-b border-surface-variant">
         <button
           onClick={() => {
             setTab("pending");
@@ -261,7 +261,7 @@ export default function ApprovalsPage() {
           className={`px-4 py-2 text-sm font-semibold ${
             tab === "pending"
               ? "border-b-2 border-primary text-primary"
-              : "text-ink-soft hover:text-ink"
+              : "text-on-surface-variant hover:text-on-surface"
           }`}
         >
           Pending ({queue.length})
@@ -274,7 +274,7 @@ export default function ApprovalsPage() {
           className={`px-4 py-2 text-sm font-semibold ${
             tab === "history"
               ? "border-b-2 border-primary text-primary"
-              : "text-ink-soft hover:text-ink"
+              : "text-on-surface-variant hover:text-on-surface"
           }`}
         >
           Approval History{histLoaded ? ` (${history.length})` : ""}
@@ -285,7 +285,7 @@ export default function ApprovalsPage() {
         <>
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <div className="relative min-w-[220px] flex-1">
-              <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-faint">
+              <span className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-outline">
                 <Icon name="search" className="text-[20px]" />
               </span>
               <input
@@ -344,7 +344,7 @@ export default function ApprovalsPage() {
 
           <div className="card overflow-hidden">
             <table className="w-full text-sm">
-              <thead className="bg-surface-muted text-left text-xs uppercase text-ink-soft">
+              <thead className="bg-surface-container text-left text-xs uppercase text-on-surface-variant">
                 <tr>
                   <th className="px-4 py-3">Reference / Title</th>
                   <th className="px-4 py-3">Requester</th>
@@ -356,15 +356,15 @@ export default function ApprovalsPage() {
                   <th className="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-surface-border">
+              <tbody className="divide-y divide-surface-variant">
                 {pageQueue.map((item) => {
                   const awaiting = item.status === "CLARIFICATION_REQUESTED";
                   const overdue = item.dueAt ? new Date(item.dueAt).getTime() < Date.now() : false;
                   return (
-                    <tr key={item.id} className="hover:bg-surface-muted">
+                    <tr key={item.id} className="hover:bg-surface-container-low">
                       <td className="px-4 py-3">
                         {awaiting && (
-                          <span className="badge mb-1 bg-gray-200 text-gray-700">
+                          <span className="badge mb-1 bg-surface-container-highest text-gray-700">
                             Awaiting reply
                           </span>
                         )}
@@ -374,23 +374,23 @@ export default function ApprovalsPage() {
                         >
                           {item.tracking}
                         </Link>
-                        <span className="block truncate text-xs text-ink-soft">
+                        <span className="block truncate text-xs text-on-surface-variant">
                           {item.title || "—"}
                         </span>
                       </td>
                       <td className="px-4 py-3">{item.requester}</td>
-                      <td className="px-4 py-3 text-ink-soft">
+                      <td className="px-4 py-3 text-on-surface-variant">
                         {item.department?.name ?? "—"}
                       </td>
-                      <td className="px-4 py-3 text-ink-soft">
+                      <td className="px-4 py-3 text-on-surface-variant">
                         {item.type}
                         {item.totalValue > 0 && (
-                          <span className="block text-[11px] text-ink-faint">
+                          <span className="block text-[11px] text-outline">
                             est. {item.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-ink-soft">
+                      <td className="px-4 py-3 text-on-surface-variant">
                         {new Date(item.submittedAt).toLocaleDateString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -415,16 +415,16 @@ export default function ApprovalsPage() {
                           title={item.awaiting ? `${item.stepName ?? "Step"} — ${item.awaiting}` : (item.stepName ?? undefined)}
                         />
                         {item.stepName && (
-                          <span className="block text-[11px] text-ink-faint">{item.stepName}</span>
+                          <span className="block text-[11px] text-outline">{item.stepName}</span>
                         )}
                         {item.progress && (
-                          <span className="block text-[11px] font-medium text-ink-soft">
+                          <span className="block text-[11px] font-medium text-on-surface-variant">
                             {item.progress.approved} of {item.progress.total} approvals
                           </span>
                         )}
                         {item.dueAt && (
                           <span
-                            className={`block text-[11px] ${overdue ? "font-semibold text-red-600" : "text-ink-faint"}`}
+                            className={`block text-[11px] ${overdue ? "font-semibold text-red-600" : "text-outline"}`}
                           >
                             {overdue ? "Overdue" : "Due"}{" "}
                             {new Date(item.dueAt).toLocaleDateString("en-US", {
@@ -438,7 +438,7 @@ export default function ApprovalsPage() {
                         {item.canDecide && !awaiting ? (
                           <Link
                             href={`/requests/${item.id}`}
-                            className="inline-block rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-blue-50"
+                            className="inline-block rounded border border-primary px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-container-low"
                           >
                             Review
                           </Link>
@@ -457,7 +457,7 @@ export default function ApprovalsPage() {
                             </Link>
                             {!item.canDecide && !awaiting && (
                               <span
-                                className="mt-1 block text-[11px] text-ink-faint"
+                                className="mt-1 block text-[11px] text-outline"
                                 title={item.decideReason ?? undefined}
                               >
                                 view only
@@ -472,12 +472,12 @@ export default function ApprovalsPage() {
                 {pageQueue.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-4 py-10 text-center">
-                      <Icon name="inbox" className="text-[28px] text-ink-faint" />
-                      <div className="mt-1 text-sm font-medium text-ink">
+                      <Icon name="inbox" className="text-[28px] text-outline" />
+                      <div className="mt-1 text-sm font-medium text-on-surface">
                         {loading ? "Loading queue..." : "Your queue is clear"}
                       </div>
                       {!loading && (
-                        <div className="text-xs text-ink-soft">
+                        <div className="text-xs text-on-surface-variant">
                           Nothing is waiting for your decision right now.
                         </div>
                       )}
@@ -494,7 +494,7 @@ export default function ApprovalsPage() {
       {tab === "history" && (
         <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-surface-muted text-left text-xs uppercase text-ink-soft">
+            <thead className="bg-surface-container text-left text-xs uppercase text-on-surface-variant">
               <tr>
                 <th className="px-4 py-3">Reference / Title</th>
                 <th className="px-4 py-3">Requester</th>
@@ -505,14 +505,14 @@ export default function ApprovalsPage() {
                 <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-border">
+            <tbody className="divide-y divide-surface-variant">
               {pageHistory.map((h) => (
-                <tr key={h.id} className="hover:bg-surface-muted">
+                <tr key={h.id} className="hover:bg-surface-container-low">
                   <td className="px-4 py-3">
                     <Link href={`/requests/${h.request.id}`} className="block font-medium text-primary">
                       {h.request.tracking}
                     </Link>
-                    <span className="block truncate text-xs text-ink-soft">
+                    <span className="block truncate text-xs text-on-surface-variant">
                       {h.request.title || h.request.form}
                     </span>
                   </td>
@@ -520,11 +520,11 @@ export default function ApprovalsPage() {
                   <td className="px-4 py-3">
                     <StatusBadge status={h.decision} />
                   </td>
-                  <td className="px-4 py-3 text-ink-soft">{h.stepName}</td>
-                  <td className="max-w-[240px] truncate px-4 py-3 text-ink-soft">
+                  <td className="px-4 py-3 text-on-surface-variant">{h.stepName}</td>
+                  <td className="max-w-[240px] truncate px-4 py-3 text-on-surface-variant">
                     {h.comment || "—"}
                   </td>
-                  <td className="px-4 py-3 text-ink-soft">
+                  <td className="px-4 py-3 text-on-surface-variant">
                     {h.decidedAt
                       ? new Date(h.decidedAt).toLocaleDateString("en-US", {
                           month: "short",
@@ -546,12 +546,12 @@ export default function ApprovalsPage() {
               {pageHistory.length === 0 && (
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center">
-                    <Icon name="history" className="text-[28px] text-ink-faint" />
-                    <div className="mt-1 text-sm font-medium text-ink">
+                    <Icon name="history" className="text-[28px] text-outline" />
+                    <div className="mt-1 text-sm font-medium text-on-surface">
                       {!histLoaded ? "Loading history..." : "No decisions yet"}
                     </div>
                     {histLoaded && (
-                      <div className="text-xs text-ink-soft">
+                      <div className="text-xs text-on-surface-variant">
                         Requests you approve or reject will appear here.
                       </div>
                     )}

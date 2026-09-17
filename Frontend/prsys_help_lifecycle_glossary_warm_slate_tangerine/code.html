@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Breadcrumbs & Meta Overline -->
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-space-sm pb-space-md">
+<div class="flex items-center gap-space-xs font-label-md text-label-md text-outline tracking-wider">
+<span class="hover:text-primary transition-colors cursor-pointer">HELP &amp; GUIDES</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-primary font-semibold">SOP &amp; LIFECYCLE GLOSSARY</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="text-on-surface-variant font-medium">PRSYS-KB-904</span>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto">
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface-variant font-medium">REV 4.8 • Q2 EDITION</span>
+<button class="flex items-center gap-1 font-label-md text-label-md px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface transition-all shadow-sm">
+<span class="material-symbols-outlined text-[16px]">file_download</span>
+<span>Download PDF SOP</span>
+</button>
+</div>
+</div>
+<!-- Page Intro Banner (Asymmetric Bento Header) -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-lowest p-space-lg md:p-space-xl shadow-sm mb-space-lg">
+<div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-gradient-to-br from-primary/10 via-secondary-container/10 to-transparent blur-2xl pointer-events-none"></div>
+<div class="relative z-10 max-w-4xl">
+<div class="inline-flex items-center gap-space-xs px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-sm text-label-sm font-bold uppercase tracking-wider mb-space-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+        Procurement Knowledge Architecture
+      </div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold mb-space-xs">
+        Procurement Knowledge Hub &amp; Requisition Lifecycle Guide
+      </h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed max-w-3xl">
+        Standard Operating Procedures, delegation governances, and formal state definitions across the 9 requisition lifecycle milestones. Standardized for Egypt &amp; MENA industrial operations.
+      </p>
+<!-- Search Hero Input -->
+<div class="mt-space-lg relative max-w-3xl">
+<div class="relative flex items-center shadow-md rounded-xl bg-surface-container-low focus-within:bg-surface-container-lowest transition-all">
+<span class="material-symbols-outlined absolute left-4 text-primary text-[22px]">search</span>
+<input class="w-full h-12 pl-12 pr-28 rounded-xl bg-transparent text-on-surface placeholder:text-outline font-body-md text-body-md focus:outline-none" id="kbSearchInput" placeholder="Search SOPs, policy guidelines, approval rules, or status codes... (e.g., VAT rules, approval threshold, delegation)" type="text"/>
+<div class="absolute right-3 flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm px-2 py-1 rounded bg-surface-container-high text-on-surface-variant uppercase font-semibold">Ctrl+K</span>
+<button class="w-8 h-8 rounded-lg bg-primary hover:bg-primary-container text-on-primary flex items-center justify-center transition-all">
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Quick Tags -->
+<div class="flex flex-wrap items-center gap-2 mt-space-sm">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold mr-1">Frequent queries:</span>
+<button class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors cursor-pointer" onclick="filterStatus('PO_REGISTERED')">#Status-PO_REGISTERED</button>
+<button class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors cursor-pointer" onclick="filterStatus('PENDING_APPROVAL')">#SLA-Escalation</button>
+<button class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors cursor-pointer">#14%VAT-Exemption</button>
+<button class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors cursor-pointer">#Capex-Above-100k</button>
+<button class="font-label-sm text-label-sm px-2.5 py-1 rounded-full bg-secondary-fixed-dim text-on-secondary-fixed font-semibold hover:bg-secondary-fixed transition-colors cursor-pointer">#Emergency-Halt-Bypass</button>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 1: The 9 Requisition States Visual Architecture & Glossary -->
+<section class="flex flex-col gap-space-md mb-space-xl">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-sm">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary font-bold">01 / FINITE-STATE MACHINE</span>
+<span class="h-1.5 w-12 rounded-full bg-primary-container/40"></span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight mt-1">
+          The 9 Requisition States Visual Architecture
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+          Deterministic transactional states governing requisition flow inside PRSYS. Transitions are logged to the immutable audit ledger with timestamps, actor IDs, and hash integrity.
+        </p>
+</div>
+<!-- Quick Status Filter Pills -->
+<div class="flex items-center gap-1.5 p-1 rounded-lg bg-surface-container-high self-start md:self-auto overflow-x-auto">
+<button class="px-3 py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold shadow-sm transition-all" id="btn-all" onclick="showAllStates()">All (9)</button>
+<button class="px-3 py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" id="btn-pre" onclick="filterStateCategory('pre')">Authoring (3)</button>
+<button class="px-3 py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" id="btn-active" onclick="filterStateCategory('active')">Procurement (3)</button>
+<button class="px-3 py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" id="btn-terminal" onclick="filterStateCategory('terminal')">Terminal (3)</button>
+</div>
+</div>
+<!-- Interactive Pipeline Visualizer (SVG Process Strip) -->
+<div class="w-full rounded-xl bg-surface-container-lowest p-space-md shadow-sm overflow-x-auto">
+<div class="min-w-[880px] flex items-center justify-between gap-2 px-space-sm py-2">
+<!-- 1: Draft -->
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('DRAFT')">
+<span class="w-8 h-8 rounded-full bg-surface-container-high text-on-surface-variant flex items-center justify-center font-label-sm text-label-sm font-bold group-hover:bg-primary group-hover:text-on-primary transition-all">01</span>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">DRAFT</span>
+<span class="font-label-sm text-[9px] text-outline">Authoring</span>
+</div>
+<div class="h-0.5 flex-1 bg-surface-container-high"></div>
+<!-- 2: Pending Approval -->
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('PENDING_APPROVAL')">
+<span class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-sm text-label-sm font-bold group-hover:scale-110 transition-transform">02</span>
+<span class="font-label-sm text-label-sm font-semibold text-primary">PENDING</span>
+<span class="font-label-sm text-[9px] text-primary">Sign-off</span>
+</div>
+<div class="h-0.5 flex-1 bg-primary/30"></div>
+<!-- 3: Clarification / Loop -->
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('CLARIFICATION_REQUESTED')">
+<span class="w-8 h-8 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold group-hover:bg-secondary-container transition-colors">03</span>
+<span class="font-label-sm text-label-sm font-semibold text-secondary">CLARIFY</span>
+<span class="font-label-sm text-[9px] text-outline">Hold Loop</span>
+</div>
+<div class="h-0.5 flex-1 bg-surface-container-high"></div>
+<!-- 4: Approved -->
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('APPROVED')">
+<span class="w-8 h-8 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-label-sm text-label-sm font-bold">04</span>
+<span class="font-label-sm text-label-sm font-semibold text-tertiary">APPROVED</span>
+<span class="font-label-sm text-[9px] text-tertiary">Budget OK</span>
+</div>
+<div class="h-0.5 flex-1 bg-tertiary/30"></div>
+<!-- 5: PO Registered -->
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('PO_REGISTERED')">
+<span class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-sm text-label-sm font-bold shadow-md">05</span>
+<span class="font-label-sm text-label-sm font-semibold text-primary font-bold">PO_REG</span>
+<span class="font-label-sm text-[9px] text-primary">SAP Synced</span>
+</div>
+<div class="h-0.5 flex-1 bg-primary/30"></div>
+<!-- 6: Fulfilled -->
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('FULFILLED')">
+<span class="w-8 h-8 rounded-full bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold">06</span>
+<span class="font-label-sm text-label-sm font-semibold text-tertiary">FULFILLED</span>
+<span class="font-label-sm text-[9px] text-outline">Dock Recv</span>
+</div>
+<div class="h-0.5 flex-1 bg-tertiary/30"></div>
+<!-- 7: Completed -->
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('COMPLETED')">
+<span class="w-8 h-8 rounded-full bg-inverse-surface text-inverse-on-surface flex items-center justify-center font-label-sm text-label-sm font-bold">07</span>
+<span class="font-label-sm text-label-sm font-semibold text-on-surface">COMPLETED</span>
+<span class="font-label-sm text-[9px] text-outline">Archived</span>
+</div>
+<div class="w-px h-8 bg-surface-dim mx-1"></div>
+<!-- Terminals: Rejected / Cancelled -->
+<div class="flex items-center gap-3">
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('REJECTED')">
+<span class="w-8 h-8 rounded-full bg-error-container text-on-error-container flex items-center justify-center font-label-sm text-label-sm font-bold">08</span>
+<span class="font-label-sm text-label-sm font-semibold text-error">REJECTED</span>
+<span class="font-label-sm text-[9px] text-error">With Cause</span>
+</div>
+<div class="flex flex-col items-center gap-1 text-center group cursor-pointer" onclick="scrollToState('CANCELLED')">
+<span class="w-8 h-8 rounded-full bg-surface-container-high text-outline flex items-center justify-center font-label-sm text-label-sm font-bold">09</span>
+<span class="font-label-sm text-label-sm font-semibold text-outline">CANCELLED</span>
+<span class="font-label-sm text-[9px] text-outline">Pre-PO Void</span>
+</div>
+</div>
+</div>
+</div>
+<!-- 9 STATUS GRID CARDS -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-md" id="statusGrid">
+<!-- 1. DRAFT -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="pre" id="card-DRAFT">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-bold">
+              01 • DRAFT
+            </span>
+<span class="font-label-sm text-label-sm text-outline font-medium">Pre-Commitment</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Initial requester drafting stage. Cart items, catalog references, and vendor quotes are uncommitted. No SLA timer runs, and no budget reservation is locked against department cost centers.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Requester Only</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-primary font-label-md">PENDING_APPROVAL</span>
+</div>
+</div>
+</div>
+<!-- 2. PENDING_APPROVAL -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="pre" id="card-PENDING_APPROVAL">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold">
+              02 • PENDING_APPROVAL
+            </span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">SLA Active (24-48h)</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Queued inside the multi-tier approval matrix awaiting electronic signatures. Cost center funds are provisionally frozen. Approvers receive automated escalation triggers upon SLA expiry.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Authorized Approver(s)</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-secondary font-label-md">APPROVED | REJECTED | CLARIFY</span>
+</div>
+</div>
+</div>
+<!-- 3. CLARIFICATION_REQUESTED -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="pre" id="card-CLARIFICATION_REQUESTED">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">
+              03 • CLARIFICATION_REQUESTED
+            </span>
+<span class="font-label-sm text-label-sm text-secondary font-semibold">SLA Paused</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Temporarily frozen pending requester response. Triggered when technical specifications, vendor quotes, or tax documentation (e.g. 14% VAT certificate) are missing or non-compliant.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Requester or Reviewer</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-primary font-label-md">PENDING_APPROVAL | CANCELLED</span>
+</div>
+</div>
+</div>
+<!-- 4. APPROVED -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="active" id="card-APPROVED">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-tertiary-container text-on-tertiary-container font-bold">
+              04 • APPROVED
+            </span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">Budget Locked</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            All necessary departmental, operational, and executive authorizations successfully recorded. The requisition is handed over to Sourcing/Procurement agents to generate formal vendor purchase orders.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Procurement Officer</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-tertiary font-label-md">PO_REGISTERED</span>
+</div>
+</div>
+</div>
+<!-- 5. PO_REGISTERED -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="active" id="card-PO_REGISTERED">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-bold">
+              05 • PO_REGISTERED
+            </span>
+<span class="font-label-sm text-label-sm text-primary font-semibold">ERP Synced (SAP)</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Formal Purchase Order dispatched to external supplier. Requisition record stamped with external PO # and linked to ERP ledger. Legal procurement obligation established with supplier.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">ERP System / Buyer</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-primary font-label-md">FULFILLED</span>
+</div>
+</div>
+</div>
+<!-- 6. FULFILLED -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="active" id="card-FULFILLED">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-bold">
+              06 • FULFILLED
+            </span>
+<span class="font-label-sm text-label-sm text-tertiary font-semibold">GRN Stamped</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Vendor items delivered to warehouse or services rendered on-site. Verified via Goods Received Note (GRN) or Technical Acceptance Sheet signed by inventory dispatcher or project owner.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Warehouse / Requester</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-tertiary font-label-md">COMPLETED</span>
+</div>
+</div>
+</div>
+<!-- 7. COMPLETED -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="terminal" id="card-COMPLETED">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-inverse-surface text-inverse-on-surface font-bold">
+              07 • COMPLETED
+            </span>
+<span class="font-label-sm text-label-sm text-outline font-semibold">Final Terminal</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Three-way matching (PO vs GRN vs Vendor Tax Invoice) validated by Accounts Payable. Final disbursement released to vendor. Ticket closed and transferred to long-term compliance archive.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Finance &amp; AP System</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-outline font-label-md">NONE (LOCKED)</span>
+</div>
+</div>
+</div>
+<!-- 8. REJECTED -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="terminal" id="card-REJECTED">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-error-container text-on-error-container font-bold">
+              08 • REJECTED
+            </span>
+<span class="font-label-sm text-label-sm text-error font-semibold">Mandatory Remarks</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Turned down by an approver or compliance reviewer. Requires mandatory justification remarks submitted into the audit log. Reserved cost center funds are released back to departmental budget immediately.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Designated Approver</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-outline font-label-md">RE-DRAFT (NEW REQ ID)</span>
+</div>
+</div>
+</div>
+<!-- 9. CANCELLED -->
+<div class="state-card flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all" data-category="terminal" id="card-CANCELLED">
+<div class="flex flex-col">
+<div class="flex items-center justify-between mb-space-sm">
+<span class="font-label-md text-label-md px-2.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-bold">
+              09 • CANCELLED
+            </span>
+<span class="font-label-sm text-label-sm text-outline font-semibold">Pre-PO Termination</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+            Voided voluntarily by requester or super-administrator prior to PO commitment. Allows cancellation if commercial terms dissolved or requirements changed before contractual execution.
+          </p>
+</div>
+<div class="pt-space-sm mt-auto bg-surface-container-low rounded-lg p-3 flex flex-col gap-2">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Actor:</span>
+<span class="text-on-surface font-semibold">Requester or Super Admin</span>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-outline uppercase">Next Transition:</span>
+<span class="font-bold text-outline font-label-md">NONE (TERMINAL)</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: Authority Matrix & Policy FAQ Split Panel -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg mb-space-xl">
+<!-- Left 7 cols: Threshold Matrix Table -->
+<div class="lg:col-span-7 flex flex-col rounded-xl bg-surface-container-lowest p-space-lg shadow-sm">
+<div class="flex items-center justify-between mb-space-md">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary font-bold">02 / DELEGATION OF AUTHORITY</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">
+            Interactive Approval Authority Matrix
+          </h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1">
+            Requisition spending tiers based on corporate financial governance policy (EGP Values).
+          </p>
+</div>
+<span class="font-label-sm text-label-sm px-2.5 py-1 rounded bg-secondary-fixed text-on-secondary-fixed font-bold">DOA-V4.2</span>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left font-body-md text-body-md">
+<thead>
+<tr class="bg-surface-container text-on-surface-variant font-label-md text-label-md uppercase">
+<th class="py-2.5 px-3 rounded-l-lg">Tier Level</th>
+<th class="py-2.5 px-3">Monetary Range (EGP)</th>
+<th class="py-2.5 px-3">Mandatory Sign-Offs</th>
+<th class="py-2.5 px-3 text-right rounded-r-lg">Standard SLA</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-transparent">
+<!-- Tier 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3">
+<span class="font-label-md text-label-md font-bold px-2 py-0.5 rounded bg-tertiary-fixed text-on-tertiary-fixed">Tier 1</span>
+</td>
+<td class="py-3 px-3 font-label-md text-label-md text-on-surface font-semibold">&lt; 10,000 EGP</td>
+<td class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm">
+                Fast-Track: Direct Line Manager only
+              </td>
+<td class="py-3 px-3 text-right font-label-sm text-label-sm text-tertiary font-bold">12 Hours</td>
+</tr>
+<!-- Tier 2 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3">
+<span class="font-label-md text-label-md font-bold px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant">Tier 2</span>
+</td>
+<td class="py-3 px-3 font-label-md text-label-md text-on-surface font-semibold">10,000 – 50,000 EGP</td>
+<td class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm">
+                Line Manager + Department Head
+              </td>
+<td class="py-3 px-3 text-right font-label-sm text-label-sm text-on-surface font-semibold">24 Hours</td>
+</tr>
+<!-- Tier 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3">
+<span class="font-label-md text-label-md font-bold px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed">Tier 3</span>
+</td>
+<td class="py-3 px-3 font-label-md text-label-md text-on-surface font-semibold">50,000 – 150,000 EGP</td>
+<td class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm">
+                Dept Head + Finance Controller + IT/Operations Director
+              </td>
+<td class="py-3 px-3 text-right font-label-sm text-label-sm text-secondary font-bold">48 Hours</td>
+</tr>
+<!-- Tier 4 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3 px-3">
+<span class="font-label-md text-label-md font-bold px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed">Tier 4</span>
+</td>
+<td class="py-3 px-3 font-label-md text-label-md text-primary font-bold">&gt; 150,000 EGP</td>
+<td class="py-3 px-3 text-on-surface-variant font-body-sm text-body-sm">
+                Executive VP (Elena Rostova) + Capex Committee Board
+              </td>
+<td class="py-3 px-3 text-right font-label-sm text-label-sm text-primary font-bold">72 Hours</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Rule Callout Box -->
+<div class="mt-space-md p-space-sm rounded-lg bg-surface-container-low flex items-start gap-space-sm">
+<span class="material-symbols-outlined text-primary text-[20px] shrink-0 mt-0.5">verified_user</span>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-tight">
+<strong class="text-on-surface font-semibold">Splitting Threshold Restriction:</strong> Intentionally subdividing single purchases into multiple requisitions beneath Tier 1 thresholds is flagged automatically by the Compliance Engine and triggers an audit notification to General Internal Control.
+        </p>
+</div>
+</div>
+<!-- Right 5 cols: Policy FAQ Accordion -->
+<div class="lg:col-span-5 flex flex-col justify-between rounded-xl bg-surface-container-lowest p-space-lg shadow-sm">
+<div>
+<div class="flex items-center gap-2 mb-1">
+<span class="font-label-lg text-label-lg text-primary font-bold">03 / COMPLIANCE FAQs</span>
+</div>
+<h3 class="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight mb-space-md">
+          Frequently Asked Questions
+        </h3>
+<!-- Accordions Container -->
+<div class="flex flex-col gap-space-xs" id="faqAccordion">
+<!-- Accordion 1 -->
+<div class="rounded-lg bg-surface-container overflow-hidden">
+<button class="w-full p-space-sm flex items-center justify-between text-left font-headline-sm text-body-md font-semibold text-on-surface hover:bg-surface-container-high transition-colors" onclick="toggleFaq(1)">
+<span>Emergency expedite for halted production?</span>
+<span class="material-symbols-outlined text-outline text-[20px] transition-transform" id="faq-icon-1">expand_more</span>
+</button>
+<div class="px-space-sm pb-space-sm font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-content-1">
+              Mark the requisition priority as <span class="font-semibold text-error font-label-sm uppercase">URGENT - LINE STOP</span> and attach Plant Director approval. This unlocks parallel approvals and routes directly to on-call duty buyers within 45 minutes.
+            </div>
+</div>
+<!-- Accordion 2 -->
+<div class="rounded-lg bg-surface-container overflow-hidden">
+<button class="w-full p-space-sm flex items-center justify-between text-left font-headline-sm text-body-md font-semibold text-on-surface hover:bg-surface-container-high transition-colors" onclick="toggleFaq(2)">
+<span>Required docs for 14% Egyptian VAT clearance?</span>
+<span class="material-symbols-outlined text-outline text-[20px] transition-transform" id="faq-icon-2">expand_more</span>
+</button>
+<div class="px-space-sm pb-space-sm font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-content-2">
+              A valid Egyptian Electronic Tax Invoice (e-Invoice registered via ETA portal with UUID) accompanied by the vendor's Tax Card (البطاقة الضريبية) and Commercial Registration (السجل التجاري) updated within 12 months.
+            </div>
+</div>
+<!-- Accordion 3 -->
+<div class="rounded-lg bg-surface-container overflow-hidden">
+<button class="w-full p-space-sm flex items-center justify-between text-left font-headline-sm text-body-md font-semibold text-on-surface hover:bg-surface-container-high transition-colors" onclick="toggleFaq(3)">
+<span>How do I delegate approval during annual leave?</span>
+<span class="material-symbols-outlined text-outline text-[20px] transition-transform" id="faq-icon-3">expand_more</span>
+</button>
+<div class="px-space-sm pb-space-sm font-body-sm text-body-sm text-on-surface-variant hidden" id="faq-content-3">
+              Navigate to <strong class="text-on-surface">Settings &gt; Approvals Delegation</strong>. Designate an active peer within your departmental group and specify the exact calendar date range. Active approvals auto-reroute while maintaining complete audit attribution.
+            </div>
+</div>
+</div>
+</div>
+<!-- Quick Guidance Link -->
+<div class="mt-space-md pt-space-sm flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-outline">Need more details on Tax Law 67/2016?</span>
+<a class="font-label-sm text-label-sm text-primary font-bold hover:underline flex items-center gap-1" href="#">
+<span>Read Full Legal Memo</span>
+<span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</section>
+<!-- SECTION 3: Enterprise Procurement Support & Regional Hotline Desks -->
+<section class="flex flex-col gap-space-md mb-space-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg text-primary font-bold">04 / OPERATIONS HOTLINE</span>
+<span class="h-1.5 w-12 rounded-full bg-primary-container/40"></span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight mt-1">
+          Enterprise Procurement Support &amp; Hotline Desk
+        </h2>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          Direct lines for field buyers, facility managers, logistics coordinators, and ERP technical support.
+        </p>
+</div>
+<!-- Direct Ticket Modal Trigger -->
+<button class="flex items-center gap-space-xs px-space-md py-2.5 rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-md self-start md:self-auto" onclick="openTicketModal()">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Raise Support Ticket</span>
+</button>
+</div>
+<!-- 3 Regional Desk Cards with Rich Visual Imagery -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<!-- Card 1: Cairo HQ Desk -->
+<div class="rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden relative">
+<div class="flex flex-col">
+<div class="w-full h-32 rounded-lg mb-space-sm overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A modern corporate procurement operations control center in New Cairo with dual-screen monitors displaying logistics data and financial metrics, warm ambient slate interior lighting with subtle orange accent desk lamps." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKBeZNjPDZbezlYOxyWi5uEOCnWg_Gu7MVgPIzGI6s_Z5_0OCiFT7GKgOJRB4HPP166OCqn568n02YihUZs0rPwgbgB-sbAn5CIesRG8hLZWUKkS1Et7RFSINHKqMv4_HSAGzb5o_g8Lh3wd4IFc1kXM9m9_6DU-FgK_BVB3WrwsnII5jEn0M2Dk0PwT5oD9gSFnL6--PyRDm1xVTIwezn_ajY3zHUGPgPwoblL4Zo7HmwML8WhXiphw"/>
+<span class="absolute top-2 right-2 px-2 py-0.5 rounded bg-surface/90 backdrop-blur font-label-sm text-label-sm text-primary font-bold">
+              HQ COMMAND
+            </span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Cairo HQ Procurement Desk</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 mb-space-md">
+            Responsible for commercial contract negotiations, major vendor onboarding, and capex board approval workflows.
+          </p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-1.5 font-label-sm text-label-sm">
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Internal Extension:</span>
+<span class="text-primary font-bold font-label-md">Ext 4410</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Direct Phone:</span>
+<span class="text-on-surface font-medium">+20 (2) 2798-4410</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Desk Lead:</span>
+<span class="text-on-surface font-medium">Tamer El-Masry</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Alexandria Logistics Dispatch -->
+<div class="rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden relative">
+<div class="flex flex-col">
+<div class="w-full h-32 rounded-lg mb-space-sm overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="An industrial high-ceiling logistics warehouse loading dock in Alexandria port with heavy freight crates, barcode scanning technicians, and a clean slate floor with amber safety markings." src="https://lh3.googleusercontent.com/aida-public/AB6AXuACa2V6wmnusPjv2EMNQV3p7XTVAXc0LwxIaz2rOCm5tjNbDSSskZOU3tWCWapAY5mUgUgkiW34Q6b16yjPJE_qEBTDiVugW4QXQhWTM1ZyU_ljLNAAZ39higjsfYmSLOSQz4Ta4bU8_YE9Xx0rYBSfQhNNjIw97Q-5LNANDCWY16uijWH7dkiivn3Vu69gO4Hv7MfincclIpe2WLD9crTmGmAPnTOq6TZDDXo6vRBd0Tc1Lyf401LcKw"/>
+<span class="absolute top-2 right-2 px-2 py-0.5 rounded bg-surface/90 backdrop-blur font-label-sm text-label-sm text-tertiary font-bold">
+              PORT &amp; YARD
+            </span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Alexandria Logistics Dispatch</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 mb-space-md">
+            Handles physical customs intake, maritime freight clearance, staging yards, and site delivery GRN coordination.
+          </p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-1.5 font-label-sm text-label-sm">
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Internal Extension:</span>
+<span class="text-primary font-bold font-label-md">Ext 4420</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Direct Phone:</span>
+<span class="text-on-surface font-medium">+20 (3) 4891-4420</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Dispatch Lead:</span>
+<span class="text-on-surface font-medium">Kareem Helmy</span>
+</div>
+</div>
+</div>
+<!-- Card 3: IT Procurement & ERP Helpdesk -->
+<div class="rounded-xl bg-surface-container-lowest p-space-md shadow-sm hover:shadow-md transition-all flex flex-col justify-between overflow-hidden relative">
+<div class="flex flex-col">
+<div class="w-full h-32 rounded-lg mb-space-sm overflow-hidden relative">
+<img class="w-full h-full object-cover" data-alt="A tech-forward IT operations engineering lab with server racks visible behind frosted glass, warm wooden worktables, and sleek laptop workstations troubleshooting enterprise ERP workflows." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpeRzqFtZ7NfC9dF3JLLGY7vSZF8uA1ovPO30l5ks9skeZE11M7oh-gBPD-rrWxQu8wJjjDNVVC_-no1jaNjUK_F_TZfijvup86zx0rOm9yk07x5351hOvkNvhru8B7IlG8fI0FCb_plzRLaFfTTzy-roiZY8QIkzCImEAgOEEd92EAvNmUjYtvUsKMwNVKdNhsRMS_b1oqrQqIKbbAzrptWCGarlSCeGT3Z425XJaGy_fRWjO03bodA"/>
+<span class="absolute top-2 right-2 px-2 py-0.5 rounded bg-surface/90 backdrop-blur font-label-sm text-label-sm text-secondary font-bold">
+              SYS-INTEGRATION
+            </span>
+</div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">ERP Integration &amp; Tech Helpdesk</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-1 mb-space-md">
+            Fixes SAP synchronization deadlocks, budget cost center mapping errors, and PRSYS API connector issues.
+          </p>
+</div>
+<div class="bg-surface-container-low rounded-lg p-3 flex flex-col gap-1.5 font-label-sm text-label-sm">
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Internal Extension:</span>
+<span class="text-primary font-bold font-label-md">Ext 4499</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Emergency Email:</span>
+<span class="text-on-surface font-medium">prsys-ops@corp.internal</span>
+</div>
+<div class="flex items-center justify-between">
+<span class="text-outline uppercase">Avg Resolution:</span>
+<span class="text-tertiary font-bold">18 Minutes</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Ticket Creation Slide-over/Modal (Hidden by default) -->
+<div class="fixed inset-0 z-50 bg-inverse-surface/40 backdrop-blur-sm hidden flex items-center justify-center p-4" id="supportModal">
+<div class="w-full max-w-lg rounded-xl bg-surface-container-lowest p-space-lg shadow-xl relative animate-in fade-in zoom-in duration-200">
+<div class="flex items-center justify-between pb-space-sm mb-space-md">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined text-[18px]">support_agent</span>
+</div>
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Submit Procurement Inquiry</span>
+</div>
+<button class="p-1 rounded-lg hover:bg-surface-container text-outline hover:text-on-surface transition-colors" onclick="closeTicketModal()">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<form class="flex flex-col gap-space-sm" onsubmit="handleTicketSubmit(event)">
+<div>
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold block mb-1">Target Requisition ID (Optional)</label>
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="e.g. PR-2024-8849" type="text"/>
+</div>
+<div>
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold block mb-1">Inquiry Category</label>
+<select class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm focus:outline-none">
+<option>SLA Escalation / Overdue Approver</option>
+<option>14% Egyptian VAT Exemption Review</option>
+<option>SAP ERP Sync Deadlock</option>
+<option>Vendor Bank Account Update</option>
+<option>Goods Receipt (GRN) Discrepancy</option>
+</select>
+</div>
+<div>
+<label class="font-label-sm text-label-sm text-outline uppercase font-semibold block mb-1">Problem Description</label>
+<textarea class="w-full p-3 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:ring-2 focus:ring-primary/30" placeholder="Provide context or specify the current blocker..." rows="3"></textarea>
+</div>
+<div class="flex items-center justify-end gap-space-sm pt-space-sm mt-2">
+<button class="px-4 py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md" onclick="closeTicketModal()" type="button">
+            Cancel
+          </button>
+<button class="px-4 py-2 rounded-lg bg-primary text-on-primary hover:bg-primary-container font-headline-sm text-body-md font-semibold transition-all" type="submit">
+            Dispatch to Desk
+          </button>
+</div>
+</form>
+</div>
+</div>
+<!-- Client-side Interactive Scripts -->
+<script>
+    function toggleFaq(id) {
+      const content = document.getElementById(`faq-content-${id}`);
+      const icon = document.getElementById(`faq-icon-${id}`);
+      if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.innerText = 'expand_less';
+        icon.classList.add('text-primary');
+      } else {
+        content.classList.add('hidden');
+        icon.innerText = 'expand_more';
+        icon.classList.remove('text-primary');
+      }
+    }
+
+    function scrollToState(stateKey) {
+      const el = document.getElementById(`card-${stateKey}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-2', 'ring-primary', 'shadow-lg');
+        setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-primary', 'shadow-lg');
+        }, 1800);
+      }
+    }
+
+    function filterStateCategory(cat) {
+      const cards = document.querySelectorAll('.state-card');
+      cards.forEach(card => {
+        if (card.getAttribute('data-category') === cat) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+      // reset styles on nav pills
+      ['btn-all', 'btn-pre', 'btn-active', 'btn-terminal'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        btn.className = 'px-3 py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all';
+      });
+      const activeBtn = document.getElementById(`btn-${cat}`);
+      if (activeBtn) {
+        activeBtn.className = 'px-3 py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold shadow-sm transition-all';
+      }
+    }
+
+    function showAllStates() {
+      const cards = document.querySelectorAll('.state-card');
+      cards.forEach(card => card.classList.remove('hidden'));
+      ['btn-all', 'btn-pre', 'btn-active', 'btn-terminal'].forEach(btnId => {
+        const btn = document.getElementById(btnId);
+        btn.className = 'px-3 py-1 rounded-lg text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all';
+      });
+      document.getElementById('btn-all').className = 'px-3 py-1 rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md font-semibold shadow-sm transition-all';
+    }
+
+    function filterStatus(code) {
+      showAllStates();
+      scrollToState(code);
+      const searchInput = document.getElementById('kbSearchInput');
+      if (searchInput) {
+        searchInput.value = code;
+      }
+    }
+
+    function openTicketModal() {
+      document.getElementById('supportModal').classList.remove('hidden');
+    }
+
+    function closeTicketModal() {
+      document.getElementById('supportModal').classList.add('hidden');
+    }
+
+    function handleTicketSubmit(e) {
+      e.preventDefault();
+      alert('Inquiry successfully queued with Cairo HQ Dispatch. Ticket ID: #TICK-9082');
+      closeTicketModal();
+    }
+  </script>
+</div></main></div></body></html>

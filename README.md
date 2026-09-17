@@ -37,6 +37,16 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ---
 
+## Frontend design system
+
+The UI follows the **"Warm Slate & Tangerine"** design system (Hanken Grotesk + JetBrains Mono,
+tangerine `#a33900` accent on warm stone/slate neutrals). Full token spec:
+`Frontend/warm_slate_tangerine/DESIGN.md`. Stitch screen mockups live in the other
+`Frontend/prsys_*` folders; Tailwind tokens are defined in `tailwind.config.ts` with the same
+names as the mockups so ports stay 1:1.
+
+---
+
 ## PRSYS — Administration (Users / Departments / Groups)
 
 Full professional CRUD for the **Users & Permissions** admin section.

@@ -199,8 +199,8 @@ function Segmented({
             size === "xs" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-1 text-xs"
           } ${
             value === o.value
-              ? "border-primary bg-blue-50 text-primary-dark"
-              : "border-surface-border bg-white text-ink-soft hover:bg-surface-muted"
+              ? "border-primary bg-surface-container-low text-primary-dark"
+              : "border-surface-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low"
           }`}
         >
           {o.label}
@@ -216,7 +216,7 @@ function Field({ label, children, hint }: { label: string; children: React.React
       <div className="label !mb-1 flex items-center gap-1.5">
         {label}
         {hint && (
-          <span className="font-normal normal-case tracking-normal text-ink-faint" title={hint}>
+          <span className="font-normal normal-case tracking-normal text-outline" title={hint}>
             <Icon name="help" className="text-[13px]" />
           </span>
         )}
@@ -314,8 +314,8 @@ function AddMenu({
 }) {
   if (!open) return null;
   return (
-    <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-lg border border-surface-border bg-white p-1 shadow-pop">
-      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-ink-faint">Add a tool</div>
+    <div className="absolute right-0 top-full z-30 mt-1 w-60 rounded-lg border border-surface-variant bg-surface-container-lowest p-1 shadow-pop">
+      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-outline">Add a tool</div>
       {tools.map((id) => {
         const t = toolMeta(id);
         return (
@@ -326,7 +326,7 @@ function AddMenu({
               onPick(id);
               onClose();
             }}
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-ink hover:bg-surface-muted"
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-on-surface hover:bg-surface-container-low"
           >
             <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border ${t.accent}`}>
               <Icon name={t.icon} className="text-[14px]" />
@@ -335,13 +335,13 @@ function AddMenu({
           </button>
         );
       })}
-      <div className="border-t border-surface-border/60 px-2 py-1 text-[10px] text-ink-faint">
+      <div className="border-t border-surface-variant/60 px-2 py-1 text-[10px] text-outline">
         or drag from the tools panel
       </div>
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-1 top-1 rounded p-1 text-ink-faint hover:text-ink"
+        className="absolute right-1 top-1 rounded p-1 text-outline hover:text-on-surface"
         title="Close"
       >
         <Icon name="close" className="text-[14px]" />
@@ -424,7 +424,7 @@ function Port({
   const kids = slotChildren(ctx.nodes, parentKey, slot);
   const toneCls =
     tone === "approve"
-      ? "text-green-700 border-green-200 bg-green-50/50"
+      ? "text-tertiary border-green-200 bg-green-50/50"
       : tone === "reject"
         ? "text-rose-700 border-rose-200 bg-rose-50/50"
         : tone === "submit"
@@ -437,13 +437,13 @@ function Port({
         <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider">
           <Icon name={icon} className="text-[14px]" />
           {title}
-          {kids.length > 0 && <span className="rounded-full bg-white/70 px-1.5 text-[10px]">{kids.length}</span>}
+          {kids.length > 0 && <span className="rounded-full bg-surface-container-lowest/70 px-1.5 text-[10px]">{kids.length}</span>}
         </span>
         {!ctx.ro && (
           <button
             type="button"
             onClick={() => setMenu((m) => !m)}
-            className="rounded px-1 text-[11px] underline decoration-dotted hover:bg-white/60"
+            className="rounded px-1 text-[11px] underline decoration-dotted hover:bg-surface-container-lowest/60"
           >
             add
           </button>
@@ -463,8 +463,8 @@ function Port({
       <div
         {...zoneProps(ctx, `${zoneId}@end`, () => ctx.dropInSlot(parentKey, slot, null))}
         className={`mt-1 flex min-h-[30px] items-center justify-center rounded border border-dashed px-2 text-[11px] ${
-          ctx.hover === `${zoneId}@end` ? "border-primary bg-white" : "border-black/10"
-        } ${kids.length === 0 ? "text-ink-faint" : "text-transparent"}`}
+          ctx.hover === `${zoneId}@end` ? "border-primary bg-surface-container-lowest" : "border-black/10"
+        } ${kids.length === 0 ? "text-outline" : "text-transparent"}`}
       >
         {kids.length === 0 ? (ctx.drag ? "drop here" : "empty — drag a tool here or press add") : "·"}
       </div>
@@ -501,7 +501,7 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
     <div
       id={`node-${n.key}`}
       onClick={() => ctx.select(n.key)}
-      className={`${nested ? "" : "card"} ${nested ? "mb-1 rounded-lg border bg-white" : "mb-2 overflow-hidden"} ${
+      className={`${nested ? "" : "card"} ${nested ? "mb-1 rounded-lg border bg-surface-container-lowest" : "mb-2 overflow-hidden"} ${
         ctx.selected === n.key ? "ring-2 ring-primary/30" : ""
       } ${issues.length > 0 ? "border-amber-300" : ""} ${!n.enabled && !isStart ? "opacity-70" : ""}`}
     >
@@ -518,14 +518,14 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
         >
           <Icon name={meta.icon} className="text-[14px]" />
         </button>
-        <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-wider text-ink-faint sm:block">
+        <span className="hidden shrink-0 text-[10px] font-bold uppercase tracking-wider text-outline sm:block">
           {isStart ? "start" : isApproval ? "decision" : meta.label}
         </span>
         {isStart ? (
-          <span className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-ink">Requester submits</span>
+          <span className="min-w-0 flex-1 truncate px-1 text-sm font-semibold text-on-surface">Requester submits</span>
         ) : (
           <input
-            className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-ink outline-none hover:border-surface-border focus:border-primary focus:bg-white"
+            className="min-w-0 flex-1 rounded border border-transparent bg-transparent px-1 py-0.5 text-sm font-semibold text-on-surface outline-none hover:border-surface-variant focus:border-primary focus:bg-surface-container-lowest"
             value={n.name}
             disabled={ctx.ro}
             placeholder={isApproval ? "unnamed — click to name it" : "label (optional)"}
@@ -534,7 +534,7 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
         )}
 
         {!isApproval && !isStart && (
-          <span className="hidden shrink-0 items-center gap-1 text-[10px] text-ink-faint md:flex">
+          <span className="hidden shrink-0 items-center gap-1 text-[10px] text-outline md:flex">
             <Icon name={whenMeta(n.when).icon} className="text-[13px]" />
             {whenText(n, ctx.nodes)}
           </span>
@@ -545,10 +545,10 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
             {fmtMins(sla.targets?.find((t) => t.priority === n.priority)?.resolveMins ?? sla.targets?.[0]?.resolveMins)}
           </span>
         )}
-        {isStart && <span className="shrink-0 text-[10px] text-ink-faint">no settings — it is just the hook</span>}
-        {!n.enabled && !isStart && <span className="shrink-0 rounded bg-gray-100 px-1.5 text-[10px] text-ink-faint">paused</span>}
+        {isStart && <span className="shrink-0 text-[10px] text-outline">no settings — it is just the hook</span>}
+        {!n.enabled && !isStart && <span className="shrink-0 rounded bg-surface-container px-1.5 text-[10px] text-outline">paused</span>}
         {issues.length > 0 && (
-          <span className="shrink-0 rounded bg-amber-100 px-1.5 text-[10px] font-semibold text-amber-800" title={issues[0]}>
+          <span className="shrink-0 rounded bg-amber-100 px-1.5 text-[10px] font-semibold text-on-secondary-fixed-variant" title={issues[0]}>
             {issues.length}
           </span>
         )}
@@ -577,9 +577,9 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
       </div>
 
       {n.open && (
-        <div className="space-y-3 border-t border-surface-border/70 px-3 py-2.5">
+        <div className="space-y-3 border-t border-surface-variant/70 px-3 py-2.5">
           {isStart ? (
-            <p className="text-[11px] leading-relaxed text-ink-soft">
+            <p className="text-[11px] leading-relaxed text-on-surface-variant">
               Everything you drop in the port below runs the moment the request is submitted — before anybody
               approves anything. Delete this node if you do not need a submit hook.
             </p>
@@ -598,31 +598,31 @@ function NodeCard({ n, ctx, depth = 0 }: { n: FlowNode; ctx: NodeCtx; depth?: nu
           {isStart && <Port title="Then run" tone="submit" icon="bolt" parentKey={n.key} slot="submit" ctx={ctx} depth={depth} />}
 
           {n.condField !== "none" && !n.open && (
-            <div className="px-3 pb-2 text-[10px] text-ink-faint">
+            <div className="px-3 pb-2 text-[10px] text-outline">
               only if {n.condField} {n.condOp} {n.condValue}
             </div>
           )}
 
           {!ctx.ro && (
-            <div className="flex flex-wrap items-center gap-3 border-t border-surface-border/60 pt-2 text-[11px]">
-              <button type="button" onClick={() => ctx.duplicate(n.key)} className="text-ink-soft hover:text-primary">
+            <div className="flex flex-wrap items-center gap-3 border-t border-surface-variant/60 pt-2 text-[11px]">
+              <button type="button" onClick={() => ctx.duplicate(n.key)} className="text-on-surface-variant hover:text-primary">
                 Duplicate
               </button>
               {attached && (
-                <button type="button" onClick={() => ctx.detach(n.key)} className="text-ink-soft hover:text-primary">
+                <button type="button" onClick={() => ctx.detach(n.key)} className="text-on-surface-variant hover:text-primary">
                   Move to the main line
                 </button>
               )}
               {!isStart && !isApproval && (
-                <button type="button" onClick={() => p({ enabled: !n.enabled })} className="text-ink-soft hover:text-primary">
+                <button type="button" onClick={() => p({ enabled: !n.enabled })} className="text-on-surface-variant hover:text-primary">
                   {n.enabled ? "Pause" : "Resume"}
                 </button>
               )}
-              <button type="button" onClick={() => ctx.remove(n.key)} className="text-ink-soft hover:text-danger">
+              <button type="button" onClick={() => ctx.remove(n.key)} className="text-on-surface-variant hover:text-danger">
                 Delete
               </button>
               {!isStart && (
-                <span className="ml-auto text-ink-faint">
+                <span className="ml-auto text-outline">
                   {isApproval
                     ? `approvals run in canvas order · ${approveKids.length} on approve · ${rejectKids.length} on reject`
                     : `rule order ${ctx.nodes.filter((x) => isActionTool(x.tool)).findIndex((x) => x.key === n.key) + 1}`}
@@ -790,7 +790,7 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
           </select>
         </Field>
       </div>
-      <p className="text-[10px] leading-relaxed text-ink-faint">
+      <p className="text-[10px] leading-relaxed text-outline">
         Nothing here is preset: “not set” means the engine default shown in that box is what happens. The two ports
         are optional too — drop a tool on them only if something should run after this decision.
       </p>
@@ -884,7 +884,7 @@ function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
               </option>
             ))}
           </select>
-          <span className="text-[11px] text-ink-faint">
+          <span className="text-[11px] text-outline">
             {n.status ? statusMeta(n.status)?.note : "nothing chosen yet"}
           </span>
         </div>
@@ -909,7 +909,7 @@ function ActionBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
           {ctx.slas.find((s) => s.id === n.slaPolicyId)?.targets && (
             <div className="mt-1 flex flex-wrap gap-1">
               {(ctx.slas.find((s) => s.id === n.slaPolicyId)?.targets ?? []).map((t) => (
-                <span key={t.priority} className="rounded bg-surface-muted px-1.5 py-0.5 text-[10px] text-ink-soft">
+                <span key={t.priority} className="rounded bg-surface-container px-1.5 py-0.5 text-[10px] text-on-surface-variant">
                   {t.priority}: TTA {fmtMins(t.responseMins)} · TTR {fmtMins(t.resolveMins)}
                 </span>
               ))}
@@ -1040,9 +1040,9 @@ function Palette({
   return (
     <div className="card sticky top-4 p-3">
       <div className="mb-2 flex items-center gap-2">
-        <Icon name="construction" className="text-[16px] text-ink-faint" />
-        <h3 className="text-xs font-bold uppercase tracking-wider text-ink-faint">Tools</h3>
-        <span className="ml-auto text-[10px] text-ink-faint">drag onto the canvas</span>
+        <Icon name="construction" className="text-[16px] text-outline" />
+        <h3 className="text-xs font-bold uppercase tracking-wider text-outline">Tools</h3>
+        <span className="ml-auto text-[10px] text-outline">drag onto the canvas</span>
       </div>
       <input
         id="wf-tool-search"
@@ -1060,7 +1060,7 @@ function Palette({
 
       {cats.map((c) => (
         <div key={c.name} className="mb-2">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-ink-faint">{c.name}</div>
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">{c.name}</div>
           <div className="space-y-1">
             {c.tools.map((t) => (
               <button
@@ -1076,39 +1076,39 @@ function Palette({
                 onDragEnd={endDrag}
                 onClick={() => onAppend(t.id)}
                 title={ro ? t.blurb : `${t.blurb}\n\nDrag it anywhere on the canvas, or click to add at the end.`}
-                className={`flex w-full cursor-grab items-start gap-2 rounded-lg border p-1.5 text-left transition-colors hover:bg-surface-muted ${
-                  drag?.kind === "new" && drag.tool === t.id ? "border-primary bg-blue-50" : "border-surface-border"
+                className={`flex w-full cursor-grab items-start gap-2 rounded-lg border p-1.5 text-left transition-colors hover:bg-surface-container-low ${
+                  drag?.kind === "new" && drag.tool === t.id ? "border-primary bg-surface-container-low" : "border-surface-variant"
                 } ${ro ? "cursor-default" : ""}`}
               >
                 <span className={`mt-px flex h-6 w-6 shrink-0 items-center justify-center rounded border ${t.accent}`}>
                   <Icon name={t.icon} className="text-[14px]" />
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate text-xs font-semibold text-ink">{t.label}</span>
-                  <span className="block text-[10px] leading-snug text-ink-faint">{t.blurb}</span>
+                  <span className="block truncate text-xs font-semibold text-on-surface">{t.label}</span>
+                  <span className="block text-[10px] leading-snug text-outline">{t.blurb}</span>
                 </span>
               </button>
             ))}
           </div>
         </div>
       ))}
-      {cats.length === 0 && <p className="py-2 text-center text-[11px] text-ink-faint">No tool matches “{q}”.</p>}
+      {cats.length === 0 && <p className="py-2 text-center text-[11px] text-outline">No tool matches “{q}”.</p>}
 
       {!ro && (
-        <div className="mt-3 border-t border-surface-border/70 pt-2">
-          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-ink-faint">Start from a preset (optional)</div>
+        <div className="mt-3 border-t border-surface-variant/70 pt-2">
+          <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">Start from a preset (optional)</div>
           {RECIPES.map((r) => (
             <button
               key={r.id}
               type="button"
               onClick={() => onRecipe(r.id)}
-              className="mb-1 flex w-full items-start gap-2 rounded-lg px-1.5 py-1 text-left hover:bg-surface-muted"
+              className="mb-1 flex w-full items-start gap-2 rounded-lg px-1.5 py-1 text-left hover:bg-surface-container-low"
               title={r.blurb}
             >
-              <Icon name={r.icon} className="mt-0.5 text-[15px] text-ink-faint" />
+              <Icon name={r.icon} className="mt-0.5 text-[15px] text-outline" />
               <span className="min-w-0">
-                <span className="block text-[11px] font-semibold text-ink">{r.label}</span>
-                <span className="block text-[10px] leading-snug text-ink-faint">inserts editable nodes</span>
+                <span className="block text-[11px] font-semibold text-on-surface">{r.label}</span>
+                <span className="block text-[10px] leading-snug text-outline">inserts editable nodes</span>
               </span>
             </button>
           ))}
@@ -1642,7 +1642,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   if (!canManage)
     return (
       <AppShell>
-        <div className="card mx-auto mt-10 max-w-md p-6 text-center text-sm text-ink-soft">
+        <div className="card mx-auto mt-10 max-w-md p-6 text-center text-sm text-on-surface-variant">
           You need the workflow management permission to open this screen.
         </div>
       </AppShell>
@@ -1651,7 +1651,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   if (loading)
     return (
       <AppShell>
-        <div className="py-16 text-center text-sm text-ink-soft">Loading workflow…</div>
+        <div className="py-16 text-center text-sm text-on-surface-variant">Loading workflow…</div>
       </AppShell>
     );
 
@@ -1667,7 +1667,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
               <Icon name="arrow_back" className="text-[18px]" />
             </Link>
             <input
-              className="min-w-0 flex-1 border-b border-transparent bg-transparent text-xl font-bold tracking-tight text-ink outline-none hover:border-surface-border focus:border-primary"
+              className="min-w-0 flex-1 border-b border-transparent bg-transparent text-xl font-bold tracking-tight text-on-surface outline-none hover:border-surface-variant focus:border-primary"
               value={name}
               disabled={ro}
               placeholder="Untitled workflow"
@@ -1675,9 +1675,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             />
             <StatusBadge status={status} />
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-3 pl-9 text-[11px] text-ink-faint">
+          <div className="mt-1 flex flex-wrap items-center gap-3 pl-9 text-[11px] text-outline">
             <input
-              className="min-w-0 flex-1 border-none bg-transparent text-xs text-ink-soft outline-none placeholder:text-ink-faint"
+              className="min-w-0 flex-1 border-none bg-transparent text-xs text-on-surface-variant outline-none placeholder:text-outline"
               value={description}
               disabled={ro}
               placeholder="What is this flow for? (optional)"
@@ -1705,8 +1705,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
               <Icon name="redo" className="text-[18px]" />
             </button>
           </div>
-          {savedAt && !dirty && <span className="text-[11px] text-ink-faint">saved {savedAt}</span>}
-          {dirty && <span className="badge bg-amber-100 text-amber-800">unsaved changes</span>}
+          {savedAt && !dirty && <span className="text-[11px] text-outline">saved {savedAt}</span>}
+          {dirty && <span className="badge bg-amber-100 text-on-secondary-fixed-variant">unsaved changes</span>}
           <button onClick={save} disabled={saving || ro || (!dirty && !isNew)} className="btn-primary">
             <Icon name="save" className="text-[18px]" />
             {saving ? "Saving…" : "Save"}
@@ -1715,7 +1715,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       </div>
 
       {error && (
-        <div className="mb-4 flex items-start gap-2 rounded border border-red-200 bg-red-50 px-4 py-2 text-sm text-danger">
+        <div className="mb-4 flex items-start gap-2 rounded border border-error/25 bg-error-container/60 px-4 py-2 text-sm text-danger">
           <Icon name="error" className="mt-0.5 text-[18px]" />
           <span>{error}</span>
         </div>
@@ -1737,10 +1737,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         <div className="xl:col-span-6" onClick={() => ctx.select(null)}>
           <div className="mx-auto max-w-2xl">
             {mainLine.length === 0 && !drag && (
-              <div className="card flex flex-col items-center gap-2 border-2 border-dashed border-surface-border p-8 text-center">
-                <Icon name="account_tree" className="text-[30px] text-ink-faint" />
-                <p className="text-sm font-semibold text-ink">Empty canvas</p>
-                <p className="max-w-sm text-xs leading-relaxed text-ink-soft">
+              <div className="card flex flex-col items-center gap-2 border-2 border-dashed border-surface-variant p-8 text-center">
+                <Icon name="account_tree" className="text-[30px] text-outline" />
+                <p className="text-sm font-semibold text-on-surface">Empty canvas</p>
+                <p className="max-w-sm text-xs leading-relaxed text-on-surface-variant">
                   Drag any tool from the left, in any order. A flow does not have to start with an approver: it can
                   be only automations on submit, one decision, or nothing that approves at all.
                 </p>
@@ -1751,7 +1751,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                       type="button"
                       disabled={ro}
                       onClick={() => appendTool(t.id)}
-                      className="rounded-full border border-surface-border px-2 py-1 text-[11px] text-ink-soft hover:border-primary hover:text-primary"
+                      className="rounded-full border border-surface-variant px-2 py-1 text-[11px] text-on-surface-variant hover:border-primary hover:text-primary"
                     >
                       + {t.label}
                     </button>
@@ -1773,7 +1773,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             <div
               {...zoneProps(ctx, "line@end", () => dropOnLine(null))}
               className={`flex min-h-[42px] items-center justify-center rounded-lg border border-dashed px-3 text-[11px] ${
-                ctx.hover === "line@end" ? "border-primary bg-blue-50/60 text-primary" : "border-surface-border text-ink-faint"
+                ctx.hover === "line@end" ? "border-primary bg-surface-container-low/60 text-primary" : "border-surface-variant text-outline"
               }`}
             >
               {drag ? "drop it here" : mainLine.length > 0 ? "drop a tool here to add it at the end" : ""}
@@ -1785,7 +1785,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
               <Port title="If the request ends rejected" tone="reject" icon="block" parentKey={END_KEY} slot="reject" ctx={ctx} depth={0} />
             </div>
             {(endApprove.length > 0 || endReject.length > 0) && (
-              <p className="mt-1 text-right text-[10px] text-ink-faint">
+              <p className="mt-1 text-right text-[10px] text-outline">
                 {endApprove.length + endReject.length} node(s) run after the final decision.
               </p>
             )}
@@ -1795,9 +1795,9 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         {/* rail */}
         <div className="space-y-3 xl:col-span-3">
           <div className="card p-3">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Flow</h3>
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-outline">Flow</h3>
             {nodes.length === 0 ? (
-              <p className="text-xs text-ink-faint">Nothing runs yet.</p>
+              <p className="text-xs text-outline">Nothing runs yet.</p>
             ) : (
               <ol className="space-y-0.5">
                 {mainLine.map((n) => {
@@ -1812,24 +1812,24 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                       <button
                         type="button"
                         onClick={() => focusNode(n.key)}
-                        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-xs hover:bg-surface-muted"
+                        className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-xs hover:bg-surface-container-low"
                       >
-                        <Icon name={toolMeta(n.tool).icon} className={`text-[14px] ${n.enabled ? "text-ink-soft" : "text-ink-faint line-through"}`} />
-                        <span className="min-w-0 flex-1 truncate text-ink">{n.name || toolMeta(n.tool).label}</span>
+                        <Icon name={toolMeta(n.tool).icon} className={`text-[14px] ${n.enabled ? "text-on-surface-variant" : "text-outline line-through"}`} />
+                        <span className="min-w-0 flex-1 truncate text-on-surface">{n.name || toolMeta(n.tool).label}</span>
                         {n.condField !== "none" && <Icon name="if_while" className="text-[12px] text-amber-600" />}
                       </button>
                       {kids.length > 0 && (
-                        <div className="ml-4 border-l border-surface-border pl-2">
+                        <div className="ml-4 border-l border-surface-variant pl-2">
                           {kids.map((k) => (
                             <button
                               key={k.key}
                               type="button"
                               onClick={() => focusNode(k.key)}
-                              className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[11px] text-ink-soft hover:bg-surface-muted"
+                              className="flex w-full items-center gap-1.5 rounded px-1 py-0.5 text-left text-[11px] text-on-surface-variant hover:bg-surface-container-low"
                             >
                               <Icon name={toolMeta(k.tool).icon} className="text-[13px]" />
                               <span className="min-w-0 flex-1 truncate">{k.name || toolMeta(k.tool).label}</span>
-                              <span className="shrink-0 text-[9px] text-ink-faint">{k.when ? WHEN_META[k.when].short : "when?"}</span>
+                              <span className="shrink-0 text-[9px] text-outline">{k.when ? WHEN_META[k.when].short : "when?"}</span>
                             </button>
                           ))}
                         </div>
@@ -1838,7 +1838,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                   );
                 })}
                 {(endApprove.length > 0 || endReject.length > 0) && (
-                  <li className="mt-1 border-t border-surface-border/70 pt-1 text-[10px] uppercase tracking-wide text-ink-faint">
+                  <li className="mt-1 border-t border-surface-variant/70 pt-1 text-[10px] uppercase tracking-wide text-outline">
                     on final decision
                   </li>
                 )}
@@ -1847,12 +1847,12 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           </div>
 
           <div className={`card p-3 ${issueList.length > 0 ? "border-amber-300" : ""}`}>
-            <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-faint">
+            <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-outline">
               <Icon name={issueList.length > 0 ? "fact_check" : "check_circle"} className={`text-[15px] ${issueList.length > 0 ? "text-amber-600" : "text-green-600"}`} />
               Readiness
             </h3>
             {issueList.length === 0 ? (
-              <p className="text-xs text-green-700">
+              <p className="text-xs text-tertiary">
                 {approvalNodes(nodes).length === 0
                   ? "No approval node in this flow — requests skip straight to approved, and your submit / end-of-request automations still run."
                   : "Ready. Save to publish."}
@@ -1864,7 +1864,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                     <button
                       type="button"
                       onClick={() => focusNode(x.key)}
-                      className="flex w-full items-start gap-1.5 rounded px-1 py-0.5 text-left text-xs text-ink-soft hover:bg-amber-50"
+                      className="flex w-full items-start gap-1.5 rounded px-1 py-0.5 text-left text-xs text-on-surface-variant hover:bg-secondary-fixed"
                     >
                       <Icon name="error" className="mt-px shrink-0 text-[14px] text-amber-600" />
                       {x.text}
@@ -1876,11 +1876,11 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           </div>
 
           <div className="card p-3">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-ink-faint">Used by forms</h3>
-            {templates.length === 0 && <p className="text-xs text-ink-faint">No form templates yet.</p>}
+            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-outline">Used by forms</h3>
+            {templates.length === 0 && <p className="text-xs text-outline">No form templates yet.</p>}
             <div className="max-h-48 space-y-0.5 overflow-y-auto">
               {templates.map((t) => (
-                <label key={t.FormTemplateID} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-surface-muted">
+                <label key={t.FormTemplateID} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-surface-container-low">
                   <input
                     type="checkbox"
                     className="h-3.5 w-3.5"
@@ -1895,8 +1895,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                       })
                     }
                   />
-                  <span className="min-w-0 flex-1 truncate text-ink">{t.Name}</span>
-                  <span className={`text-[10px] ${t.Status === "ACTIVE" ? "text-green-600" : "text-ink-faint"}`}>
+                  <span className="min-w-0 flex-1 truncate text-on-surface">{t.Name}</span>
+                  <span className={`text-[10px] ${t.Status === "ACTIVE" ? "text-green-600" : "text-outline"}`}>
                     {t.Status === "ACTIVE" ? "live" : t.Status.toLowerCase()}
                   </span>
                 </label>
@@ -1904,16 +1904,16 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             </div>
           </div>
 
-          <div className="card p-3 text-[11px] leading-relaxed text-ink-faint">
+          <div className="card p-3 text-[11px] leading-relaxed text-outline">
             Nodes run in canvas order. Actions dropped on an approval&apos;s port fire right after that decision; the
             end-of-request ports fire once, after the final outcome. A Jump stops the rest of its group. Undo/redo
-            (Ctrl+Z) covers structure, <kbd className="rounded border border-surface-border px-1">/</kbd> searches
-            tools, <kbd className="rounded border border-surface-border px-1">⌘S</kbd> saves.
+            (Ctrl+Z) covers structure, <kbd className="rounded border border-surface-variant px-1">/</kbd> searches
+            tools, <kbd className="rounded border border-surface-variant px-1">⌘S</kbd> saves.
           </div>
         </div>
       </div>
 
-      {ro && <p className="mt-4 text-center text-xs text-ink-faint">Read-only view — you do not have workflow management.</p>}
+      {ro && <p className="mt-4 text-center text-xs text-outline">Read-only view — you do not have workflow management.</p>}
     </AppShell>
   );
 }

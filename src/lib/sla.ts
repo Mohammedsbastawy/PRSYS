@@ -129,12 +129,12 @@ export function slaHealth(req: {
 }
 
 export const SLA_BADGE: Record<SLAState, { label: string; cls: string; icon: string }> = {
-  ON_TRACK: { label: 'On track', cls: 'bg-green-100 text-green-800', icon: 'schedule' },
-  DUE_SOON: { label: 'Due soon', cls: 'bg-amber-100 text-amber-800', icon: 'warning' },
-  BREACHED: { label: 'SLA breached', cls: 'bg-red-100 text-red-800', icon: 'alarm' },
-  MET: { label: 'Met SLA', cls: 'bg-green-100 text-green-800', icon: 'check_circle' },
-  MISSED: { label: 'Missed SLA', cls: 'bg-red-100 text-red-800', icon: 'error' },
-  NONE: { label: 'No SLA', cls: 'bg-gray-100 text-gray-500', icon: 'remove' },
+  ON_TRACK: { label: 'On track', cls: 'bg-tertiary-fixed text-green-800', icon: 'schedule' },
+  DUE_SOON: { label: 'Due soon', cls: 'bg-amber-100 text-on-secondary-fixed-variant', icon: 'warning' },
+  BREACHED: { label: 'SLA breached', cls: 'bg-error-container text-on-error-container', icon: 'alarm' },
+  MET: { label: 'Met SLA', cls: 'bg-tertiary-fixed text-green-800', icon: 'check_circle' },
+  MISSED: { label: 'Missed SLA', cls: 'bg-error-container text-on-error-container', icon: 'error' },
+  NONE: { label: 'No SLA', cls: 'bg-surface-container text-outline', icon: 'remove' },
 }
 
 export function fmtMinutes(mins: number): string {

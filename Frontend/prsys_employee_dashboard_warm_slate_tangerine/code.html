@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full space-y-space-xl">
+<!-- Header / Executive Greeting Banner -->
+<div class="relative overflow-hidden rounded-xl bg-surface-container-low p-space-lg shadow-sm">
+<div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-gradient-to-br from-primary-fixed/40 via-secondary-fixed/20 to-transparent blur-2xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-space-md">
+<div class="space-y-1">
+<div class="flex items-center gap-space-xs">
+<span class="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">Cairo HQ Operations</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="font-label-sm text-label-sm text-outline font-medium">Engineering &amp; Design Group</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">Welcome back, Kareem Sherif</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+          Overview of your active procurement requests, budget utilization, and pending actions across Cairo HQ.
+        </p>
+</div>
+<div class="flex items-center gap-space-sm self-start md:self-auto shrink-0">
+<div class="flex items-center gap-space-xs px-space-sm py-1.5 rounded-lg bg-surface-container-lowest shadow-sm">
+<span class="material-symbols-outlined text-tertiary text-[18px]">verified</span>
+<span class="font-label-md text-label-md text-on-surface font-medium">Policy v2026.3 Active</span>
+</div>
+<a class="inline-flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.25)] active:scale-[0.98]" href="#quick-catalog">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>New Requisition</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Top KPI Stats Row -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
+<!-- Stat 1: Active Requests -->
+<div class="group relative rounded-xl bg-surface-container-lowest p-space-lg shadow-sm hover:shadow-md transition-all">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">My Active Requests</span>
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">pending_actions</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-baseline gap-space-xs">
+<span class="font-headline-xl text-headline-xl text-on-surface font-bold">6</span>
+<span class="font-label-md text-label-md text-outline">in flight</span>
+</div>
+<div class="mt-space-md pt-space-xs flex items-center gap-1.5 text-on-surface-variant font-body-sm text-body-sm">
+<span class="px-1.5 py-0.5 rounded bg-surface-container font-label-sm text-label-sm font-semibold text-on-surface">3 review</span>
+<span class="px-1.5 py-0.5 rounded bg-tertiary-fixed/40 font-label-sm text-label-sm font-semibold text-on-tertiary-fixed-variant">2 approved</span>
+<span class="px-1.5 py-0.5 rounded bg-secondary-fixed/50 font-label-sm text-label-sm font-semibold text-on-secondary-fixed-variant">1 PO</span>
+</div>
+</div>
+<!-- Stat 2: Clarification Alert -->
+<div class="relative rounded-xl bg-surface-container-lowest p-space-lg shadow-sm overflow-hidden group hover:shadow-md transition-all">
+<div class="absolute left-0 top-0 bottom-0 w-1.5 bg-primary"></div>
+<div class="flex items-start justify-between pl-1">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Pending My Clarification</span>
+<div class="w-9 h-9 rounded-lg bg-primary-fixed/40 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">priority_high</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-baseline gap-space-xs pl-1">
+<span class="font-headline-xl text-headline-xl text-primary font-bold">1</span>
+<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed font-label-sm text-label-sm font-bold animate-pulse">
+          Requires immediate input
+        </span>
+</div>
+<p class="mt-space-md pl-1 font-body-sm text-body-sm text-on-surface-variant truncate">
+        Req <span class="font-label-md text-label-md text-on-surface font-semibold">R-2026-0042</span>: Missing Raya quotation
+      </p>
+</div>
+<!-- Stat 3: Approved Spend -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm hover:shadow-md transition-all">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Approved This Quarter</span>
+<div class="w-9 h-9 rounded-lg bg-tertiary-fixed/30 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-baseline gap-space-xs">
+<span class="font-headline-xl text-headline-xl text-on-surface font-bold">18</span>
+<span class="font-label-md text-label-md text-tertiary font-semibold">Total Approved</span>
+</div>
+<div class="mt-space-md flex items-center justify-between text-on-surface-variant font-body-sm text-body-sm">
+<span class="text-outline">Cumulative Value:</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">420,500 EGP</span>
+</div>
+</div>
+<!-- Stat 4: Turnaround Metric with Mini Sparkline -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm hover:shadow-md transition-all">
+<div class="flex items-start justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Avg Fulfillment Time</span>
+<div class="w-9 h-9 rounded-lg bg-surface-container-high flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[20px]">speed</span>
+</div>
+</div>
+<div class="mt-space-sm flex items-baseline justify-between">
+<div class="flex items-baseline gap-1">
+<span class="font-headline-xl text-headline-xl text-on-surface font-bold">3.2</span>
+<span class="font-body-md text-body-md text-outline">Days</span>
+</div>
+<div class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-tertiary-fixed/40 text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[14px]">trending_down</span>
+<span>-15%</span>
+</div>
+</div>
+<div class="mt-space-md flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline">Benchmark: 3.8d</span>
+<!-- Micro inline Sparkline -->
+<svg class="w-24 h-5 text-tertiary overflow-visible" fill="none" viewbox="0 0 96 20">
+<path d="M0 16 L20 14 L40 15 L60 8 L78 9 L96 3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+<circle cx="96" cy="3" fill="currentColor" r="2.5"></circle>
+</svg>
+</div>
+</div>
+</div>
+<!-- Main Section 1: Quick Action Cards -->
+<div class="flex flex-col space-y-space-md" id="quick-catalog">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-sm">
+<span class="w-2 h-6 rounded-full bg-primary"></span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">Start a New Requisition</h2>
+<span class="hidden sm:inline-block font-label-sm text-label-sm text-outline uppercase">· Instant Form Provisioning</span>
+</div>
+<a class="group inline-flex items-center gap-1 font-label-md text-label-md text-primary hover:text-primary-container font-semibold transition-colors" href="#">
+<span>Browse All 14 Catalog Templates</span>
+<span class="material-symbols-outlined text-[16px] group-hover:translate-x-0.5 transition-transform">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter">
+<!-- Card 1 -->
+<a class="group rounded-xl bg-surface-container-lowest p-space-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between hover:-translate-y-0.5" href="#">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[22px]">laptop_mac</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">SLA: 2-3 Days</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold group-hover:text-primary transition-colors">Hardware &amp; IT Equipment</h3>
+<p class="mt-1 font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Laptops, calibrated displays, server racks, and peripheral packs.</p>
+</div>
+</div>
+<div class="mt-space-lg pt-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Standard Route</span>
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</a>
+<!-- Card 2 -->
+<a class="group rounded-xl bg-surface-container-lowest p-space-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between hover:-translate-y-0.5" href="#">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-secondary group-hover:bg-secondary group-hover:text-on-secondary transition-colors">
+<span class="material-symbols-outlined text-[22px]">chair</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed/50 text-on-secondary-fixed-variant font-bold">Fast-Track &lt; 24h</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold group-hover:text-primary transition-colors">Office Supplies &amp; Ergonomics</h3>
+<p class="mt-1 font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Desks, adjustable chairs, stationery batches, and workstation gear.</p>
+</div>
+</div>
+<div class="mt-space-lg pt-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Automated PO</span>
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</a>
+<!-- Card 3 -->
+<a class="group rounded-xl bg-surface-container-lowest p-space-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between hover:-translate-y-0.5" href="#">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-tertiary group-hover:bg-tertiary group-hover:text-on-tertiary transition-colors">
+<span class="material-symbols-outlined text-[22px]">precision_manufacturing</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">SLA: 48h</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold group-hover:text-primary transition-colors">Raw Materials &amp; Consumables</h3>
+<p class="mt-1 font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Production stock, mechanical fasteners, resins, and workshop reagents.</p>
+</div>
+</div>
+<div class="mt-space-lg pt-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Plant Clearance</span>
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</a>
+<!-- Card 4 -->
+<a class="group rounded-xl bg-surface-container-lowest p-space-lg shadow-sm hover:shadow-md transition-all flex flex-col justify-between hover:-translate-y-0.5" href="#">
+<div class="space-y-space-sm">
+<div class="flex items-center justify-between">
+<div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-on-primary transition-colors">
+<span class="material-symbols-outlined text-[22px]">cloud_sync</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-medium">SLA: 24h</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold group-hover:text-primary transition-colors">Software &amp; Cloud Access</h3>
+<p class="mt-1 font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Dev tooling seats, SaaS seat expansion, and AWS reserved nodes.</p>
+</div>
+</div>
+<div class="mt-space-lg pt-space-xs flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-outline uppercase font-semibold">Security Vetted</span>
+<span class="material-symbols-outlined text-[18px] text-outline group-hover:text-primary transition-colors">chevron_right</span>
+</div>
+</a>
+</div>
+</div>
+<!-- Primary Workspace: Requisitions Table & Contextual Sidebar Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Main Requisition Ledger (8 Cols Desktop) -->
+<div class="lg:col-span-8 flex flex-col space-y-space-md">
+<div class="rounded-xl bg-surface-container-lowest shadow-sm overflow-hidden">
+<div class="p-space-lg flex flex-col sm:flex-row sm:items-center justify-between gap-space-sm bg-surface-container-low/50">
+<div class="space-y-0.5">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">My Recent Requisitions</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Real-time workflow audit trail and stage progression</p>
+</div>
+<div class="flex items-center gap-space-xs">
+<div class="flex items-center rounded-lg bg-surface-container-lowest p-1 shadow-sm">
+<button class="px-2.5 py-1 rounded font-label-sm text-label-sm bg-primary text-on-primary font-semibold">All (5)</button>
+<button class="px-2.5 py-1 rounded font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface font-medium">Pending (2)</button>
+<button class="px-2.5 py-1 rounded font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface font-medium">Completed (3)</button>
+</div>
+</div>
+</div>
+<!-- Dense Data Table matching §6 enterprise contract -->
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-high/60 text-on-surface-variant font-label-md text-label-md uppercase">
+<th class="py-3 px-space-md">Ref ID &amp; Title</th>
+<th class="py-3 px-space-sm hidden md:table-cell">Category Form</th>
+<th class="py-3 px-space-sm">Submitted</th>
+<th class="py-3 px-space-sm text-right">Total (EGP)</th>
+<th class="py-3 px-space-sm">Priority</th>
+<th class="py-3 px-space-sm">Status</th>
+<th class="py-3 px-space-md text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-on-surface font-body-sm text-body-sm">
+<!-- Row 1: Attention State -->
+<tr class="bg-primary-fixed/15 hover:bg-primary-fixed/25 transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex items-center gap-space-xs min-w-0">
+<span class="w-2 h-2 rounded-full bg-primary shrink-0 animate-ping"></span>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-bold text-primary tracking-wide">R-2026-0042</span>
+<span class="font-body-md text-body-md font-semibold text-on-surface truncate">Apple MacBook Pro 16" M3 Max</span>
+</div>
+</div>
+</td>
+<td class="py-3.5 px-space-sm hidden md:table-cell text-on-surface-variant font-medium">Hardware &amp; IT</td>
+<td class="py-3.5 px-space-sm font-label-sm text-label-sm text-on-surface-variant">Today, 09:30</td>
+<td class="py-3.5 px-space-sm text-right font-label-md text-label-md font-semibold text-on-surface">184,500</td>
+<td class="py-3.5 px-space-sm">
+<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">HIGH</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[13px]">help</span>
+                    CLARIFICATION_REQ
+                  </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="px-2.5 py-1 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary-container transition-colors shadow-sm inline-flex items-center gap-1">
+<span>Respond</span>
+<span class="material-symbols-outlined text-[14px]">send</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: In Review -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-outline tracking-wide">R-2026-0041</span>
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Dell Latitude 5550 (x5)</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm hidden md:table-cell text-on-surface-variant">Hardware &amp; IT</td>
+<td class="py-3.5 px-space-sm font-label-sm text-label-sm text-on-surface-variant">12 Sep 2026</td>
+<td class="py-3.5 px-space-sm text-right font-label-md text-label-md font-semibold text-on-surface">185,000</td>
+<td class="py-3.5 px-space-sm">
+<span class="px-2 py-0.5 rounded bg-error-container text-on-error-container font-label-sm text-label-sm font-bold">HIGH</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[13px]">hourglass_top</span>
+                    PENDING_APPROVAL
+                  </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="View Details">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: Completed -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-outline tracking-wide">R-2026-0038</span>
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Ergonomic Mesh Office Chairs (x12)</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm hidden md:table-cell text-on-surface-variant">General Items</td>
+<td class="py-3.5 px-space-sm font-label-sm text-label-sm text-on-surface-variant">08 Sep 2026</td>
+<td class="py-3.5 px-space-sm text-right font-label-md text-label-md font-semibold text-on-surface">74,500</td>
+<td class="py-3.5 px-space-sm">
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-semibold">LOW</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[13px]">task_alt</span>
+                    COMPLETED
+                  </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="View Details">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 4: Approved -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-outline tracking-wide">R-2026-0034</span>
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">AWS Cloud Infrastructure Reserve</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm hidden md:table-cell text-on-surface-variant">Software</td>
+<td class="py-3.5 px-space-sm font-label-sm text-label-sm text-on-surface-variant">01 Sep 2026</td>
+<td class="py-3.5 px-space-sm text-right font-label-md text-label-md font-semibold text-on-surface">312,000</td>
+<td class="py-3.5 px-space-sm">
+<span class="px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed-variant font-label-sm text-label-sm font-bold">MEDIUM</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-tertiary-fixed/60 text-on-tertiary-fixed-variant font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[13px]">verified</span>
+                    APPROVED
+                  </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="View Details">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+<!-- Row 5: Fulfilled -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="py-3.5 px-space-md">
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-outline tracking-wide">R-2026-0029</span>
+<span class="font-body-md text-body-md font-medium text-on-surface truncate">Precision Calibration Tools</span>
+</div>
+</td>
+<td class="py-3.5 px-space-sm hidden md:table-cell text-on-surface-variant">Raw Materials</td>
+<td class="py-3.5 px-space-sm font-label-sm text-label-sm text-on-surface-variant">25 Aug 2026</td>
+<td class="py-3.5 px-space-sm text-right font-label-md text-label-md font-semibold text-on-surface">19,200</td>
+<td class="py-3.5 px-space-sm">
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-on-surface font-label-sm text-label-sm font-semibold">LOW</span>
+</td>
+<td class="py-3.5 px-space-sm">
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm font-bold">
+<span class="material-symbols-outlined text-[13px]">inventory_2</span>
+                    FULFILLED
+                  </span>
+</td>
+<td class="py-3.5 px-space-md text-right">
+<button class="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors" title="View Details">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-space-md bg-surface-container-low/40 flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<span>Showing 5 of 24 logged requisitions</span>
+<div class="flex items-center gap-space-xs">
+<button class="px-2 py-1 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container transition-colors shadow-sm">Previous</button>
+<button class="px-2 py-1 rounded bg-surface-container-lowest text-on-surface hover:bg-surface-container transition-colors shadow-sm">Next</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Sidebar Column (4 Cols Desktop) -->
+<div class="lg:col-span-4 flex flex-col space-y-space-md">
+<!-- Action Banner Card: Pending Item Clarification -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm relative overflow-hidden">
+<div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-secondary"></div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">campaign</span>
+<span class="font-label-sm text-label-sm uppercase font-bold text-primary tracking-wide">Action Required</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed-variant font-semibold">R-2026-0042</span>
+</div>
+<!-- Agent Quote Box -->
+<div class="mt-space-md p-space-md rounded-xl bg-surface-container-low">
+<div class="flex items-center gap-space-xs mb-space-xs">
+<img alt="Elena Rostova" class="w-6 h-6 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/>
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Elena Rostova</span>
+<span class="font-label-sm text-label-sm text-outline">· Procurement VP</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface italic">
+            "Please attach revised quotation with official stamp from Raya IT."
+          </p>
+</div>
+<!-- Interactive Quick Response form -->
+<div class="mt-space-md space-y-space-xs" id="quick-reply-box">
+<label class="font-label-sm text-label-sm text-outline font-semibold uppercase">Your Clarification Response</label>
+<textarea class="w-full p-2.5 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest transition-colors" placeholder="Add commentary for Elena..." rows="2"></textarea>
+<div class="flex items-center gap-space-xs pt-1">
+<button class="flex-1 py-2 px-space-sm rounded-lg bg-primary text-on-primary font-headline-sm text-body-sm hover:bg-primary-container font-semibold transition-all shadow-sm flex items-center justify-center gap-1">
+<span class="material-symbols-outlined text-[16px]">upload_file</span>
+<span>Submit Attachment</span>
+</button>
+<button class="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors" title="Attach file">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Personal Spend & Quota Analytics Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center justify-between">
+<div class="space-y-0.5">
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Personal Spend &amp; Quota</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Annual Departmental Allowance (FY26)</p>
+</div>
+<span class="material-symbols-outlined text-outline text-[20px]">pie_chart</span>
+</div>
+<div class="space-y-space-xs">
+<div class="flex justify-between items-baseline font-label-md text-label-md">
+<span class="font-semibold text-primary">420,500 EGP Spent</span>
+<span class="text-outline">650,000 EGP Allocated</span>
+</div>
+<!-- Progress Bar Container -->
+<div class="w-full h-3 rounded-full bg-surface-container overflow-hidden p-0.5">
+<div class="h-full rounded-full bg-gradient-to-r from-secondary-container via-primary to-primary-container transition-all duration-500" style="width: 64.7%;"></div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<span class="font-label-sm text-label-sm text-tertiary font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">savings</span>
+              229,500 EGP Remaining
+            </span>
+<span class="font-label-sm text-label-sm text-outline">64.7% Utilized</span>
+</div>
+</div>
+<!-- Inline Spend Distribution Bar Visual -->
+<div class="p-space-sm rounded-lg bg-surface-container-low space-y-2">
+<span class="font-label-sm text-label-sm uppercase font-bold text-outline">Category Breakdown</span>
+<div class="flex h-2 rounded-full overflow-hidden w-full gap-0.5">
+<div class="bg-primary h-full" style="width: 58%;" title="Hardware: 58%"></div>
+<div class="bg-secondary-container h-full" style="width: 25%;" title="Software: 25%"></div>
+<div class="bg-tertiary h-full" style="width: 17%;" title="Supplies: 17%"></div>
+</div>
+<div class="flex items-center justify-between font-label-sm text-label-sm text-on-surface-variant pt-0.5">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary"></span> Hardware</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-secondary-container"></span> Software</span>
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-tertiary"></span> Supplies</span>
+</div>
+</div>
+</div>
+<!-- Help & Enterprise Support Card -->
+<div class="rounded-xl bg-surface-container-lowest p-space-lg shadow-sm space-y-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-9 h-9 rounded-lg bg-tertiary-fixed/40 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-[20px]">support_agent</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Help &amp; Enterprise Support</h4>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Cairo HQ Procurement Desk</p>
+</div>
+</div>
+<div class="space-y-space-xs text-on-surface">
+<div class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-outline">phone_in_talk</span>
+<span class="font-body-sm text-body-sm font-medium">Fast-Dial Extension</span>
+</div>
+<span class="font-label-md text-label-md font-bold text-primary bg-primary-fixed/50 px-2 py-0.5 rounded">ext. 4410</span>
+</div>
+<a class="flex items-center justify-between p-2 rounded-lg bg-surface-container-low hover:bg-surface-container transition-colors group" href="#">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px] text-outline">menu_book</span>
+<span class="font-body-sm text-body-sm font-medium">Procurement SOP Guidelines</span>
+</div>
+<span class="material-symbols-outlined text-[16px] text-outline group-hover:text-primary transition-colors">download</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Secondary Section: High-Fidelity Empty State Pattern Component -->
+<div class="space-y-space-sm pt-space-lg">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-outline text-[18px]">devices_other</span>
+<span class="font-label-sm text-label-sm uppercase font-bold text-outline tracking-wider">Interface State Reference</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">Employee Dashboard - Zero State View</span>
+</div>
+<!-- Empty State Container -->
+<div class="rounded-xl bg-surface-container-lowest p-space-xl shadow-sm text-center flex flex-col items-center justify-center max-w-4xl mx-auto space-y-space-md">
+<!-- Decorative Empty State SVG Illustration -->
+<div class="relative w-28 h-28 flex items-center justify-center">
+<div class="absolute inset-0 rounded-full bg-gradient-to-tr from-surface-container-high via-surface-container to-surface-container-low opacity-70 animate-pulse"></div>
+<div class="relative w-20 h-20 rounded-2xl bg-surface-container-lowest shadow-md flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[42px]">post_add</span>
+</div>
+</div>
+<div class="space-y-1 max-w-md">
+<h4 class="font-headline-md text-headline-md font-semibold text-on-surface">No Pending Requisitions Yet</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          You haven't initiated any purchase requests this cycle. Need equipment, dev tools, or office consumables to get started?
+        </p>
+</div>
+<div class="flex flex-wrap items-center justify-center gap-space-sm pt-space-xs">
+<button class="px-space-lg py-2.5 rounded-lg bg-primary text-on-primary font-headline-sm text-body-md font-semibold hover:bg-primary-container shadow-sm transition-all flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-[18px]">add_task</span>
+<span>Create Your First Requisition</span>
+</button>
+<button class="px-space-md py-2.5 rounded-lg bg-surface-container text-on-surface font-headline-sm text-body-md font-semibold hover:bg-surface-container-high transition-colors">
+          View Onboarding Handbook
+        </button>
+</div>
+<div class="pt-space-sm flex items-center gap-space-lg text-outline font-label-sm text-label-sm">
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">shield_person</span> Zero Manager Sign-off &lt; 2,000 EGP</span>
+<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">schedule</span> Standard Delivery: 48 Hours</span>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

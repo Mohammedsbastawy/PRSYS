@@ -109,7 +109,7 @@ function FileAnswerLinks({
   const files = ids
     .map((id) => attachments.find((a) => a.RequestAttachmentID === id))
     .filter((a): a is Att => !!a);
-  if (files.length === 0) return <span className="text-ink-faint">—</span>;
+  if (files.length === 0) return <span className="text-outline">—</span>;
   return (
     <span className="flex flex-wrap gap-1.5">
       {files.map((a) => (
@@ -117,7 +117,7 @@ function FileAnswerLinks({
           key={a.RequestAttachmentID}
           type="button"
           title={`Download ${a.FileName}`}
-          className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface-muted py-1 pl-2.5 pr-3 text-xs font-medium text-primary-dark hover:bg-blue-100"
+          className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface-container py-1 pl-2.5 pr-3 text-xs font-medium text-primary-dark hover:bg-primary-fixed"
           onClick={() => {
             fetch(`/api/requests/${requestId}/attachments/${a.RequestAttachmentID}`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -265,9 +265,9 @@ function auditLabel(a: string | null): string {
 function SummaryRow({ icon, label, children }: { icon: string; label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[11px] font-semibold uppercase tracking-wide text-ink-faint">{label}</div>
-      <div className="mt-0.5 flex items-center gap-1.5 text-sm text-ink">
-        <Icon name={icon} className="text-[18px] text-ink-faint" />
+      <div className="font-label-md text-label-md font-semibold uppercase tracking-wider text-outline">{label}</div>
+      <div className="mt-0.5 flex items-center gap-1.5 text-sm text-on-surface">
+        <Icon name={icon} className="text-[18px] text-outline" />
         <span className="min-w-0 truncate">{children}</span>
       </div>
     </div>
@@ -306,7 +306,7 @@ function DecisionModal({
   return (
     <Modal open onClose={onClose} title={titles[mode]}>
       {hint && (
-        <p className="mb-3 rounded border border-blue-200 bg-blue-50 px-3 py-2 text-[13px] text-primary-dark">
+        <p className="mb-3 rounded border border-surface-variant bg-surface-container-low px-3 py-2 text-[13px] text-primary-dark">
           {hint}
         </p>
       )}
@@ -517,12 +517,12 @@ function VerifyModal({
 
   return (
     <Modal open onClose={onClose} title={`Verify — ${item.RequestedItemName}`} wide>
-      {err && <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{err}</div>}
+      {err && <div className="mb-3 rounded border border-error/25 bg-error-container/60 px-3 py-2 text-sm text-on-error-container">{err}</div>}
       <div className="relative mb-4">
         <label className="label">Linked Oracle catalog item</label>
         {catId ? (
-          <div className="flex items-center justify-between rounded border border-surface-border bg-surface px-3 py-2 text-sm">
-            <span className="truncate font-medium text-ink">{catLabel}</span>
+          <div className="flex items-center justify-between rounded border border-surface-variant bg-surface-container-low px-3 py-2 text-sm">
+            <span className="truncate font-medium text-on-surface">{catLabel}</span>
             <button
               className="text-xs font-semibold text-danger hover:underline"
               onClick={() => {
@@ -549,13 +549,13 @@ function VerifyModal({
             {open && q.trim().length >= 2 && (
               <div className="dropdown left-0 right-0 max-h-56 overflow-y-auto">
                 {hits.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-ink-soft">No matches</div>
+                  <div className="px-4 py-3 text-sm text-on-surface-variant">No matches</div>
                 ) : (
                   hits.map((h) => (
                     <button
                       key={h.ItemCatalogCacheID}
                       type="button"
-                      className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-surface"
+                      className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-surface-container-low"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setCatId(h.ItemCatalogCacheID);
@@ -564,10 +564,10 @@ function VerifyModal({
                         setQ("");
                       }}
                     >
-                      <span className="truncate text-sm text-ink">
+                      <span className="truncate text-sm text-on-surface">
                         <span className="font-semibold">[{h.ItemCode}]</span> {h.ItemName}
                       </span>
-                      <span className="shrink-0 text-sm text-ink-soft">{h.Uom}</span>
+                      <span className="shrink-0 text-sm text-on-surface-variant">{h.Uom}</span>
                     </button>
                   ))
                 )}
@@ -631,12 +631,12 @@ function StockLookup({ token }: { token: string }) {
   return (
     <div className="card">
       <div className="flex flex-col gap-1 px-5 pt-5 md:flex-row md:items-center md:justify-between">
-        <h3 className="text-lg font-semibold text-ink">Check Warehouse Stock</h3>
-        <p className="text-[13px] text-ink-soft">Search Oracle inventory to confirm requested items are in stock before approving.</p>
+        <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Check Warehouse Stock</h3>
+        <p className="text-[13px] text-on-surface-variant">Search Oracle inventory to confirm requested items are in stock before approving.</p>
       </div>
       <div className="p-5">
         <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline">
             <Icon name="search" className="text-[20px]" />
           </span>
           <input
@@ -648,7 +648,7 @@ function StockLookup({ token }: { token: string }) {
           />
         </div>
         {searched && (
-          <div className="mt-3 overflow-x-auto rounded border border-surface-border">
+          <div className="mt-3 overflow-x-auto rounded border border-surface-variant">
             <table className="tbl w-full min-w-[640px]">
               <thead>
                 <tr>
@@ -661,16 +661,16 @@ function StockLookup({ token }: { token: string }) {
               <tbody>
                 {hits.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="py-6 text-center text-ink-faint">
+                    <td colSpan={4} className="py-6 text-center text-outline">
                       No catalog matches
                     </td>
                   </tr>
                 )}
                 {hits.map((h) => (
                   <tr key={h.ItemCatalogCacheID}>
-                    <td className="font-semibold text-ink">[{h.ItemCode}]</td>
+                    <td className="font-semibold text-on-surface">[{h.ItemCode}]</td>
                     <td>{h.ItemName}</td>
-                    <td className="text-ink-soft">{h.OrganizationCode}</td>
+                    <td className="text-on-surface-variant">{h.OrganizationCode}</td>
                     <td className="!text-right font-medium text-primary-dark">
                       {h.LastPurchasedPrice !== null ? fmtNum(h.LastPurchasedPrice) : "—"}
                     </td>
@@ -680,7 +680,7 @@ function StockLookup({ token }: { token: string }) {
             </table>
           </div>
         )}
-        {busy && <div className="mt-2 text-sm text-ink-soft">Searching...</div>}
+        {busy && <div className="mt-2 text-sm text-on-surface-variant">Searching...</div>}
       </div>
     </div>
   );
@@ -830,7 +830,7 @@ export default function RequestDetailPage() {
   if (!req) {
     return (
       <AppShell>
-        <div className="py-10 text-center text-sm text-ink-soft">Loading request...</div>
+        <div className="py-10 text-center text-sm text-on-surface-variant">Loading request...</div>
       </AppShell>
     );
   }
@@ -942,14 +942,14 @@ export default function RequestDetailPage() {
 
   return (
     <AppShell>
-      <Link href="/requests" className="mb-3 flex items-center gap-1 text-sm text-ink-soft hover:text-primary-dark">
+      <Link href="/requests" className="mb-3 flex items-center gap-1 text-sm text-on-surface-variant hover:text-primary-dark">
         <Icon name="arrow_back" className="text-[16px]" /> Back to My Requests
       </Link>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-ink">
+        <h1 className="font-headline-lg text-headline-lg font-bold tracking-tight text-on-surface">
           {req.Title || "Untitled request"}{" "}
-          <span className="text-ink-soft">({req.TrackingNumber})</span>
+          <span className="text-on-surface-variant">({req.TrackingNumber})</span>
         </h1>
         <StatusBadge status={req.Status} />
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -964,7 +964,7 @@ export default function RequestDetailPage() {
             </button>
           )}
           {decideBlocked && req.DecideReason && (
-            <span className="rounded border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800">
+            <span className="rounded border border-secondary-fixed-dim bg-secondary-fixed px-3 py-1.5 text-xs font-medium text-on-secondary-fixed-variant">
               {req.DecideReason}
             </span>
           )}
@@ -978,7 +978,7 @@ export default function RequestDetailPage() {
                 Request Clarification
               </button>
               <button
-                className="inline-flex items-center justify-center gap-1.5 rounded border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 rounded border border-error/40 bg-surface-container-lowest px-4 py-2 text-sm font-semibold text-on-error-container transition-colors hover:bg-error-container disabled:cursor-not-allowed disabled:opacity-50"
                 disabled={busy !== null}
                 onClick={() => setDecision("REJECT")}
               >
@@ -1016,16 +1016,16 @@ export default function RequestDetailPage() {
             </button>
           )}
           {cancelArm && (
-            <span className="flex items-center gap-2 rounded border border-red-200 bg-red-50 px-3 py-1.5 text-sm">
-              <span className="font-medium text-red-800">Cancel this request?</span>
+            <span className="flex items-center gap-2 rounded border border-error/25 bg-error-container/60 px-3 py-1.5 text-sm">
+              <span className="font-medium text-on-error-container">Cancel this request?</span>
               <button
-                className="font-semibold text-red-700 hover:underline disabled:opacity-50"
+                className="font-semibold text-on-error-container hover:underline disabled:opacity-50"
                 disabled={busy !== null}
                 onClick={() => act("CANCEL")}
               >
                 Yes
               </button>
-              <button className="text-ink-soft hover:underline" onClick={() => setCancelArm(false)}>
+              <button className="text-on-surface-variant hover:underline" onClick={() => setCancelArm(false)}>
                 No
               </button>
             </span>
@@ -1033,7 +1033,7 @@ export default function RequestDetailPage() {
         </div>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-1 text-[13px] text-ink-soft">
+      <div className="mb-5 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] text-on-surface-variant">
         <span className="flex items-center gap-1">
           <Icon name="category" className="text-[16px]" />
           {req.FormTemplate.Category?.Name || "General"} · {req.FormTemplate.Name}
@@ -1078,24 +1078,24 @@ export default function RequestDetailPage() {
         const metric = (label: string, state: keyof typeof SLA_BADGE, due: string | null, done: string | null) => {
           const b = SLA_BADGE[state];
           return (
-            <div className="min-w-[150px] flex-1 rounded border border-surface-border p-3">
+            <div className="min-w-[150px] flex-1 rounded border border-surface-variant p-3">
               <div className="mb-1 flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-ink-faint">{label}</span>
+                <span className="font-label-sm text-label-sm font-bold uppercase tracking-wider text-outline">{label}</span>
                 {state !== "NONE" && (
                   <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${b.cls}`}>{b.label}</span>
                 )}
               </div>
               {due ? (
-                <div className="text-xs text-ink">
+                <div className="text-xs text-on-surface">
                   Due {fmtDateTime(due)}
                   {done ? (
-                    <span className="ml-1 text-ink-faint">· done in {fmtDuration(new Date(req.SubmittedAt ?? req.CreatedAt).getTime(), new Date(done).getTime())}</span>
+                    <span className="ml-1 text-outline">· done in {fmtDuration(new Date(req.SubmittedAt ?? req.CreatedAt).getTime(), new Date(done).getTime())}</span>
                   ) : (
-                    <span className="ml-1 text-ink-faint">· {fmtDuration(Date.now(), new Date(due).getTime())} left</span>
+                    <span className="ml-1 text-outline">· {fmtDuration(Date.now(), new Date(due).getTime())} left</span>
                   )}
                 </div>
               ) : (
-                <div className="text-xs text-ink-faint">No deadline</div>
+                <div className="text-xs text-outline">No deadline</div>
               )}
             </div>
           );
@@ -1103,7 +1103,7 @@ export default function RequestDetailPage() {
         return (
           <div className="card mb-4 p-4">
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-faint">
+              <h3 className="flex items-center gap-1.5 font-label-md text-label-md font-bold uppercase tracking-wider text-outline">
                 <Icon name="timer" className="text-[16px]" />
                 SLA{req.SLAPolicy ? ` — ${req.SLAPolicy.Name}` : ""}
               </h3>
@@ -1119,9 +1119,9 @@ export default function RequestDetailPage() {
               {metric("Resolution (TTR)", h.resolve, req.ResolveDueAt, req.ResolvedAt)}
             </div>
             {h.resolve !== "MET" && h.resolve !== "MISSED" && h.resolve !== "NONE" && req.ResolveDueAt && (
-              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-muted">
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-container">
                 <div
-                  className={`h-full rounded-full ${h.state === "BREACHED" ? "bg-red-500" : h.state === "DUE_SOON" ? "bg-amber-500" : "bg-green-500"}`}
+                  className={`h-full rounded-full ${h.state === "BREACHED" ? "bg-error-container/600" : h.state === "DUE_SOON" ? "bg-secondary-fixed0" : "bg-tertiary"}`}
                   style={{ width: `${Math.round(h.ttrElapsed * 100)}%` }}
                 />
               </div>
@@ -1131,19 +1131,19 @@ export default function RequestDetailPage() {
       })()}
 
       {actionError && (
-        <div className="mb-4 flex items-start gap-2 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+        <div className="mb-4 flex items-start gap-2 rounded border border-error/25 bg-error-container/60 px-4 py-3 text-sm text-on-error-container">
           <Icon name="error" className="mt-0.5 text-[18px]" />
           <span>{actionError}</span>
         </div>
       )}
 
       {req.OraclePoNumber && (
-        <div className="card mb-4 flex items-center gap-4 bg-purple-50/60 p-4">
-          <Icon name="receipt_long" className="text-[28px] text-purple-700" />
+        <div className="card mb-4 flex items-center gap-4 bg-surface-container-low p-4">
+          <Icon name="receipt_long" className="text-[28px] text-primary" />
           <div>
-            <div className="text-xs font-semibold uppercase tracking-wide text-purple-700">Oracle PO</div>
-            <div className="text-lg font-bold text-purple-900">{req.OraclePoNumber}</div>
-            <div className="text-xs text-ink-soft">
+            <div className="font-label-md text-label-md font-bold uppercase tracking-wider text-primary">Oracle PO</div>
+            <div className="font-label-lg text-label-lg font-bold text-on-surface">{req.OraclePoNumber}</div>
+            <div className="text-xs text-on-surface-variant">
               Registered{req.PoCreator ? ` by ${req.PoCreator.Name}` : ""}
               {req.PoCreatedAt ? ` · ${fmtDateTime(req.PoCreatedAt)}` : ""}
               {req.PoNotes ? ` · ${req.PoNotes}` : ""}
@@ -1154,16 +1154,16 @@ export default function RequestDetailPage() {
 
       {/* Workflow Status */}
       <div className="card mb-4 p-5">
-        <h3 className="mb-2 text-lg font-semibold text-ink">Workflow Status</h3>
+        <h3 className="mb-3 font-headline-sm text-headline-sm font-semibold text-on-surface">Workflow Status</h3>
         {req.Status === "DRAFT" ? (
-          <span className="badge bg-gray-100 text-gray-600">Not submitted yet — submit to start {req.FormTemplate.Workflow?.Name || "the approval workflow"}</span>
+          <span className="badge bg-surface-container text-on-surface-variant">Not submitted yet — submit to start {req.FormTemplate.Workflow?.Name || "the approval workflow"}</span>
         ) : req.Status === "CANCELLED" ? (
-          <span className="badge bg-gray-100 text-gray-500">Cancelled — workflow stopped</span>
+          <span className="badge bg-surface-container text-outline">Cancelled — workflow stopped</span>
         ) : (
           <WorkflowTimeline nodes={nodes} />
         )}
         {req.Status === "CLARIFICATION_REQUESTED" && (
-          <div className="mt-3 flex items-start gap-2 rounded border border-orange-200 bg-orange-50 px-3 py-2 text-[13px] text-orange-900">
+          <div className="mt-3 flex items-start gap-2 rounded border border-secondary-container bg-secondary-fixed/60 px-3 py-2 text-[13px] text-on-secondary-fixed">
             <Icon name="help" className="mt-0.5 text-[16px]" />
             <span>
               {isOwner
@@ -1177,8 +1177,8 @@ export default function RequestDetailPage() {
       {/* Summary + Items */}
       <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="card p-5">
-          <h3 className="mb-3 text-lg font-semibold text-ink">Request Summary</h3>
-          <div className="space-y-3 border-t border-surface-border pt-3">
+          <h3 className="mb-3 font-headline-sm text-headline-sm font-semibold text-on-surface">Request Summary</h3>
+          <div className="space-y-3 border-t border-surface-variant pt-3">
             <SummaryRow icon="person" label="Requestor">
               {req.Requester.Name}
             </SummaryRow>
@@ -1208,8 +1208,8 @@ export default function RequestDetailPage() {
 
         <div className="card overflow-hidden lg:col-span-2">
           <div className="flex items-center justify-between px-5 pt-5">
-            <h3 className="text-lg font-semibold text-ink">Requested Items</h3>
-            <span className="badge bg-gray-100 text-gray-600">
+            <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Requested Items</h3>
+            <span className="badge bg-surface-container text-on-surface-variant">
               {req.Items.length} Item{req.Items.length === 1 ? "" : "s"}
             </span>
           </div>
@@ -1226,7 +1226,7 @@ export default function RequestDetailPage() {
               <tbody>
                 {req.Items.length === 0 && (
                   <tr>
-                    <td colSpan={canVerify ? 4 : 3} className="py-6 text-center text-ink-faint">
+                    <td colSpan={canVerify ? 4 : 3} className="py-6 text-center text-outline">
                       No items
                     </td>
                   </tr>
@@ -1234,32 +1234,32 @@ export default function RequestDetailPage() {
                 {req.Items.map((it) => (
                   <tr key={it.RequestItemID}>
                     <td>
-                      <div className="font-medium text-ink">{it.RequestedItemName}</div>
+                      <div className="font-medium text-on-surface">{it.RequestedItemName}</div>
                       {(it.ItemCode || it.OrganizationCode) && (
-                        <div className="text-xs text-ink-faint">
+                        <div className="text-xs text-outline">
                           {it.ItemCode ? `[${it.ItemCode}]` : ""}
                           {it.ItemCode && it.OrganizationCode ? " · " : ""}
                           {it.OrganizationCode || ""}
                         </div>
                       )}
                       {it.EstimatedPrice !== null && (
-                        <div className="text-xs text-ink-faint">Est. {fmtNum(it.EstimatedPrice)}</div>
+                        <div className="text-xs text-outline">Est. {fmtNum(it.EstimatedPrice)}</div>
                       )}
                     </td>
-                    <td className="text-ink-soft">{it.RequestedItemDetails || it.ItemName || "—"}</td>
+                    <td className="text-on-surface-variant">{it.RequestedItemDetails || it.ItemName || "—"}</td>
                     <td className="!text-right">{qty(it.RequestedQuantity, it.RequestedUom || it.Uom)}</td>
                     {canVerify && (
                       <td>
                         {it.ItemVerifiedByUserID ? (
                           <div className="text-xs">
-                            <span className="flex items-center gap-1 font-semibold text-green-700">
+                            <span className="flex items-center gap-1 font-semibold text-tertiary">
                               <Icon name="verified" className="text-[16px]" /> Verified
                             </span>
-                            <span className="text-ink-faint">
+                            <span className="text-outline">
                               {it.Verifier?.Name}
                               {it.ItemVerifiedAt ? ` · ${fmtDate(it.ItemVerifiedAt)}` : ""}
                             </span>
-                            <span className="block text-ink-soft">
+                            <span className="block text-on-surface-variant">
                               On-hand {fmtNum(it.OnHandQuantity)} · Issue {fmtNum(it.IssuedFromStockQuantity)} ·
                               Buy {fmtNum(it.ToPurchaseQuantity)}
                             </span>
@@ -1295,7 +1295,7 @@ export default function RequestDetailPage() {
       {/* Attachments */}
       <div className="card mb-4 p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-ink">Attachments</h3>
+          <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Attachments</h3>
           <label className="btn-secondary cursor-pointer !py-1.5">
             <Icon name="attach_file" className="text-[18px]" /> {uploading ? "Uploading..." : "Add files"}
             <input
@@ -1311,15 +1311,15 @@ export default function RequestDetailPage() {
           </label>
         </div>
         {req.Attachments.length === 0 ? (
-          <p className="text-sm text-ink-faint">No attachments yet.</p>
+          <p className="text-sm text-outline">No attachments yet.</p>
         ) : (
-          <div className="divide-y divide-surface-border rounded border border-surface-border">
+          <div className="divide-y divide-surface-variant rounded border border-surface-variant">
             {req.Attachments.map((a) => (
               <div key={a.RequestAttachmentID} className="flex items-center gap-3 px-4 py-2.5">
-                <Icon name="description" className="text-[20px] text-ink-faint" />
+                <Icon name="description" className="text-[20px] text-outline" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-medium text-ink">{a.FileName}</span>
-                  <span className="block text-xs text-ink-faint">
+                  <span className="block truncate text-sm font-medium text-on-surface">{a.FileName}</span>
+                  <span className="block text-xs text-outline">
                     {fmtSize(Number(a.FileSize))} · {a.Uploader.Name} · {fmtDateTime(a.CreatedAt)}
                   </span>
                 </span>
@@ -1365,18 +1365,18 @@ export default function RequestDetailPage() {
 
       {/* Comments & Discussion */}
       <div className="card mb-4 p-5">
-        <h3 className="mb-4 border-b border-surface-border pb-3 text-lg font-semibold text-ink">
+        <h3 className="mb-4 border-b border-surface-variant pb-3 font-headline-sm text-headline-sm font-semibold text-on-surface">
           Comments &amp; Discussion
         </h3>
         <div className="space-y-4">
-          {feed.length === 0 && <p className="text-sm text-ink-faint">No comments yet.</p>}
+          {feed.length === 0 && <p className="text-sm text-outline">No comments yet.</p>}
           {feed.map((f) =>
             f.kind === "event" ? (
               <div key={f.a.RequestApprovalID} className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-surface-border" />
+                <div className="h-px flex-1 bg-surface-variant" />
                 <span
                   className={`badge gap-1 ${
-                    f.a.Decision === "APPROVED" ? "bg-blue-50 text-primary-dark" : "bg-red-50 text-red-700"
+                    f.a.Decision === "APPROVED" ? "bg-surface-container-low text-primary-dark" : "bg-error-container/60 text-on-error-container"
                   }`}
                 >
                   <Icon
@@ -1386,44 +1386,44 @@ export default function RequestDetailPage() {
                   {f.a.Approver.Name} {f.a.Decision === "APPROVED" ? "approved" : "rejected"} this step
                   {f.a.Comment ? ` — ${f.a.Comment}` : ""}
                 </span>
-                <div className="h-px flex-1 bg-surface-border" />
+                <div className="h-px flex-1 bg-surface-variant" />
               </div>
             ) : (
               <div key={f.c.RequestCommentID} className="flex gap-3">
                 <Avatar name={f.c.Author.Name} />
                 <div
-                  className={`flex-1 rounded-lg border border-surface-border p-3 ${
-                    f.c.IsInternal ? "border-l-2 !border-l-primary bg-surface" : "bg-white"
+                  className={`flex-1 rounded-lg border border-surface-variant p-3 ${
+                    f.c.IsInternal ? "border-l-2 !border-l-primary bg-surface-container-low" : "bg-surface-container-lowest"
                   }`}
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-sm font-semibold text-ink">{f.c.Author.Name}</span>
+                    <span className="text-sm font-semibold text-on-surface">{f.c.Author.Name}</span>
                     {f.c.Author.UserID === req.Requester.UserID ? (
-                      <span className="badge bg-blue-600 !px-2 !py-0 text-[11px] text-white">Requester</span>
+                      <span className="badge bg-primary !px-2 !py-0 text-[11px] text-white">Requester</span>
                     ) : (
-                      <span className="text-xs text-ink-soft">{f.c.Author.Role.Name}</span>
+                      <span className="text-xs text-on-surface-variant">{f.c.Author.Role.Name}</span>
                     )}
                     {f.c.CommentType === "CLARIFICATION" && (
-                      <span className="badge bg-orange-100 !px-2 !py-0 text-[11px] text-orange-800">
+                      <span className="badge bg-secondary-fixed !px-2 !py-0 text-[11px] text-on-secondary-fixed">
                         Clarification
                       </span>
                     )}
-                    <span className="ml-auto text-xs text-ink-faint">{fmtDateTime(f.c.CreatedAt)}</span>
+                    <span className="ml-auto text-xs text-outline">{fmtDateTime(f.c.CreatedAt)}</span>
                   </div>
                   {f.c.IsInternal && (
-                    <div className="mt-1 flex items-center gap-1 text-xs text-ink-soft">
+                    <div className="mt-1 flex items-center gap-1 text-xs text-on-surface-variant">
                       <Icon name="visibility_off" className="text-[14px]" /> Internal note — not visible to
                       requester
                     </div>
                   )}
-                  <p className="mt-1 whitespace-pre-wrap text-sm text-ink">{f.c.CommentText}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-on-surface">{f.c.CommentText}</p>
                 </div>
               </div>
             )
           )}
         </div>
 
-        <div className="mt-5 flex gap-3 border-t border-surface-border pt-4">
+        <div className="mt-5 flex gap-3 border-t border-surface-variant pt-4">
           <Avatar name={user?.name || "?"} />
           <div className="flex-1">
             <textarea
@@ -1440,10 +1440,10 @@ export default function RequestDetailPage() {
             <div className="mt-2 flex items-center justify-between">
               <div>
                 {canSeeInternal && (
-                  <label className="flex cursor-pointer items-center gap-2 text-[13px] text-ink-soft">
+                  <label className="flex cursor-pointer items-center gap-2 text-[13px] text-on-surface-variant">
                     <input
                       type="checkbox"
-                      className="h-4 w-4 rounded border-surface-border"
+                      className="h-4 w-4 rounded border-surface-variant"
                       checked={internal}
                       onChange={(e) => setInternal(e.target.checked)}
                     />
@@ -1451,7 +1451,7 @@ export default function RequestDetailPage() {
                   </label>
                 )}
                 {isOwner && req.Status === "CLARIFICATION_REQUESTED" && (
-                  <span className="text-[13px] text-ink-soft">Posting will resubmit your request automatically.</span>
+                  <span className="text-[13px] text-on-surface-variant">Posting will resubmit your request automatically.</span>
                 )}
               </div>
               <button className="btn-primary" disabled={busy !== null || !comment.trim()} onClick={postComment}>
@@ -1468,23 +1468,23 @@ export default function RequestDetailPage() {
 
       {/* Audit trail */}
       <details className="card">
-        <summary className="cursor-pointer px-5 py-3 font-semibold text-ink">
+        <summary className="cursor-pointer px-5 py-3 font-headline-sm text-body-md font-semibold text-on-surface">
           Audit Trail ({req.AuditLogs.length})
         </summary>
-        <div className="divide-y divide-surface-border border-t border-surface-border">
+        <div className="divide-y divide-surface-variant border-t border-surface-variant">
           {req.AuditLogs.length === 0 && (
-            <div className="px-5 py-4 text-sm text-ink-faint">No audit entries.</div>
+            <div className="px-5 py-4 text-sm text-outline">No audit entries.</div>
           )}
           {req.AuditLogs.map((a) => (
             <div key={a.AuditLogID} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-5 py-2.5 text-[13px]">
-              <span className="font-semibold text-ink">{auditLabel(a.Action)}</span>
+              <span className="font-semibold text-on-surface">{auditLabel(a.Action)}</span>
               {a.FromStatus && a.ToStatus && (
-                <span className="text-ink-soft">
+                <span className="text-on-surface-variant">
                   {a.FromStatus.replace(/_/g, " ")} → {a.ToStatus.replace(/_/g, " ")}
                 </span>
               )}
-              {a.Note && <span className="text-ink-faint">· {a.Note}</span>}
-              <span className="ml-auto text-ink-faint">
+              {a.Note && <span className="text-outline">· {a.Note}</span>}
+              <span className="ml-auto text-outline">
                 {a.ChangedBy?.Name || "System"} · {timeAgo(a.CreatedAt)}
               </span>
             </div>

@@ -198,31 +198,31 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
   if (f.fieldType === "section") {
     return (
       <div className="pointer-events-none border-l-2 border-primary pl-3">
-        <div className="text-base font-bold text-ink">
-          {f.label || <span className="text-ink-faint">Untitled section</span>}
+        <div className="text-base font-bold text-on-surface">
+          {f.label || <span className="text-outline">Untitled section</span>}
         </div>
-        {f.help && <p className="mt-0.5 text-xs text-ink-soft">{f.help}</p>}
+        {f.help && <p className="mt-0.5 text-xs text-on-surface-variant">{f.help}</p>}
       </div>
     );
   }
   if (f.fieldType === "file") {
     return (
       <div className="pointer-events-none">
-        <div className="mb-1 block text-sm font-medium text-ink">
-          {f.label || <span className="text-ink-faint">Untitled field</span>}{" "}
+        <div className="mb-1 block text-sm font-medium text-on-surface">
+          {f.label || <span className="text-outline">Untitled field</span>}{" "}
           {f.isRequired && <span className="text-danger">*</span>}
         </div>
-        <div className="flex items-center justify-center gap-2 rounded border border-dashed border-surface-border bg-surface-muted px-4 py-4 text-sm text-ink-soft">
+        <div className="flex items-center justify-center gap-2 rounded border border-dashed border-surface-variant bg-surface-container px-4 py-4 text-sm text-on-surface-variant">
           <Icon name="attach_file" className="text-[20px]" />
           Choose files...
         </div>
-        {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+        {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
       </div>
     );
   }
   if (f.fieldType === "checkbox") {
     return (
-      <div className="pointer-events-none flex items-center gap-2 pt-1 text-sm text-ink">
+      <div className="pointer-events-none flex items-center gap-2 pt-1 text-sm text-on-surface">
         <input type="checkbox" disabled className="h-4 w-4" />
         <span className="font-medium">
           {f.label || "Checkbox"} {f.isRequired && <span className="text-danger">*</span>}
@@ -234,21 +234,21 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
     const opts = optionsOf(f);
     return (
       <div className="pointer-events-none">
-        <div className="mb-1 block text-sm font-medium text-ink">
-          {f.label || <span className="text-ink-faint">Untitled field</span>}{" "}
+        <div className="mb-1 block text-sm font-medium text-on-surface">
+          {f.label || <span className="text-outline">Untitled field</span>}{" "}
           {f.isRequired && <span className="text-danger">*</span>}
         </div>
         <div className="space-y-1">
           {(opts.length > 0 ? opts.slice(0, 3) : ["Option"]).map((o) => (
-            <label key={o} className="flex items-center gap-2 text-sm text-ink-soft">
+            <label key={o} className="flex items-center gap-2 text-sm text-on-surface-variant">
               <input type="radio" disabled className="h-4 w-4" /> {o}
             </label>
           ))}
           {opts.length > 3 && (
-            <div className="text-xs text-ink-faint">+{opts.length - 3} more</div>
+            <div className="text-xs text-outline">+{opts.length - 3} more</div>
           )}
         </div>
-        {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+        {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
       </div>
     );
   }
@@ -268,29 +268,29 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
             : "Select...";
     return (
       <div className="pointer-events-none">
-        <div className="mb-1 block text-sm font-medium text-ink">
-          {f.label || <span className="text-ink-faint">Untitled field</span>}{" "}
+        <div className="mb-1 block text-sm font-medium text-on-surface">
+          {f.label || <span className="text-outline">Untitled field</span>}{" "}
           {f.isRequired && <span className="text-danger">*</span>}
         </div>
-        <select disabled className="input bg-surface-muted">
+        <select disabled className="input bg-surface-container">
           <option>{ph}</option>
         </select>
-        {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+        {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
       </div>
     );
   }
   const fcur = f.fieldType === "currency" ? currencyByCode(f.currency) || null : null;
   return (
     <div className="pointer-events-none">
-      <div className="mb-1 block text-sm font-medium text-ink">
-        {f.label || <span className="text-ink-faint">Untitled field</span>}{" "}
+      <div className="mb-1 block text-sm font-medium text-on-surface">
+        {f.label || <span className="text-outline">Untitled field</span>}{" "}
         {f.isRequired && <span className="text-danger">*</span>}
       </div>
       {f.fieldType === "textarea" ? (
         <textarea
           disabled
           rows={2}
-          className="input bg-surface-muted"
+          className="input bg-surface-container"
           placeholder={f.placeholder || undefined}
         />
       ) : fcur ? (
@@ -298,10 +298,10 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
           <input
             disabled
             type="number"
-            className="input bg-surface-muted !pr-14"
+            className="input bg-surface-container !pr-14"
             placeholder={f.placeholder || undefined}
           />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-soft">
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-on-surface-variant">
             {fcur.symbol}
           </span>
         </div>
@@ -309,11 +309,11 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
         <input
           disabled
           type={inputType(f.fieldType)}
-          className="input bg-surface-muted"
+          className="input bg-surface-container"
           placeholder={f.placeholder || undefined}
         />
       )}
-      {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+      {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
     </div>
   );
 }
@@ -342,11 +342,11 @@ function LivePreview({
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-ink">{name || "Untitled Form"}</h2>
-      {description && <p className="mt-1 text-sm text-ink-soft">{description}</p>}
-      <div className="my-4 border-b border-dashed border-surface-border" />
+      <h2 className="text-xl font-bold text-on-surface">{name || "Untitled Form"}</h2>
+      {description && <p className="mt-1 text-sm text-on-surface-variant">{description}</p>}
+      <div className="my-4 border-b border-dashed border-surface-variant" />
       {fields.length === 0 && (
-        <p className="py-6 text-center text-sm text-ink-faint">
+        <p className="py-6 text-center text-sm text-outline">
           No fields yet — requesters will only fill title, priority and items.
         </p>
       )}
@@ -373,8 +373,8 @@ function LivePreview({
             <div key={f.key} className={wide ? "md:col-span-2" : ""}>
               {f.fieldType === "section" ? (
                 <div className="border-l-2 border-primary pl-3">
-                  <div className="text-base font-bold text-ink">{f.label || "Untitled section"}</div>
-                  {f.help && <p className="mt-0.5 text-xs text-ink-soft">{f.help}</p>}
+                  <div className="text-base font-bold text-on-surface">{f.label || "Untitled section"}</div>
+                  {f.help && <p className="mt-0.5 text-xs text-on-surface-variant">{f.help}</p>}
                 </div>
               ) : f.fieldType === "file" ? (
                 <>
@@ -382,7 +382,7 @@ function LivePreview({
                     {f.label || "Untitled field"}{" "}
                     {f.isRequired && <span className="text-danger">*</span>}
                   </label>
-                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-surface-border bg-surface px-4 py-4 text-sm font-medium text-ink-soft transition-colors hover:border-primary hover:text-primary-dark">
+                  <label className="flex cursor-pointer items-center justify-center gap-2 rounded border border-dashed border-surface-variant bg-surface-container-low px-4 py-4 text-sm font-medium text-on-surface-variant transition-colors hover:border-primary hover:text-primary-dark">
                     <Icon name="attach_file" className="text-[20px]" />
                     {(() => {
                       const n = (vals[f.key] || "").split("|").filter(Boolean).length;
@@ -402,11 +402,11 @@ function LivePreview({
                       }
                     />
                   </label>
-                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                  {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
                 </>
               ) : f.fieldType === "checkbox" ? (
                 <>
-                  <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-ink">
+                  <label className="flex cursor-pointer items-center gap-2 pt-1 text-sm text-on-surface">
                     <input
                       type="checkbox"
                       className="h-4 w-4"
@@ -418,7 +418,7 @@ function LivePreview({
                       {f.isRequired && <span className="text-danger">*</span>}
                     </span>
                   </label>
-                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                  {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
                 </>
               ) : f.fieldType === "radio" ? (
                 <>
@@ -428,10 +428,10 @@ function LivePreview({
                   </span>
                   <div className="space-y-1.5 pt-1">
                     {opts.length === 0 && (
-                      <p className="text-xs italic text-ink-faint">No options defined yet</p>
+                      <p className="text-xs italic text-outline">No options defined yet</p>
                     )}
                     {opts.map((o) => (
-                      <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                      <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-on-surface">
                         <input
                           type="radio"
                           name={f.key}
@@ -443,7 +443,7 @@ function LivePreview({
                       </label>
                     ))}
                   </div>
-                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                  {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
                 </>
               ) : f.fieldType === "multiselect" ? (
                 <>
@@ -451,12 +451,12 @@ function LivePreview({
                     {f.label || "Untitled field"}{" "}
                     {f.isRequired && <span className="text-danger">*</span>}
                   </span>
-                  <div className="space-y-1.5 rounded border border-surface-border p-3 pt-2">
+                  <div className="space-y-1.5 rounded border border-surface-variant p-3 pt-2">
                     {opts.length === 0 && (
-                      <p className="text-xs italic text-ink-faint">No options defined yet</p>
+                      <p className="text-xs italic text-outline">No options defined yet</p>
                     )}
                     {opts.map((o) => (
-                      <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-ink">
+                      <label key={o} className="flex cursor-pointer items-center gap-2 text-sm text-on-surface">
                         <input
                           type="checkbox"
                           className="h-4 w-4"
@@ -467,7 +467,7 @@ function LivePreview({
                       </label>
                     ))}
                   </div>
-                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                  {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
                 </>
               ) : f.fieldType === "user" || f.fieldType === "department" ? (
                 <>
@@ -489,7 +489,7 @@ function LivePreview({
                       </option>
                     ))}
                   </select>
-                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                  {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
                 </>
               ) : (
                 <>
@@ -531,7 +531,7 @@ function LivePreview({
                           onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
                           {...numAttrs}
                         />
-                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-ink-soft">
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-on-surface-variant">
                           {pcur.symbol}
                         </span>
                       </div>
@@ -552,7 +552,7 @@ function LivePreview({
                       {...lenAttrs}
                     />
                   )}
-                  {f.help && <p className="mt-1 text-xs text-ink-faint">{f.help}</p>}
+                  {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
                 </>
               )}
             </div>
@@ -979,7 +979,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         </Link>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-ink">
+            <h1 className="text-2xl font-bold text-on-surface">
               {isNew ? "New Form Template" : `Edit Form: ${name || "..."}`}
             </h1>
             {!isNew && <StatusBadge status={status} />}
@@ -989,8 +989,8 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
               onClick={() => setPreview(!preview)}
               className={`inline-flex items-center gap-1.5 rounded border px-4 py-2 text-sm font-semibold ${
                 preview
-                  ? "border-primary bg-blue-50 text-primary"
-                  : "border-surface-border bg-white text-ink-soft hover:border-primary hover:text-primary"
+                  ? "border-primary bg-surface-container-low text-primary"
+                  : "border-surface-variant bg-surface-container-lowest text-on-surface-variant hover:border-primary hover:text-primary"
               }`}
             >
               <Icon name="visibility" className="text-[18px]" />
@@ -1013,24 +1013,24 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
       </div>
 
       {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+        <div className="mb-4 rounded border border-error/25 bg-error-container/60 px-4 py-3 text-sm font-medium text-on-error-container">
           {error}
         </div>
       )}
 
       {loading ? (
-        <div className="py-16 text-center text-sm text-ink-soft">Loading template...</div>
+        <div className="py-16 text-center text-sm text-on-surface-variant">Loading template...</div>
       ) : (
         <div className="grid items-start gap-4 xl:grid-cols-[230px_minmax(0,1fr)_300px]">
           {/* ---- Field palette ---- */}
           <div className={`card p-4 ${preview ? "pointer-events-none opacity-50" : ""}`}>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-ink-faint">
+            <h2 className="mb-3 text-xs font-bold uppercase tracking-wide text-outline">
               Field Types
             </h2>
             <div className="grid grid-cols-2 gap-2 xl:grid-cols-1">
               {FIELD_TYPE_GROUPS.map((sec) => (
                 <div key={sec} className="col-span-2 xl:col-span-1">
-                  <div className="mb-1.5 mt-2 text-xs font-semibold text-ink-soft first:mt-0">
+                  <div className="mb-1.5 mt-2 text-xs font-semibold text-on-surface-variant first:mt-0">
                     {sec}
                   </div>
                   <div className="grid grid-cols-2 gap-2">
@@ -1044,11 +1044,11 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         }}
                         onClick={() => canManage && insertField(t.value, fields.length)}
                         title={canManage ? "Drag onto the canvas, or click to add" : fieldTypeLabel(t.value)}
-                        className={`flex flex-col items-center gap-1 rounded border border-surface-border bg-white px-2 py-3 text-center ${
+                        className={`flex flex-col items-center gap-1 rounded border border-surface-variant bg-surface-container-lowest px-2 py-3 text-center ${
                           canManage ? "cursor-grab hover:border-primary hover:text-primary" : ""
                         }`}
                       >
-                        <Icon name={t.icon} className="text-[22px] text-ink-soft" />
+                        <Icon name={t.icon} className="text-[22px] text-on-surface-variant" />
                         <span className="text-xs font-medium">{t.label}</span>
                       </div>
                     ))}
@@ -1056,7 +1056,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 </div>
               ))}
             </div>
-            <p className="mt-3 text-[11px] leading-snug text-ink-faint">
+            <p className="mt-3 text-[11px] leading-snug text-outline">
               Items and attachments are built into every request — no need to add them as fields.
             </p>
           </div>
@@ -1074,7 +1074,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
           >
             {preview ? (
               <>
-                <div className="mb-4 rounded bg-blue-50 px-3 py-2 text-xs font-medium text-primary">
+                <div className="mb-4 rounded bg-surface-container-low px-3 py-2 text-xs font-medium text-primary">
                   Preview mode — try the form as a requester. Nothing here is saved.
                 </div>
                 <LivePreview
@@ -1087,15 +1087,15 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
               </>
             ) : (
               <>
-                <h2 className="text-xl font-bold text-ink">{name || "Untitled Form"}</h2>
+                <h2 className="text-xl font-bold text-on-surface">{name || "Untitled Form"}</h2>
                 {description ? (
-                  <p className="mt-1 text-sm text-ink-soft">{description}</p>
+                  <p className="mt-1 text-sm text-on-surface-variant">{description}</p>
                 ) : (
-                  <p className="mt-1 text-sm italic text-ink-faint">
+                  <p className="mt-1 text-sm italic text-outline">
                     Add a description in Form Settings — it shows on the catalog card.
                   </p>
                 )}
-                <div className="my-4 border-b border-dashed border-surface-border" />
+                <div className="my-4 border-b border-dashed border-surface-variant" />
                 <div className="space-y-1.5">
                   {fields.map((f, i) => {
                     const active = f.key === selectedKey;
@@ -1120,8 +1120,8 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           title={canManage ? "Click to edit — drag to reorder" : undefined}
                           className={`relative rounded-lg border-2 p-3 pt-4 ${
                             active
-                              ? "border-primary bg-blue-50/40"
-                              : "border-transparent bg-white hover:border-surface-border"
+                              ? "border-primary bg-surface-container-low/40"
+                              : "border-transparent bg-surface-container-lowest hover:border-surface-variant"
                           } ${canManage ? "cursor-grab" : ""}`}
                         >
                           {active && (
@@ -1135,7 +1135,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                                   onClick={(e) => e.stopPropagation()}
                                 >
                                   <button
-                                    className="icon-btn !h-7 !w-7 bg-white shadow-sm"
+                                    className="icon-btn !h-7 !w-7 bg-surface-container-lowest shadow-sm"
                                     disabled={i === 0}
                                     onClick={() => moveField(f.key, -1)}
                                     aria-label="Move up"
@@ -1143,7 +1143,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                                     <Icon name="arrow_upward" className="text-[18px]" />
                                   </button>
                                   <button
-                                    className="icon-btn !h-7 !w-7 bg-white shadow-sm"
+                                    className="icon-btn !h-7 !w-7 bg-surface-container-lowest shadow-sm"
                                     disabled={i === fields.length - 1}
                                     onClick={() => moveField(f.key, 1)}
                                     aria-label="Move down"
@@ -1151,7 +1151,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                                     <Icon name="arrow_downward" className="text-[18px]" />
                                   </button>
                                   <button
-                                    className="icon-btn !h-7 !w-7 bg-white text-danger shadow-sm hover:bg-red-50"
+                                    className="icon-btn !h-7 !w-7 bg-surface-container-lowest text-danger shadow-sm hover:bg-error-container"
                                     onClick={() => removeField(f.key)}
                                     aria-label="Remove field"
                                   >
@@ -1170,12 +1170,12 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     <div className="h-0.5 rounded bg-primary" />
                   )}
                   {fields.length === 0 && (
-                    <div className="rounded-lg border-2 border-dashed border-surface-border px-4 py-14 text-center">
-                      <Icon name="add_circle" className="text-[28px] text-ink-faint" />
-                      <div className="mt-2 text-sm font-medium text-ink-soft">
+                    <div className="rounded-lg border-2 border-dashed border-surface-variant px-4 py-14 text-center">
+                      <Icon name="add_circle" className="text-[28px] text-outline" />
+                      <div className="mt-2 text-sm font-medium text-on-surface-variant">
                         Drag &amp; Drop fields here
                       </div>
-                      <div className="text-xs text-ink-faint">
+                      <div className="text-xs text-outline">
                         {canManage
                           ? "or click a field type to add it"
                           : "this template has no custom fields"}
@@ -1189,13 +1189,13 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
 
           {/* ---- Settings panel ---- */}
           <div className="card overflow-hidden">
-            <div className="flex border-b border-surface-border text-sm font-semibold">
+            <div className="flex border-b border-surface-variant text-sm font-semibold">
               <button
                 onClick={() => setSettingsTab("field")}
                 className={`flex-1 px-3 py-2.5 ${
                   settingsTab === "field"
                     ? "border-b-2 border-primary text-primary"
-                    : "text-ink-soft hover:text-ink"
+                    : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
                 Field Settings
@@ -1205,7 +1205,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 className={`flex-1 px-3 py-2.5 ${
                   settingsTab === "form"
                     ? "border-b-2 border-primary text-primary"
-                    : "text-ink-soft hover:text-ink"
+                    : "text-on-surface-variant hover:text-on-surface"
                 }`}
               >
                 Form Settings
@@ -1216,14 +1216,14 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                 selected ? (
                   <>
                     <div className="flex items-center gap-2">
-                      <span className="flex h-9 w-9 items-center justify-center rounded bg-blue-100 text-primary">
+                      <span className="flex h-9 w-9 items-center justify-center rounded bg-primary-fixed text-primary">
                         <Icon name={fieldTypeIcon(selected.fieldType)} className="text-[20px]" />
                       </span>
                       <div>
-                        <div className="text-sm font-semibold text-ink">
+                        <div className="text-sm font-semibold text-on-surface">
                           {fieldTypeLabel(selected.fieldType)}
                         </div>
-                        <div className="font-mono text-[11px] text-ink-faint">
+                        <div className="font-mono text-[11px] text-outline">
                           {selected.fieldKey || "no key yet"}
                         </div>
                       </div>
@@ -1294,7 +1294,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     </div>
                     {selected.fieldType !== "section" && (
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-ink">Required field</span>
+                        <span className="text-sm font-medium text-on-surface">Required field</span>
                         <button
                           type="button"
                           role="switch"
@@ -1306,7 +1306,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           } disabled:opacity-50`}
                         >
                           <span
-                            className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
+                            className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface-container-lowest transition-all ${
                               selected.isRequired ? "left-[18px]" : "left-0.5"
                             }`}
                           />
@@ -1314,10 +1314,10 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                       </div>
                     )}
                     {selected.fieldType !== "section" && (
-                      <div className="rounded border border-surface-border p-2.5">
-                        <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                      <div className="rounded border border-surface-variant p-2.5">
+                        <div className="mb-1.5 text-xs font-bold uppercase tracking-wide text-on-surface-variant">
                           Show this field when...{" "}
-                          <span className="font-normal normal-case text-ink-faint">(optional)</span>
+                          <span className="font-normal normal-case text-outline">(optional)</span>
                         </div>
                         <div className="space-y-2">
                           <select
@@ -1363,7 +1363,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                                   placeholder="Value to compare, e.g. Yes"
                                 />
                               )}
-                              <p className="text-[11px] text-ink-faint">
+                              <p className="text-[11px] text-outline">
                                 While the condition is unmet the field hides and its required rule pauses.
                               </p>
                             </>
@@ -1374,7 +1374,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     <div>
                       <label className="label">
                         {selected.fieldType === "section" ? "Description" : "Help Text"}{" "}
-                        <span className="float-right font-normal text-ink-faint">Optional</span>
+                        <span className="float-right font-normal text-outline">Optional</span>
                       </label>
                       <textarea
                         rows={2}
@@ -1393,7 +1393,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                       <div>
                         <label className="label">
                           Placeholder{" "}
-                          <span className="float-right font-normal text-ink-faint">Optional</span>
+                          <span className="float-right font-normal text-outline">Optional</span>
                         </label>
                         <input
                           className="input"
@@ -1495,7 +1495,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         <div>
                           <label className="label">
                             Allowed types{" "}
-                            <span className="float-right font-normal text-ink-faint">Optional</span>
+                            <span className="float-right font-normal text-outline">Optional</span>
                           </label>
                           <input
                             className="input font-mono text-xs"
@@ -1541,15 +1541,15 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     {canManage && (
                       <button
                         onClick={() => removeField(selected.key)}
-                        className="flex w-full items-center justify-center gap-1.5 rounded border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-danger hover:bg-red-50"
+                        className="flex w-full items-center justify-center gap-1.5 rounded border border-error/25 bg-surface-container-lowest px-3 py-2 text-sm font-semibold text-danger hover:bg-error-container"
                       >
                         <Icon name="delete" className="text-[18px]" /> Remove
                       </button>
                     )}
                   </>
                 ) : (
-                  <div className="py-10 text-center text-sm text-ink-soft">
-                    <Icon name="touch_app" className="text-[28px] text-ink-faint" />
+                  <div className="py-10 text-center text-sm text-on-surface-variant">
+                    <Icon name="touch_app" className="text-[28px] text-outline" />
                     <div className="mt-2">Select a field on the canvas to edit its settings.</div>
                   </div>
                 )
@@ -1627,7 +1627,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         </option>
                       ))}
                     </select>
-                    <p className="mt-1 text-[11px] text-ink-faint">
+                    <p className="mt-1 text-[11px] text-outline">
                       Response & resolution deadlines (TTA/TTR) applied to requests of this form, by priority.
                     </p>
                   </div>
@@ -1645,8 +1645,8 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                   </div>
 
                   {/* ---- Request ID format ---- */}
-                  <div className="rounded border border-surface-border p-3">
-                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                  <div className="rounded border border-surface-variant p-3">
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-on-surface-variant">
                       Request ID Format
                     </div>
                     <div className="space-y-2">
@@ -1688,7 +1688,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                             onChange={(e) => setIdPadding(e.target.value)}
                           />
                         </div>
-                        <label className="flex cursor-pointer items-center gap-2 pb-2 text-xs font-medium text-ink">
+                        <label className="flex cursor-pointer items-center gap-2 pb-2 text-xs font-medium text-on-surface">
                           <input
                             type="checkbox"
                             className="h-4 w-4"
@@ -1699,18 +1699,18 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           Include year
                         </label>
                       </div>
-                      <div className="rounded bg-surface-muted px-2.5 py-2 font-mono text-xs text-ink">
+                      <div className="rounded bg-surface-container px-2.5 py-2 font-mono text-xs text-on-surface">
                         {idPreview || "Off - requests use REQ-YYYY-NNNNN"}
                       </div>
-                      <p className="text-[11px] leading-snug text-ink-faint">
+                      <p className="text-[11px] leading-snug text-outline">
                         The prefix must be unique and is checked against existing IDs. Issued IDs never change.
                       </p>
                     </div>
                   </div>
 
                   {/* ---- Responsible owner ---- */}
-                  <div className="rounded border border-surface-border p-3">
-                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                  <div className="rounded border border-surface-variant p-3">
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-on-surface-variant">
                       Responsible Owner
                     </div>
                     <div className="space-y-2">
@@ -1754,18 +1754,18 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           ))}
                         </select>
                       )}
-                      <p className="text-[11px] leading-snug text-ink-faint">
+                      <p className="text-[11px] leading-snug text-outline">
                         The owner is shown on the catalog card and notified on new submissions.
                       </p>
                     </div>
                   </div>
 
                   {/* ---- Request Inputs (built-in) ---- */}
-                  <div className="rounded border border-surface-border p-3">
-                    <div className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                  <div className="rounded border border-surface-variant p-3">
+                    <div className="mb-1 text-xs font-bold uppercase tracking-wide text-on-surface-variant">
                       Request Inputs
                     </div>
-                    <p className="mb-2 text-[11px] text-ink-faint">
+                    <p className="mb-2 text-[11px] text-outline">
                       Standard inputs of every request. Unticked inputs simply do not appear when
                       filling this form — add fields above for anything custom.
                     </p>
@@ -1774,14 +1774,14 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                         const st = builtins[b.key];
                         return (
                           <div key={b.key} className="flex items-center justify-between gap-2">
-                            <span className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-ink" title={b.description}>
-                              <Icon name={b.icon} className="text-[16px] text-ink-faint" />
+                            <span className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-on-surface" title={b.description}>
+                              <Icon name={b.icon} className="text-[16px] text-outline" />
                               <span className="truncate">{b.label}</span>
                             </span>
                             <span className="flex items-center gap-3">
                               {b.hasRequired && (
                                 <label
-                                  className={`flex items-center gap-1 text-[11px] ${st.show ? "text-ink" : "text-ink-faint"}`}
+                                  className={`flex items-center gap-1 text-[11px] ${st.show ? "text-on-surface" : "text-outline"}`}
                                   title="Must be filled before submission"
                                 >
                                   <input
@@ -1813,7 +1813,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                                 title={st.show ? "Shown on the form" : "Hidden from the form"}
                               >
                                 <span
-                                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${
+                                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface-container-lowest transition-all ${
                                     st.show ? "left-[18px]" : "left-0.5"
                                   }`}
                                 />
@@ -1826,8 +1826,8 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                   </div>
 
                   {/* ---- Visibility ---- */}
-                  <div className="rounded border border-surface-border p-3">
-                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
+                  <div className="rounded border border-surface-variant p-3">
+                    <div className="mb-2 text-xs font-bold uppercase tracking-wide text-on-surface-variant">
                       Visibility — who can see & request this form
                     </div>
                     <div className="mb-2 flex gap-2">
@@ -1839,8 +1839,8 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           onClick={() => setVisMode(m)}
                           className={`flex-1 rounded border px-2 py-1.5 text-xs font-semibold capitalize ${
                             visMode === m
-                              ? "border-primary bg-blue-50 text-primary"
-                              : "border-surface-border text-ink-soft hover:border-primary"
+                              ? "border-primary bg-surface-container-low text-primary"
+                              : "border-surface-variant text-on-surface-variant hover:border-primary"
                           } disabled:opacity-50`}
                         >
                           {m}
@@ -1848,7 +1848,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                       ))}
                     </div>
                     {visMode === "public" ? (
-                      <p className="text-[11px] leading-snug text-ink-faint">
+                      <p className="text-[11px] leading-snug text-outline">
                         Everyone who can create requests can see and use this form.
                       </p>
                     ) : (
@@ -1890,7 +1890,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           </div>
                         )}
                         {visChips.length === 0 && (
-                          <p className="text-[11px] italic text-ink-faint">
+                          <p className="text-[11px] italic text-outline">
                             No entries yet — add at least one, or switch back to Public.
                           </p>
                         )}
@@ -1898,11 +1898,11 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                           {visChips.map((c) => (
                             <span
                               key={c.key}
-                              className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface-muted py-1 pl-2.5 pr-1 text-xs font-medium text-ink"
+                              className="inline-flex max-w-full items-center gap-1 rounded-full bg-surface-container py-1 pl-2.5 pr-1 text-xs font-medium text-on-surface"
                             >
                               <Icon
                                 name={c.kind === "dep" ? "apartment" : c.kind === "group" ? "group" : "person"}
-                                className="text-[14px] text-ink-faint"
+                                className="text-[14px] text-outline"
                               />
                               <span className="truncate">{c.label}</span>
                               {canManage && (
@@ -1912,7 +1912,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                                   onClick={() =>
                                     setVisChips((prev) => prev.filter((x) => x.key !== c.key))
                                   }
-                                  className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-surface-border"
+                                  className="flex h-5 w-5 items-center justify-center rounded-full hover:bg-surface-variant"
                                 >
                                   <Icon name="close" className="text-[14px]" />
                                 </button>
@@ -1924,9 +1924,9 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                     )}
                   </div>
 
-                  <div className="rounded bg-surface-muted p-3">
-                    <div className="mb-1.5 text-xs font-semibold text-ink">How it works</div>
-                    <ul className="list-disc space-y-1 pl-4 text-[11px] leading-snug text-ink-soft">
+                  <div className="rounded bg-surface-container p-3">
+                    <div className="mb-1.5 text-xs font-semibold text-on-surface">How it works</div>
+                    <ul className="list-disc space-y-1 pl-4 text-[11px] leading-snug text-on-surface-variant">
                       <li>Only Active templates appear in the New Request catalog.</li>
                       <li>Set an ID prefix (e.g. PR) for custom numbering like PR1, PR2.</li>
                       <li>Field keys must be unique — they identify answers.</li>

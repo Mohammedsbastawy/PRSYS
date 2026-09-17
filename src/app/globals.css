@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..0&display=swap');
 
 @tailwind base;
@@ -6,8 +6,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #f8f9fb;
-  --foreground: #1e293b;
+  --background: #f8f9ff;
+  --foreground: #161c25;
 }
 
 * {
@@ -20,9 +20,10 @@ body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Inter, system-ui, -apple-system, sans-serif;
+  font-family: 'Hanken Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   font-size: 14px;
   line-height: 1.5;
+  font-feature-settings: 'tnum';
 }
 
 /* ---- Material Symbols (mockup icon set) ---- */
@@ -67,7 +68,7 @@ body {
   width: 8px;
 }
 .slim-scroll::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #c4cbd4;
   border-radius: 4px;
 }
 .slim-scroll::-webkit-scrollbar-track {
@@ -82,58 +83,78 @@ body {
 }
 
 @layer components {
+  /* ---- Buttons (Warm Slate & Tangerine) ---- */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn bg-primary text-white hover:bg-primary-dark;
+    @apply btn bg-primary text-on-primary shadow-cta hover:bg-primary-light;
   }
   .btn-secondary {
-    @apply btn border border-surface-border bg-white text-ink hover:bg-surface-muted;
+    @apply btn border border-surface-variant bg-surface-container-lowest text-on-surface hover:border-outline-variant hover:bg-surface-container-low;
   }
   .btn-ghost {
-    @apply btn text-ink-soft hover:bg-surface-muted;
+    @apply btn text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface;
   }
   .btn-danger {
-    @apply btn bg-danger text-white hover:bg-red-700;
+    @apply btn bg-error text-on-error hover:bg-on-error-container;
   }
   .icon-btn {
-    @apply flex h-9 w-9 items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-surface-muted active:opacity-80;
+    @apply flex h-9 w-9 items-center justify-center rounded-lg text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface active:opacity-80;
   }
+
+  /* ---- Forms ---- */
   .input {
-    @apply w-full rounded border border-surface-border bg-white px-3 py-2 text-sm text-ink outline-none focus:border-primary focus:ring-2 focus:ring-primary/10;
+    @apply w-full h-10 rounded-lg border border-surface-variant bg-surface-container-lowest px-3 text-sm text-on-surface placeholder:text-outline outline-none transition-shadow focus:border-primary focus:ring-[3px] focus:ring-primary/15;
+  }
+  textarea.input {
+    @apply h-auto py-2;
+  }
+  select.input {
+    @apply pr-8;
   }
   .label {
-    @apply mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-soft;
+    @apply mb-1.5 block font-label-md text-label-md uppercase tracking-wider font-semibold text-on-surface-variant;
   }
+
+  /* ---- Surfaces ---- */
   .card {
-    @apply rounded-lg border border-surface-border bg-white;
+    @apply rounded-xl border border-surface-variant bg-surface-container-lowest shadow-tier1;
   }
   .badge {
-    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 font-label-sm text-label-sm font-semibold tracking-wide;
   }
-  /* Top-nav tab (mockup fixed_nav pattern) */
-  .nav-tab {
-    @apply flex h-full items-center whitespace-nowrap px-3 text-sm text-ink-soft transition-colors hover:bg-surface-muted hover:text-primary-dark;
+
+  /* ---- Sidebar (new shell) ---- */
+  .nav-item {
+    @apply flex items-center justify-between gap-space-sm rounded-lg px-space-sm py-2 text-on-surface-variant transition-all hover:bg-surface-container-high hover:text-on-surface;
   }
-  .nav-tab-active {
-    @apply border-b-2 border-primary font-semibold text-primary-dark;
+  .nav-item-active {
+    @apply bg-primary-container text-on-primary-container font-semibold;
   }
-  /* Dropdown panel */
+  .nav-item-active:hover {
+    @apply bg-primary-container text-on-primary-container;
+  }
+  .nav-section {
+    @apply px-space-sm pt-space-md pb-1 font-label-sm text-label-sm uppercase tracking-wider font-semibold text-outline;
+  }
+
+  /* Dropdown panel (tier-2 elevation) */
   .dropdown {
-    @apply animate-dropdown absolute right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-surface-border bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)];
+    @apply animate-dropdown absolute right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-surface-variant bg-surface-container-lowest shadow-tier2;
   }
-  /* Dense enterprise table */
+
+  /* Dense enterprise table (mono headers per design system) */
   .tbl th {
-    @apply bg-surface px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-ink-soft;
+    @apply bg-surface-container px-4 py-2.5 text-left font-label-md text-label-md uppercase tracking-wider text-on-surface-variant;
   }
   .tbl td {
-    @apply px-4 py-3 text-sm;
+    @apply border-t border-surface-variant/70 px-4 py-3 text-sm;
   }
   .tbl tbody tr {
-    @apply border-t border-surface-border transition-colors;
+    @apply transition-colors;
   }
   .tbl tbody tr:hover {
-    @apply bg-surface;
+    @apply bg-surface-container-low;
   }
 }

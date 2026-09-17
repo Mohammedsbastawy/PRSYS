@@ -63,7 +63,7 @@ function CatalogInner() {
   if (deep) {
     return (
       <AppShell>
-        <div className="py-10 text-center text-sm text-ink-soft">Opening form...</div>
+        <div className="py-10 text-center text-sm text-on-surface-variant">Opening form...</div>
       </AppShell>
     );
   }
@@ -71,7 +71,7 @@ function CatalogInner() {
   if (loading) {
     return (
       <AppShell>
-        <div className="py-10 text-center text-sm text-ink-soft">Loading your access...</div>
+        <div className="py-10 text-center text-sm text-on-surface-variant">Loading your access...</div>
       </AppShell>
     );
   }
@@ -94,10 +94,10 @@ function CatalogInner() {
     <AppShell>
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
         <div className="lg:col-span-9">
-          <h1 className="text-4xl font-bold tracking-tight text-ink">New Request</h1>
-          <p className="mb-6 mt-1 text-base text-ink-soft">Choose a request type to get started.</p>
+          <h1 className="text-4xl font-bold tracking-tight text-on-surface">New Request</h1>
+          <p className="mb-6 mt-1 text-base text-on-surface-variant">Choose a request type to get started.</p>
           <div className="relative mb-8 max-w-2xl">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-faint">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline">
               <Icon name="search" />
             </span>
             <input
@@ -109,7 +109,7 @@ function CatalogInner() {
           </div>
 
           {!filtered ? (
-            <div className="py-6 text-sm text-ink-soft">Loading forms...</div>
+            <div className="py-6 text-sm text-on-surface-variant">Loading forms...</div>
           ) : filtered.length === 0 ? (
             <div className="card">
               <EmptyState
@@ -132,7 +132,7 @@ function CatalogInner() {
           ) : (
             filtered.map((c) => (
               <section key={c.FormCategoryID} className="mb-8">
-                <h2 className="mb-4 border-b border-surface-border pb-2 text-xl font-semibold text-ink">
+                <h2 className="mb-4 border-b border-surface-variant pb-2 text-xl font-semibold text-on-surface">
                   {c.Name}
                 </h2>
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -144,17 +144,17 @@ function CatalogInner() {
                     >
                       <Icon
                         name={templateIcon(t.Name)}
-                        className="mt-0.5 text-[26px] text-ink-soft transition-colors group-hover:text-primary-dark"
+                        className="mt-0.5 text-[26px] text-on-surface-variant transition-colors group-hover:text-primary-dark"
                       />
                       <span>
-                        <span className="block text-base font-medium text-ink transition-colors group-hover:text-primary-dark">
+                        <span className="block text-base font-medium text-on-surface transition-colors group-hover:text-primary-dark">
                           {t.Name}
                         </span>
-                        <span className="mt-1 block text-[13px] text-ink-soft">
+                        <span className="mt-1 block text-[13px] text-on-surface-variant">
                           {t.Description || "Start a new request"}
                         </span>
                         {t.ownerName && (
-                          <span className="mt-0.5 block text-xs text-ink-faint">
+                          <span className="mt-0.5 block text-xs text-outline">
                             Managed by {t.ownerName}
                           </span>
                         )}
@@ -168,12 +168,12 @@ function CatalogInner() {
         </div>
 
         <div className="lg:col-span-3">
-          <div className="card sticky top-24 bg-surface p-4">
+          <div className="card sticky top-24 bg-surface-container-low p-4">
             <div className="mb-2 flex items-center gap-2">
               <Icon name="info" filled className="text-[20px] text-primary-dark" />
-              <h4 className="text-sm font-semibold text-ink">Finding the right form</h4>
+              <h4 className="text-sm font-semibold text-on-surface">Finding the right form</h4>
             </div>
-            <p className="text-[13px] leading-relaxed text-ink-soft">
+            <p className="text-[13px] leading-relaxed text-on-surface-variant">
               Browse forms by category or use search to find what you need. Your most-used forms
               also appear as shortcuts on the dashboard. If a form is missing, contact the
               procurement team.
@@ -190,7 +190,7 @@ export default function NewRequestCatalogPage() {
     <Suspense
       fallback={
         <AppShell>
-          <div className="py-10 text-center text-sm text-ink-soft">Loading...</div>
+          <div className="py-10 text-center text-sm text-on-surface-variant">Loading...</div>
         </AppShell>
       }
     >

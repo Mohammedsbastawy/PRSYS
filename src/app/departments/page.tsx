@@ -175,7 +175,7 @@ export default function DepartmentsPage() {
 
       <div className="card overflow-hidden">
         {/* header row */}
-        <div className="grid grid-cols-[2fr_2fr_1fr_90px] gap-4 border-b border-surface-border bg-surface-muted px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+        <div className="grid grid-cols-[2fr_2fr_1fr_90px] gap-4 border-b border-surface-variant bg-surface-container px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
           <div>Department</div>
           <div>Manager</div>
           <div>Employees</div>
@@ -183,7 +183,7 @@ export default function DepartmentsPage() {
         </div>
 
         {loading && (
-          <div className="p-6 text-center text-sm text-ink-faint">
+          <div className="p-6 text-center text-sm text-outline">
             <Icon name="progress_activity" className="animate-spin text-[22px]" />
           </div>
         )}
@@ -197,36 +197,36 @@ export default function DepartmentsPage() {
             return (
               <Fragment key={d.DEPID}>
                 <div
-                  className={`grid cursor-pointer grid-cols-[2fr_2fr_1fr_90px] items-center gap-4 border-b border-surface-border px-4 py-3 transition-colors hover:bg-surface ${
-                    isOpen ? "border-l-2 !border-l-primary bg-surface" : ""
+                  className={`grid cursor-pointer grid-cols-[2fr_2fr_1fr_90px] items-center gap-4 border-b border-surface-variant px-4 py-3 transition-colors hover:bg-surface-container-low ${
+                    isOpen ? "border-l-2 !border-l-primary bg-surface-container-low" : ""
                   }`}
                   onClick={() => toggleExpand(d.DEPID)}
                 >
-                  <div className="flex items-center gap-2 font-medium text-ink">
+                  <div className="flex items-center gap-2 font-medium text-on-surface">
                     <Icon
                       name="chevron_right"
-                      className={`text-[20px] transition-transform ${isOpen ? "rotate-90 text-primary" : "text-ink-faint"}`}
+                      className={`text-[20px] transition-transform ${isOpen ? "rotate-90 text-primary" : "text-outline"}`}
                     />
                     {d.Name}
-                    <span className="badge bg-surface-muted text-[10px] text-ink-faint">{d.Code}</span>
+                    <span className="badge bg-surface-container text-[10px] text-outline">{d.Code}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     {d.Manager ? (
                       <>
                         <Avatar name={d.Manager.Name} size="sm" />
-                        <span className="text-sm text-ink">{d.Manager.Name}</span>
+                        <span className="text-sm text-on-surface">{d.Manager.Name}</span>
                         <span
-                          className="text-ink-faint"
+                          className="text-outline"
                           title='This person receives approval requests routed to "Department Manager" in workflows.'
                         >
                           <Icon name="info" className="cursor-help text-[14px]" />
                         </span>
                       </>
                     ) : (
-                      <span className="text-sm text-ink-faint">—</span>
+                      <span className="text-sm text-outline">—</span>
                     )}
                   </div>
-                  <div className="text-sm text-ink-soft">
+                  <div className="text-sm text-on-surface-variant">
                     {d.memberCount} {d.memberCount === 1 ? "member" : "members"}
                   </div>
                   <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
@@ -235,7 +235,7 @@ export default function DepartmentsPage() {
                         <button className="icon-btn !h-8 !w-8" title="Edit" onClick={() => { setEditing(d); setFormOpen(true); }}>
                           <Icon name="edit" className="text-[18px]" />
                         </button>
-                        <button className="icon-btn !h-8 !w-8 hover:!bg-red-50 hover:text-danger" title="Delete" onClick={() => setDeleting(d)}>
+                        <button className="icon-btn !h-8 !w-8 hover:!bg-error-container/60 hover:text-danger" title="Delete" onClick={() => setDeleting(d)}>
                           <Icon name="delete" className="text-[18px]" />
                         </button>
                       </>
@@ -245,34 +245,34 @@ export default function DepartmentsPage() {
 
                 {/* expanded members panel */}
                 {isOpen && (
-                  <div className="border-b border-surface-border bg-surface px-4 py-3">
-                    <div className="ml-6 overflow-hidden rounded-md border border-surface-border bg-white">
-                      <div className="grid grid-cols-[2fr_2fr_1fr_40px] gap-2 border-b border-surface-border bg-surface-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-ink-soft">
+                  <div className="border-b border-surface-variant bg-surface-container-low px-4 py-3">
+                    <div className="ml-6 overflow-hidden rounded-md border border-surface-variant bg-surface-container-lowest">
+                      <div className="grid grid-cols-[2fr_2fr_1fr_40px] gap-2 border-b border-surface-variant bg-surface-container px-3 py-2 text-[10px] font-semibold uppercase tracking-wide text-on-surface-variant">
                         <div>Employee</div>
                         <div>Email</div>
                         <div>Role</div>
                         <div />
                       </div>
                       {membersLoading && !members[d.DEPID] && (
-                        <div className="px-3 py-4 text-center text-ink-faint">
+                        <div className="px-3 py-4 text-center text-outline">
                           <Icon name="progress_activity" className="animate-spin text-[18px]" />
                         </div>
                       )}
                       {(members[d.DEPID] || []).map((m) => (
-                        <div key={m.UserID} className="grid grid-cols-[2fr_2fr_1fr_40px] items-center gap-2 border-b border-surface-border px-3 py-2 last:border-0 hover:bg-surface">
-                          <div className="flex items-center gap-2 text-sm text-ink">
+                        <div key={m.UserID} className="grid grid-cols-[2fr_2fr_1fr_40px] items-center gap-2 border-b border-surface-variant px-3 py-2 last:border-0 hover:bg-surface-container-low">
+                          <div className="flex items-center gap-2 text-sm text-on-surface">
                             <Avatar name={m.Name} size="sm" />
-                            <span className={m.IsActive ? "" : "text-ink-faint line-through"}>{m.Name}</span>
+                            <span className={m.IsActive ? "" : "text-outline line-through"}>{m.Name}</span>
                             {d.Manager?.UserID === m.UserID && (
                               <span className="rounded bg-primary-container px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-primary-dark">Manager</span>
                             )}
                           </div>
-                          <div className="truncate text-xs text-ink-soft">{m.Email}</div>
-                          <div className="text-xs text-ink-soft">{m.Role?.Name}</div>
+                          <div className="truncate text-xs text-on-surface-variant">{m.Email}</div>
+                          <div className="text-xs text-on-surface-variant">{m.Role?.Name}</div>
                           <div className="text-right">
                             {canEditUser && (
                               <button
-                                className="icon-btn !h-7 !w-7 hover:!bg-red-50 hover:text-danger"
+                                className="icon-btn !h-7 !w-7 hover:!bg-error-container/60 hover:text-danger"
                                 title="Remove from department"
                                 onClick={() => removeMember(d, m)}
                               >
@@ -283,11 +283,11 @@ export default function DepartmentsPage() {
                         </div>
                       ))}
                       {members[d.DEPID] && members[d.DEPID].length === 0 && (
-                        <div className="px-3 py-4 text-center text-xs text-ink-faint">No employees in this department yet.</div>
+                        <div className="px-3 py-4 text-center text-xs text-outline">No employees in this department yet.</div>
                       )}
                       {canEditUser && (
                         <button
-                          className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs font-semibold text-primary-dark transition-colors hover:bg-surface"
+                          className="flex w-full items-center gap-1 px-3 py-2 text-left text-xs font-semibold text-primary-dark transition-colors hover:bg-surface-container-low"
                           onClick={() => setAddToDep(d)}
                         >
                           <Icon name="add" className="text-[16px]" />
@@ -330,7 +330,7 @@ export default function DepartmentsPage() {
         onConfirm={deleteDep}
         busy={busy}
         title="Delete department"
-        message={<>Are you sure you want to delete <b className="text-ink">{deleting?.Name}</b>?</>}
+        message={<>Are you sure you want to delete <b className="text-on-surface">{deleting?.Name}</b>?</>}
         note={deleting && deleting.memberCount > 0 ? `This department has ${deleting.memberCount} member(s) — they must be reassigned before it can be deleted.` : undefined}
       />
 
@@ -398,7 +398,7 @@ function DepFormModal({
             {managers.map((m) => <option key={m.UserID} value={m.UserID}>{m.Name}</option>)}
           </select>
         </Field>
-        <div className="flex justify-end gap-2 border-t border-surface-border pt-4">
+        <div className="flex justify-end gap-2 border-t border-surface-variant pt-4">
           <button type="button" className="btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
           <button type="submit" className="btn-primary" disabled={busy}>
             {busy && <Icon name="progress_activity" className="animate-spin text-[18px]" />}
@@ -432,7 +432,7 @@ function AddMemberModal({
             {users.map((u) => <option key={u.UserID} value={u.UserID}>{u.Name}</option>)}
           </select>
         </Field>
-        <div className="flex justify-end gap-2 border-t border-surface-border pt-4">
+        <div className="flex justify-end gap-2 border-t border-surface-variant pt-4">
           <button className="btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
           <button className="btn-primary" disabled={!userId || busy} onClick={() => onAssign(dep, userId)}>
             {busy && <Icon name="progress_activity" className="animate-spin text-[18px]" />}

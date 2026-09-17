@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full gap-space-lg">
+<div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-md">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-xs text-on-surface-variant">
+<span class="font-label-md text-label-md uppercase tracking-wider text-outline">Administration</span>
+<span class="material-symbols-outlined text-[14px]">chevron_right</span>
+<span class="font-label-md text-label-md uppercase tracking-wider font-semibold text-primary">SLA Policies</span>
+</div>
+<div class="flex items-center gap-space-md flex-wrap">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Service Level Agreement (SLA) Policies</h1>
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md font-semibold">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span>Active Governance v2.4</span>
+</div>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+        Define operational thresholds, maximum response times (Time To Acknowledge - TTA), and resolution turnaround (Time To Resolve - TTR) mapped across procurement priority classes and department workflows.
+      </p>
+</div>
+<div class="flex items-center gap-space-sm self-start lg:self-auto shrink-0">
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-body-md hover:bg-surface-container-highest transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">history</span>
+<span>Audit Logs</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-body-md hover:bg-surface-container-highest transition-all shadow-sm">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+<span>Global Holidays</span>
+</button>
+<button class="flex items-center gap-space-xs px-space-md py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container transition-all shadow-md">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>+ Add SLA Policy</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-space-md">
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between gap-space-sm relative overflow-hidden">
+<div class="absolute right-0 top-0 w-24 h-24 bg-tertiary/5 rounded-bl-full pointer-events-none"></div>
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Overall SLA Compliance</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-tertiary material-symbols-outlined text-[18px]">verified</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold">94.6%</span>
+<div class="flex items-center text-tertiary font-label-md text-label-md font-semibold bg-tertiary-fixed/40 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+1.2%</span>
+</div>
+</div>
+<div class="flex flex-col gap-1">
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-tertiary h-1.5 rounded-full" style="width: 94.6%"></div>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Target benchmark 92.0% enterprise-wide</span>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Avg. Time To Acknowledge (TTA)</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-primary material-symbols-outlined text-[18px]">timer_3</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold">1.4 <span class="text-headline-md text-outline font-normal">Hours</span></span>
+<div class="flex items-center text-tertiary font-label-md text-label-md font-semibold bg-tertiary-fixed/40 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">arrow_downward</span>
+<span>-18m</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm text-outline">
+<span>Target: &lt; 2.0h</span>
+<span class="text-on-surface font-medium">98.1% within window</span>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col justify-between gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Avg. Time To Resolution (TTR)</span>
+<span class="p-1.5 rounded-lg bg-surface-container text-secondary material-symbols-outlined text-[18px]">timelapse</span>
+</div>
+<div class="flex items-baseline gap-space-sm">
+<span class="font-headline-xl text-headline-xl text-on-surface tracking-tight font-bold">2.8 <span class="text-headline-md text-outline font-normal">Days</span></span>
+<div class="flex items-center text-tertiary font-label-md text-label-md font-semibold bg-tertiary-fixed/40 px-1.5 py-0.5 rounded">
+<span class="material-symbols-outlined text-[14px]">check</span>
+<span>Nominal</span>
+</div>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm text-outline">
+<span>Enterprise Target: &lt; 3.5d</span>
+<span class="text-on-surface font-medium">412 orders closed MTD</span>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-error-container text-on-error-container shadow-sm flex flex-col justify-between gap-space-sm relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-error uppercase tracking-wider font-bold">Active SLA Breaches</span>
+<span class="p-1 rounded bg-error text-on-error material-symbols-outlined text-[16px] animate-ping">priority_high</span>
+</div>
+<div class="flex items-baseline gap-space-xs">
+<span class="font-headline-xl text-headline-xl font-bold tracking-tight text-error">1</span>
+<span class="font-label-md text-label-md text-error uppercase tracking-wider font-semibold">Active Escalation</span>
+</div>
+<div class="p-2 rounded bg-surface-container-lowest text-on-surface flex items-center justify-between shadow-xs">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="material-symbols-outlined text-error text-[16px]">warning</span>
+<span class="font-label-sm text-label-sm font-semibold truncate">PR-4491: Dell Fleet Capex</span>
+</div>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-error/10 text-error font-bold whitespace-nowrap">+2h 14m</span>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 2xl:grid-cols-12 gap-space-lg">
+<div class="2xl:col-span-8 flex flex-col gap-space-md">
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-md">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-sm pb-space-xs">
+<div class="flex items-center gap-space-xs overflow-x-auto py-1">
+<button class="px-space-sm py-1 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-semibold">All Priorities</button>
+<button class="px-space-sm py-1 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-medium">Urgent (Tier 1)</button>
+<button class="px-space-sm py-1 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-medium">High (Tier 2)</button>
+<button class="px-space-sm py-1 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-medium">Medium</button>
+<button class="px-space-sm py-1 rounded-lg bg-surface-container text-on-surface-variant hover:text-on-surface font-label-md text-label-md font-medium">Low</button>
+</div>
+<div class="flex items-center gap-space-sm self-end md:self-auto">
+<div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-container-low text-on-surface-variant font-label-md text-label-md">
+<span>Show Inactive</span>
+<input class="w-3.5 h-3.5 accent-primary cursor-pointer" type="checkbox"/>
+</div>
+<button class="p-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant transition-colors" title="Export CSV">
+<span class="material-symbols-outlined text-[18px]">download</span>
+</button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left">
+<thead>
+<tr class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+<th class="p-space-sm rounded-l-lg">Policy &amp; Scope</th>
+<th class="p-space-sm">Priority</th>
+<th class="p-space-sm">TTA Window</th>
+<th class="p-space-sm">TTR Window</th>
+<th class="p-space-sm">Escalation Rule</th>
+<th class="p-space-sm">Status</th>
+<th class="p-space-sm text-right rounded-r-lg">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-low font-body-md text-body-sm text-on-surface">
+<tr class="bg-primary-fixed/20 hover:bg-primary-fixed/30 transition-colors">
+<td class="p-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[18px]">radio_button_checked</span>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Urgent Tier-1 Fast Track</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">IT Hardware</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">Critical Plant</span>
+</div>
+</div>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="font-label-md text-label-md px-2 py-0.5 rounded-full bg-error-container text-on-error-container font-bold">URGENT</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-primary">
+                  4 Hours
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">24/7 Clock</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-on-surface">
+                  24 Hours (1d)
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">Direct fulfillment</span>
+</td>
+<td class="p-space-sm max-w-xs">
+<div class="flex items-start gap-1 text-outline">
+<span class="material-symbols-outlined text-primary text-[14px] mt-0.5">crisis_alert</span>
+<span class="line-clamp-2">Auto-escalate to VP Procurement on breach + SMS alert to Buyer</span>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">ACTIVE</span>
+</td>
+<td class="p-space-sm text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="px-2 py-1 rounded bg-primary text-on-primary font-label-sm text-label-sm font-semibold hover:bg-primary-container transition-colors shadow-xs">Edit</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Test Rule">
+<span class="material-symbols-outlined text-[16px]">play_circle</span>
+</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Duplicate">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-outline text-[18px]">folder_special</span>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">High Priority Capex</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">Capex Approvals</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">Global Logistics</span>
+</div>
+</div>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="font-label-md text-label-md px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-bold">HIGH</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-on-surface">
+                  12 Hours
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">Work hours</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-on-surface">
+                  72 Hours (3d)
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">Vendor quotes</span>
+</td>
+<td class="p-space-sm max-w-xs">
+<div class="flex items-start gap-1 text-outline">
+<span class="material-symbols-outlined text-secondary text-[14px] mt-0.5">notifications_active</span>
+<span class="line-clamp-2">Notify Department Head &amp; Slack #procurement-alarms</span>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">ACTIVE</span>
+</td>
+<td class="p-space-sm text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="px-2 py-1 rounded bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold hover:bg-surface-container-high transition-colors">Edit</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Test Rule">
+<span class="material-symbols-outlined text-[16px]">play_circle</span>
+</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Duplicate">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-outline text-[18px]">inventory_2</span>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Standard Business OpEx</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">All Forms (Default)</span>
+</div>
+</div>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="font-label-md text-label-md px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-bold">MEDIUM</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-on-surface">
+                  24 Hours
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">Standard biz</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-on-surface">
+                  5 Business Days
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">PO cycle</span>
+</td>
+<td class="p-space-sm max-w-xs">
+<div class="flex items-start gap-1 text-outline">
+<span class="material-symbols-outlined text-outline text-[14px] mt-0.5">mail</span>
+<span class="line-clamp-2">Digest email to Assignee after 48h idle queue</span>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">ACTIVE</span>
+</td>
+<td class="p-space-sm text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="px-2 py-1 rounded bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold hover:bg-surface-container-high transition-colors">Edit</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Test Rule">
+<span class="material-symbols-outlined text-[16px]">play_circle</span>
+</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Duplicate">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-low transition-colors opacity-80">
+<td class="p-space-sm">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-outline text-[18px]">assignment_turned_in</span>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Low Priority Routine &amp; Office Supplies</span>
+<div class="flex items-center gap-1 mt-0.5">
+<span class="font-label-sm text-label-sm px-1.5 py-0.2 rounded bg-surface-container text-on-surface-variant">Pantry &amp; Stationery</span>
+</div>
+</div>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="font-label-md text-label-md px-2 py-0.5 rounded-full bg-surface-container-highest text-outline font-bold">LOW</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-on-surface">
+                  48 Hours
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">Working days</span>
+</td>
+<td class="p-space-sm font-label-md text-label-md font-semibold text-on-surface">
+                  10 Business Days
+                  <span class="block text-outline font-normal font-body-sm text-body-sm">Batched ordering</span>
+</td>
+<td class="p-space-sm max-w-xs">
+<div class="flex items-start gap-1 text-outline">
+<span class="material-symbols-outlined text-outline text-[14px] mt-0.5">event_repeat</span>
+<span class="line-clamp-2">Weekly roll-up digest; no automated pager notification</span>
+</div>
+</td>
+<td class="p-space-sm">
+<span class="px-2 py-0.5 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-bold">ACTIVE</span>
+</td>
+<td class="p-space-sm text-right whitespace-nowrap">
+<div class="flex items-center justify-end gap-1">
+<button class="px-2 py-1 rounded bg-surface-container text-on-surface font-label-sm text-label-sm font-semibold hover:bg-surface-container-high transition-colors">Edit</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Test Rule">
+<span class="material-symbols-outlined text-[16px]">play_circle</span>
+</button>
+<button class="p-1 rounded text-outline hover:bg-surface-container hover:text-on-surface" title="Duplicate">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-space-xs">
+<span class="material-symbols-outlined text-primary text-[20px]">troubleshoot</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Breach Root Cause &amp; SLA Compliance by Department</h2>
+</div>
+<span class="font-label-md text-label-md text-outline">Last 30 Rolling Days</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md">
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-sm font-semibold text-on-surface">IT Infrastructure</span>
+<span class="font-label-sm text-label-sm text-error font-bold">1 Active Breach</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+<div class="bg-error h-2 rounded-full" style="width: 88%"></div>
+</div>
+<span class="font-label-md text-label-md font-bold text-on-surface">88%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Main roadblock: Multi-vendor quotes</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-sm font-semibold text-on-surface">Operations &amp; Plant</span>
+<span class="font-label-sm text-label-sm text-tertiary font-bold">0 Breaches</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+<div class="bg-tertiary h-2 rounded-full" style="width: 98%"></div>
+</div>
+<span class="font-label-md text-label-md font-bold text-on-surface">98%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Fastest average acknowledgment (42m)</span>
+</div>
+<div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-space-xs">
+<div class="flex justify-between items-center">
+<span class="font-body-md text-body-sm font-semibold text-on-surface">Corporate Marketing</span>
+<span class="font-label-sm text-label-sm text-secondary font-bold">Near Risk (1)</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="w-full bg-surface-container-high rounded-full h-2 overflow-hidden">
+<div class="bg-secondary h-2 rounded-full" style="width: 93%"></div>
+</div>
+<span class="font-label-md text-label-md font-bold text-on-surface">93%</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Design agency retainer review delays</span>
+</div>
+</div>
+<div class="pt-space-xs">
+<div class="h-28 w-full flex items-end justify-between gap-1.5 px-2">
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="w-full bg-tertiary-fixed rounded-t h-16 hover:bg-tertiary transition-colors" title="Day 1-5: 98% compliant"></div>
+<span class="font-label-sm text-label-sm text-outline">W1</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="w-full bg-tertiary-fixed rounded-t h-20 hover:bg-tertiary transition-colors" title="Day 6-12: 99% compliant"></div>
+<span class="font-label-sm text-label-sm text-outline">W2</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="w-full bg-secondary-fixed-dim rounded-t h-14 hover:bg-secondary transition-colors" title="Day 13-19: 91% compliant"></div>
+<span class="font-label-sm text-label-sm text-outline">W3</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="w-full bg-tertiary-fixed rounded-t h-22 hover:bg-tertiary transition-colors" title="Day 20-26: 96% compliant"></div>
+<span class="font-label-sm text-label-sm text-outline">W4</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-1">
+<div class="w-full bg-error-container rounded-t h-10 hover:bg-error transition-colors" title="Current: 1 breach logged"></div>
+<span class="font-label-sm text-label-sm text-error font-bold">Now</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="2xl:col-span-4 flex flex-col gap-space-md">
+<div class="p-space-lg rounded-xl bg-surface-container-lowest shadow-md flex flex-col gap-space-md relative border-l-4 border-primary">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="p-1.5 rounded-lg bg-primary text-on-primary material-symbols-outlined text-[18px]">edit_note</span>
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Policy Inspector</h3>
+<span class="font-label-sm text-label-sm text-outline">Editing active SLA rule definition</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-primary-fixed text-on-primary-fixed font-bold">ID: SLA-01</span>
+</div>
+<div class="flex flex-col gap-space-sm">
+<label class="font-label-md text-label-md font-semibold text-on-surface uppercase tracking-wider">Policy Name</label>
+<input class="w-full h-10 px-3 rounded-lg bg-surface-container-low text-on-surface font-body-md text-body-md focus:outline-none focus:ring-2 focus:ring-primary shadow-xs" type="text" value="Urgent Tier-1 Fast Track"/>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md font-semibold text-on-surface uppercase tracking-wider">Priority Tier Alignment</label>
+<div class="grid grid-cols-4 gap-1.5">
+<button class="py-1.5 text-center rounded bg-primary text-on-primary font-label-sm text-label-sm font-bold shadow-xs">URGENT</button>
+<button class="py-1.5 text-center rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm">HIGH</button>
+<button class="py-1.5 text-center rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm">MEDIUM</button>
+<button class="py-1.5 text-center rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm">LOW</button>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-space-sm">
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md font-semibold text-on-surface uppercase tracking-wider">TTA (Hours)</label>
+<div class="relative flex items-center">
+<input class="w-full h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-lg text-label-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary shadow-xs" type="number" value="4"/>
+<span class="absolute right-2.5 font-label-sm text-label-sm text-outline">hrs</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Max response window</span>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md font-semibold text-on-surface uppercase tracking-wider">TTR (Turnaround)</label>
+<div class="relative flex items-center">
+<input class="w-full h-10 pl-3 pr-8 rounded-lg bg-surface-container-low text-on-surface font-label-lg text-label-lg font-bold focus:outline-none focus:ring-2 focus:ring-primary shadow-xs" type="number" value="24"/>
+<span class="absolute right-2.5 font-label-sm text-label-sm text-outline">hrs</span>
+</div>
+<span class="font-body-sm text-body-sm text-outline">Full signoff completion</span>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md font-semibold text-on-surface uppercase tracking-wider">Working Hours Calendar</label>
+<div class="flex flex-col gap-2">
+<label class="flex items-start gap-2 p-2 rounded-lg bg-surface-container-low cursor-pointer">
+<input checked="" class="mt-0.5 accent-primary" name="calendar" type="radio"/>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-sm font-semibold text-on-surface">24/7 Continuous Stopwatch</span>
+<span class="font-body-sm text-body-sm text-outline">Time elapses continuously including weekends &amp; holidays.</span>
+</div>
+</label>
+<label class="flex items-start gap-2 p-2 rounded-lg bg-surface-container-lowest hover:bg-surface-container-low transition-colors cursor-pointer">
+<input class="mt-0.5 accent-primary" name="calendar" type="radio"/>
+<div class="flex flex-col min-w-0">
+<span class="font-body-md text-body-sm font-semibold text-on-surface">Egyptian Standard Business Hours</span>
+<span class="font-body-sm text-body-sm text-outline">Sun–Thu 09:00 - 17:00 (Cairo GMT+2), pauses outside windows.</span>
+</div>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-space-xs">
+<label class="font-label-md text-label-md font-semibold text-on-surface uppercase tracking-wider">Breach &amp; Escalation Triggers</label>
+<div class="flex flex-col gap-2">
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 accent-primary rounded" type="checkbox"/>
+<span class="font-body-md text-body-sm text-on-surface">Auto-escalate to VP Procurement on TTA overrun</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 accent-primary rounded" type="checkbox"/>
+<span class="font-body-md text-body-sm text-on-surface">Send Urgent Webhook to Teams/Slack channel</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input checked="" class="w-4 h-4 accent-primary rounded" type="checkbox"/>
+<span class="font-body-md text-body-sm text-on-surface">Flag requisition row red in Approval Queue</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input class="w-4 h-4 accent-primary rounded" type="checkbox"/>
+<span class="font-body-md text-body-sm text-on-surface">Trigger SMS text alert to Category Manager</span>
+</label>
+</div>
+</div>
+<div class="pt-space-sm flex items-center justify-between gap-space-sm">
+<button class="px-space-md py-2 rounded-lg bg-surface-container text-on-surface-variant font-headline-sm text-body-md hover:bg-surface-container-high transition-colors">
+            Reset
+          </button>
+<div class="flex items-center gap-2">
+<button class="px-space-md py-2 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-body-md hover:bg-surface-dim transition-colors">
+              Simulate Test
+            </button>
+<button class="px-space-md py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container transition-all shadow-md">
+              Save Policy Changes
+            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

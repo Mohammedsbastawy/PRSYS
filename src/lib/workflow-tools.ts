@@ -35,7 +35,7 @@ export const TOOLS: Tool[] = [
     category: "People",
     blurb: "Someone has to say yes or no. Choose the person, group, role or manager — then what runs on each answer.",
     kind: "decision",
-    accent: "bg-blue-50 text-primary-dark border-blue-200",
+    accent: "bg-surface-container-low text-primary-dark border-surface-variant",
   },
   {
     id: "NOTIFY",
@@ -62,7 +62,7 @@ export const TOOLS: Tool[] = [
     category: "Update the request",
     blurb: "LOW / MEDIUM / HIGH / URGENT. Later nodes in the flow see the new value right away.",
     kind: "action",
-    accent: "bg-amber-50 text-amber-700 border-amber-200",
+    accent: "bg-secondary-fixed text-amber-700 border-secondary-fixed-dim",
   },
   {
     id: "SET_STATUS",
@@ -71,7 +71,7 @@ export const TOOLS: Tool[] = [
     category: "Update the request",
     blurb: "Move the ticket itself: complete it, fulfil it, ask for clarification or cancel it.",
     kind: "action",
-    accent: "bg-amber-50 text-amber-700 border-amber-200",
+    accent: "bg-secondary-fixed text-amber-700 border-secondary-fixed-dim",
   },
   {
     id: "SET_SLA",

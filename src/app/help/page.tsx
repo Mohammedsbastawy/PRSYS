@@ -45,34 +45,34 @@ export default function HelpPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {FAQS.map((f) => (
           <div key={f.q} className="card flex gap-4 p-5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-50 text-primary-dark">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-primary-dark">
               <Icon name={f.icon} />
             </span>
             <div>
-              <div className="font-semibold text-ink">{f.q}</div>
-              <p className="mt-1 text-sm leading-relaxed text-ink-soft">{f.a}</p>
+              <div className="font-semibold text-on-surface">{f.q}</div>
+              <p className="mt-1 text-sm leading-relaxed text-on-surface-variant">{f.a}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <h2 className="mb-3 mt-8 text-lg font-semibold text-ink">Request statuses</h2>
-      <div className="card divide-y divide-surface-border">
+      <h2 className="mb-3 mt-8 text-lg font-semibold text-on-surface">Request statuses</h2>
+      <div className="card divide-y divide-surface-variant">
         {STATUSES.map(([s, d]) => (
           <div key={s} className="flex items-center gap-4 px-5 py-3">
             <span className="w-48 shrink-0">
               <StatusBadge status={s} />
             </span>
-            <span className="text-sm text-ink-soft">{d}</span>
+            <span className="text-sm text-on-surface-variant">{d}</span>
           </div>
         ))}
       </div>
 
-      <div className="card mt-6 flex items-center gap-4 bg-blue-50/50 p-5">
+      <div className="card mt-6 flex items-center gap-4 bg-surface-container-low/60 p-5">
         <Icon name="support_agent" className="text-[32px] text-primary-dark" />
         <div>
-          <div className="font-semibold text-ink">Still need help?</div>
-          <div className="text-sm text-ink-soft">
+          <div className="font-semibold text-on-surface">Still need help?</div>
+          <div className="text-sm text-on-surface-variant">
             Contact your IT support team or your system administrator for access and technical
             issues.
           </div>

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"primary-fixed-dim":"#ffb599","on-surface-variant":"#5a4138","surface-container":"#e9eefb","on-primary-fixed-variant":"#7f2b00","outline":"#8e7166","on-error":"#ffffff","on-primary-container":"#fffbff","secondary-fixed-dim":"#ffb77d","primary-container":"#cc4900","tertiary-container":"#578034","surface":"#f8f9ff","surface-container-lowest":"#ffffff","on-tertiary-fixed-variant":"#2b5008","on-tertiary-fixed":"#0c2000","on-tertiary-container":"#f9ffec","secondary":"#904d00","on-error-container":"#93000a","secondary-container":"#fe932c","inverse-primary":"#ffb599","tertiary-fixed":"#c2f198","on-secondary-fixed-variant":"#6e3900","on-tertiary":"#ffffff","surface-container-highest":"#dde3ef","tertiary-fixed-dim":"#a6d47e","outline-variant":"#e2bfb2","on-primary":"#ffffff","on-secondary-fixed":"#2f1500","surface-container-low":"#eff4ff","surface-tint":"#a73a00","surface-variant":"#dde3ef","error":"#ba1a1a","on-secondary-container":"#663500","surface-dim":"#d5dae6","on-background":"#161c25","inverse-surface":"#2b313a","error-container":"#ffdad6","on-primary-fixed":"#370e00","primary-fixed":"#ffdbce","background":"#f8f9ff","tertiary":"#3f661e","surface-container-high":"#e3e8f5","on-secondary":"#ffffff","inverse-on-surface":"#ebf1fd","secondary-fixed":"#ffdcc3","primary":"#a33900","on-surface":"#161c25","surface-bright":"#f8f9ff"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin-mobile":"1rem","space-sm":"0.5rem","margin":"2rem","space-xl":"2.5rem","space-md":"1rem","gutter":"1.25rem","gutter-mobile":"0.75rem"},"fontFamily":{"headline-xl":["Hanken Grotesk"],"body-sm":["Hanken Grotesk"],"label-lg":["JetBrains Mono"],"headline-lg":["Hanken Grotesk"],"headline-md":["Hanken Grotesk"],"body-lg":["Hanken Grotesk"],"headline-lg-mobile":["Hanken Grotesk"],"label-md":["JetBrains Mono"],"label-sm":["JetBrains Mono"],"headline-xl-mobile":["Hanken Grotesk"],"body-md":["Hanken Grotesk"],"headline-sm":["Hanken Grotesk"]},"fontSize":{"headline-xl":["40px",{"lineHeight":"48px","letterSpacing":"-0.02em","fontWeight":"700"}],"body-sm":["12px",{"lineHeight":"16px","fontWeight":"400"}],"label-lg":["13px",{"lineHeight":"18px","letterSpacing":"0.02em","fontWeight":"500"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.015em","fontWeight":"600"}],"headline-md":["22px",{"lineHeight":"28px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","fontWeight":"400"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","letterSpacing":"-0.01em","fontWeight":"600"}],"label-md":["11px",{"lineHeight":"16px","letterSpacing":"0.04em","fontWeight":"500"}],"label-sm":["10px",{"lineHeight":"14px","letterSpacing":"0.05em","fontWeight":"600"}],"headline-xl-mobile":["30px",{"lineHeight":"38px","letterSpacing":"-0.015em","fontWeight":"700"}],"body-md":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-sm":["18px",{"lineHeight":"24px","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-low shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-50 flex flex-col justify-between overflow-y-auto"><div class="flex flex-col"><div class="h-16 px-space-lg flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-on-primary font-headline-sm text-headline-sm"><span class="material-symbols-outlined text-[20px]">token</span></div><div class="flex flex-col"><span class="font-headline-sm text-headline-sm tracking-tight text-on-surface font-bold">PRSYS</span><span class="font-label-sm text-label-sm text-outline tracking-wider uppercase">Procurement OS</span></div></div><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold">v2.4</span></div><div class="px-space-md py-space-sm"><a class="flex items-center justify-center gap-space-sm w-full py-2 px-space-md rounded-lg bg-primary text-on-primary font-headline-sm text-body-md hover:bg-primary-container hover:text-on-primary-container transition-all shadow-[0_2px_8px_rgba(163,57,0,0.2)]" data-path="new-request" href="#"><span class="material-symbols-outlined text-[18px]">add</span><span>New Request</span></a></div><nav class="flex flex-col px-space-sm space-y-1 mt-space-xs" data-active-classes="bg-primary-container text-on-primary-container font-semibold rounded-lg"><div class="px-space-sm pt-space-xs pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Overview</span></div><a aria-current="page" class="flex items-center justify-between px-space-sm py-2 transition-all bg-primary-container text-on-primary-container font-semibold rounded-lg" data-path="dashboard" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">grid_view</span><span class="font-body-md text-body-md">Dashboard</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="font-body-md text-body-md">Requests</span></div></a><a class="flex items-center justify-between px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="approvals" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[20px]">rule</span><span class="font-body-md text-body-md">Approvals</span></div><span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">4</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Administration</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="users" href="#"><span class="material-symbols-outlined text-[20px]">group</span><span class="font-body-md text-body-md">Users</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="departments" href="#"><span class="material-symbols-outlined text-[20px]">domain</span><span class="font-body-md text-body-md">Departments</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="groups" href="#"><span class="material-symbols-outlined text-[20px]">hub</span><span class="font-body-md text-body-md">Groups</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="forms" href="#"><span class="material-symbols-outlined text-[20px]">dynamic_form</span><span class="font-body-md text-body-md">Forms</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="workflows" href="#"><span class="material-symbols-outlined text-[20px]">alt_route</span><span class="font-body-md text-body-md">Workflows</span></a><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="sla-policies" href="#"><span class="material-symbols-outlined text-[20px]">timer</span><span class="font-body-md text-body-md">SLA Policies</span></a><div class="px-space-sm pt-space-md pb-1"><span class="font-label-sm text-label-sm text-outline font-semibold tracking-wider uppercase">Insights</span></div><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[20px]">query_stats</span><span class="font-body-md text-body-md">Reports</span></a></nav></div><div class="p-space-sm mt-space-md flex flex-col gap-space-xs"><a class="flex items-center gap-space-sm px-space-sm py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">help_outline</span><span class="font-body-md text-body-md">Help &amp; Guides</span></a><div class="p-space-sm rounded-xl bg-surface-container flex items-center justify-between mt-space-xs"><div class="flex items-center gap-space-sm min-w-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover shrink-0" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline truncate">VP Procurement</span></div></div><a class="p-1 text-on-surface-variant hover:text-primary transition-colors shrink-0" data-path="login" href="#" title="Sign out"><span class="material-symbols-outlined text-[20px]">logout</span></a></div></div></aside><div class="pl-[260px]"><header class="fixed top-0 left-[260px] right-0 h-16 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-space-lg"><div class="flex items-center w-96"><div class="relative w-full flex items-center"><span class="material-symbols-outlined absolute left-3 text-outline text-[18px]">search</span><input class="w-full h-10 pl-9 pr-12 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none shadow-[0_1px_3px_rgba(30,36,45,0.05)]" placeholder="Search orders, vendors, requests..." type="text"/><div class="absolute right-2.5 px-1.5 py-0.5 rounded bg-surface-container-high font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider font-semibold">⌘K</div></div></div><div class="flex items-center gap-space-md"><a class="p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors" data-path="help" href="#"><span class="material-symbols-outlined text-[20px]">contact_support</span></a><button class="relative p-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-colors"><span class="material-symbols-outlined text-[20px]">notifications</span><span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary ring-2 ring-surface"></span></button><div class="h-6 w-px bg-surface-dim"></div><div class="flex items-center gap-space-sm cursor-pointer pl-1"><img alt="Profile" class="w-8 h-8 rounded-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1XuLpydTMilUkFZfdzSzzF8Y9qsEawXZg4gghKNCFF5MNJqFzsAkaWXBZRiAjb5wt6Wi-0Y0sKtKHR0lPveIQKXlT8YhuDiwRpkyDEutn-Qum0jMuM3bBmIluIlnKQpmyMsgtX_ux1G4yKlLqXbnkDIpW6USmzSR3rF9wkrf_TrE0tIZvlRFUimKJxVolZf6JAkxmcb378G2w3h8brD_Fh4-6yR48v1MPHyqC2AFL6zT59ts17QmNtghGQ"/><div class="hidden md:flex flex-col text-left"><span class="font-headline-sm text-body-sm font-semibold text-on-surface leading-tight">Elena Rostova</span><span class="font-label-sm text-label-sm text-outline uppercase">Agent Mode</span></div><span class="material-symbols-outlined text-outline text-[18px]">keyboard_arrow_down</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full space-y-space-lg">
+<!-- Header Banner -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md bg-surface-container-lowest p-space-lg rounded-xl shadow-sm">
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-space-sm mb-1">
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-fixed text-on-secondary-fixed font-semibold uppercase tracking-wider">Queue 5.2 • Operations Hub</span>
+<span class="inline-flex items-center gap-1 font-label-sm text-label-sm text-tertiary">
+<span class="w-2 h-2 rounded-full bg-tertiary-container animate-pulse"></span>
+          Live Sync active (Delta-Q)
+        </span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Procurement Agent Queue</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Real-time dispatch, PO issuance and fulfillment tracking for Cairo &amp; Alexandria Hubs</p>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm self-start lg:self-center">
+<!-- Date Filter -->
+<div class="flex items-center bg-surface-container px-space-md py-2 rounded-lg text-on-surface gap-2">
+<span class="material-symbols-outlined text-[18px] text-outline">calendar_today</span>
+<span class="font-label-md text-label-md">Sep 01 - Sep 30, 2026</span>
+<span class="material-symbols-outlined text-[16px] text-outline">expand_more</span>
+</div>
+<!-- Export CTA -->
+<button class="flex items-center gap-1.5 px-space-md py-2 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-md text-body-md transition-all">
+<span class="material-symbols-outlined text-[18px]">download</span>
+<span>Export CSV</span>
+</button>
+<!-- Primary Action CTA -->
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-body-md shadow-md hover:shadow-lg transition-all active:scale-[0.98]">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span>Register New PO</span>
+</button>
+</div>
+</div>
+<!-- KPI Row (5 Compact Cards) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-space-md">
+<!-- Stat 1 -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Pending My Approval</span>
+<div class="w-8 h-8 rounded-lg bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed">
+<span class="material-symbols-outlined text-[18px]">pending_actions</span>
+</div>
+</div>
+<div class="mt-2">
+<div class="font-headline-xl text-headline-xl text-on-surface">14</div>
+<div class="flex items-center gap-1 text-secondary font-label-sm text-label-sm mt-0.5">
+<span class="material-symbols-outlined text-[14px]">flag</span>
+<span>3 high priority</span>
+</div>
+</div>
+</div>
+<!-- Stat 2 (High Risk Overdue Alert) -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-error-container/40 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+<div class="absolute top-0 left-0 bottom-0 w-1.5 bg-error"></div>
+<div class="flex items-center justify-between pl-1">
+<span class="font-label-md text-label-md text-error font-semibold uppercase tracking-wider">SLA Overdue</span>
+<div class="w-8 h-8 rounded-lg bg-error text-on-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+</div>
+</div>
+<div class="mt-2 pl-1">
+<div class="font-headline-xl text-headline-xl text-error">4</div>
+<div class="flex items-center gap-1 text-on-error-container font-label-sm text-label-sm mt-0.5">
+<span class="material-symbols-outlined text-[14px]">timer_off</span>
+<span>Requires immediate action</span>
+</div>
+</div>
+</div>
+<!-- Stat 3 -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Assigned To Me</span>
+<div class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">assignment_ind</span>
+</div>
+</div>
+<div class="mt-2">
+<div class="font-headline-xl text-headline-xl text-on-surface">29</div>
+<div class="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm mt-0.5">
+<span class="material-symbols-outlined text-[14px]">local_shipping</span>
+<span>11 awaiting supplier confirmation</span>
+</div>
+</div>
+</div>
+<!-- Stat 4 -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Awaiting PO Issuance</span>
+<div class="w-8 h-8 rounded-lg bg-primary-fixed flex items-center justify-center text-on-primary-fixed-variant">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+</div>
+</div>
+<div class="mt-2">
+<div class="font-headline-xl text-headline-xl text-primary">18</div>
+<div class="flex items-center gap-1 text-outline font-label-sm text-label-sm mt-0.5">
+<span>Total value</span>
+<span class="font-label-md text-label-md font-semibold text-on-surface">2.45M EGP</span>
+</div>
+</div>
+</div>
+<!-- Stat 5 -->
+<div class="flex flex-col justify-between p-space-md rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-shadow">
+<div class="flex items-center justify-between">
+<span class="font-label-md text-label-md text-outline uppercase tracking-wider">Fulfilled This Month</span>
+<div class="w-8 h-8 rounded-lg bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed-variant">
+<span class="material-symbols-outlined text-[18px]">task_alt</span>
+</div>
+</div>
+<div class="mt-2">
+<div class="font-headline-xl text-headline-xl text-tertiary">142</div>
+<div class="flex items-center gap-1 text-tertiary font-label-sm text-label-sm mt-0.5">
+<span class="material-symbols-outlined text-[14px]">trending_up</span>
+<span>+18% vs last month</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Main Content Card: Tab Bar, Filters & Table -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm flex flex-col overflow-hidden">
+<!-- Interactive Tab Navigation -->
+<div class="flex items-center gap-space-xs p-space-sm bg-surface-container-low overflow-x-auto">
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-body-md shadow-sm transition-all whitespace-nowrap">
+<span>Pending Action</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-on-primary text-primary font-bold">18</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg text-on-surface-variant hover:bg-surface-container font-headline-sm text-body-md transition-all whitespace-nowrap">
+<span>Assigned Requisitions</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-semibold">29</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg text-on-surface-variant hover:bg-surface-container font-headline-sm text-body-md transition-all whitespace-nowrap">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span>High SLA Risk</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-error-container text-on-error-container font-bold">4</span>
+</button>
+<button class="flex items-center gap-2 px-space-md py-2 rounded-lg text-on-surface-variant hover:bg-surface-container font-headline-sm text-body-md transition-all whitespace-nowrap">
+<span>Resolved / Completed</span>
+<span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded-full bg-surface-container-high text-on-surface font-semibold">142</span>
+</button>
+</div>
+<!-- Filter & Search Toolbar -->
+<div class="p-space-md bg-surface-container-lowest flex flex-col md:flex-row items-stretch md:items-center justify-between gap-space-sm">
+<div class="relative flex-1 max-w-xl">
+<span class="material-symbols-outlined absolute left-3.5 top-2.5 text-outline text-[20px]">filter_list</span>
+<input class="w-full h-10 pl-11 pr-4 rounded-lg bg-surface-container-low text-on-surface placeholder:text-outline font-body-sm text-body-sm focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 transition-all shadow-inner" placeholder="Filter by ref ID, vendor, requester, SKU..." type="text"/>
+</div>
+<div class="flex flex-wrap items-center gap-space-xs">
+<!-- Status Dropdown -->
+<div class="relative">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm flex items-center gap-2 hover:bg-surface-container transition-all">
+<span class="text-outline">Status:</span>
+<span class="font-semibold">All Active</span>
+<span class="material-symbols-outlined text-[16px] text-outline">arrow_drop_down</span>
+</button>
+</div>
+<!-- Priority Dropdown -->
+<div class="relative">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm flex items-center gap-2 hover:bg-surface-container transition-all">
+<span class="text-outline">Priority:</span>
+<span class="font-semibold">All</span>
+<span class="material-symbols-outlined text-[16px] text-outline">arrow_drop_down</span>
+</button>
+</div>
+<!-- Department Dropdown -->
+<div class="relative">
+<button class="h-10 px-space-md rounded-lg bg-surface-container-low text-on-surface font-body-sm text-body-sm flex items-center gap-2 hover:bg-surface-container transition-all">
+<span class="text-outline">Dept:</span>
+<span class="font-semibold">All Departments</span>
+<span class="material-symbols-outlined text-[16px] text-outline">arrow_drop_down</span>
+</button>
+</div>
+<button class="h-10 px-space-sm text-outline hover:text-primary font-body-sm text-body-sm flex items-center gap-1 transition-colors">
+<span class="material-symbols-outlined text-[16px]">close</span>
+<span>Clear</span>
+</button>
+</div>
+</div>
+<!-- Data Table -->
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left text-on-surface border-collapse">
+<thead class="bg-surface-container-high text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+<tr>
+<th class="py-3 px-space-md w-10 text-center">
+<input class="rounded accent-primary w-4 h-4 cursor-pointer" type="checkbox"/>
+</th>
+<th class="py-3 px-space-md">Requisition Ref &amp; Item Title</th>
+<th class="py-3 px-space-md">Requester &amp; Hub</th>
+<th class="py-3 px-space-md text-right">Total Value</th>
+<th class="py-3 px-space-md">SLA Status</th>
+<th class="py-3 px-space-md">Workflow Stage</th>
+<th class="py-3 px-space-md text-center">Priority</th>
+<th class="py-3 px-space-md text-right">Quick Action</th>
+</tr>
+</thead>
+<tbody class="divide-y-0 text-body-sm font-body-sm">
+<!-- Row 1: Overdue Escalation (with Red Accent) -->
+<tr class="hover:bg-error-container/20 transition-colors bg-surface-container-lowest group relative">
+<td class="py-4 px-space-md text-center relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-error"></div>
+<input class="rounded accent-primary w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-error">R-2026-0041</span>
+<span class="w-1.5 h-1.5 rounded-full bg-error"></span>
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Laptop — Dell Latitude 5550 (x5)</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm mt-0.5">Asset Code: IT-HW-CAI-9921 • PO draft pending</div>
+</td>
+<td class="py-4 px-space-md">
+<div class="font-headline-sm text-body-sm font-medium text-on-surface">Ahmed Hassan</div>
+<div class="font-label-sm text-label-sm text-outline">IT Infrastructure (Cairo Hub)</div>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="font-label-lg text-label-lg font-bold text-on-surface">185,000.00</div>
+<div class="font-label-sm text-label-sm text-outline">EGP</div>
+</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-error-container text-on-error-container font-label-md text-label-md font-bold">
+<span class="material-symbols-outlined text-[14px]">error</span>
+<span>BREACHED (-1h 14m)</span>
+</span>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold text-on-primary-fixed">2</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Finance Authorization</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm pl-8">Assigned: A. Shawky</div>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="px-2 py-0.5 rounded-full bg-error/15 text-error font-label-sm text-label-sm font-bold uppercase tracking-wider">High</span>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-body-sm transition-all shadow-sm">
+                  Approve
+                </button>
+<button class="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm transition-colors">
+                  Review
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 2: Urgent 2h 45m -->
+<tr class="hover:bg-secondary-fixed/20 transition-colors bg-surface-container-low/40">
+<td class="py-4 px-space-md text-center relative">
+<div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary"></div>
+<input class="rounded accent-primary w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-primary">R-2026-0039</span>
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Steel Sheet 2mm Cold Rolled (50 pcs)</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm mt-0.5">Supplier: Ezz Steel Rolling Mills • Quoted &amp; Validated</div>
+</td>
+<td class="py-4 px-space-md">
+<div class="font-headline-sm text-body-sm font-medium text-on-surface">Mahmoud Zaki</div>
+<div class="font-label-sm text-label-sm text-outline">Production (Alex Hub)</div>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="font-label-lg text-label-lg font-bold text-on-surface">94,500.00</div>
+<div class="font-label-sm text-label-sm text-outline">EGP</div>
+</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[14px]">alarm</span>
+<span>Due in 2h 45m</span>
+</span>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-secondary-fixed-dim flex items-center justify-center font-label-sm text-label-sm font-bold text-on-secondary-fixed">1</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Dept Manager Validation</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm pl-8">Pending: Eng. Sherif</div>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm font-bold uppercase tracking-wider">Urgent</span>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-3 py-1.5 rounded-lg bg-primary hover:bg-primary-container text-on-primary font-headline-sm text-body-sm transition-all shadow-sm">
+                  Register PO
+                </button>
+<button class="px-2.5 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm transition-colors">
+                  Details
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 3: Medium (18h) -->
+<tr class="hover:bg-surface-container transition-colors bg-surface-container-lowest">
+<td class="py-4 px-space-md text-center">
+<input class="rounded accent-primary w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-outline">R-2026-0038</span>
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Cement — 50 bags Portland Type I</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm mt-0.5">Direct Delivery: Helwan Construction Site #4</div>
+</td>
+<td class="py-4 px-space-md">
+<div class="font-headline-sm text-body-sm font-medium text-on-surface">Ibrahim Fawzy</div>
+<div class="font-label-sm text-label-sm text-outline">Facilities &amp; Works</div>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="font-label-lg text-label-lg font-bold text-on-surface">18,200.00</div>
+<div class="font-label-sm text-label-sm text-outline">EGP</div>
+</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant font-label-md text-label-md font-semibold">
+<span class="material-symbols-outlined text-[14px]">schedule</span>
+<span>Due in 18h</span>
+</span>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-tertiary-fixed-dim flex items-center justify-center font-label-sm text-label-sm font-bold text-on-tertiary-fixed">2</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">Vendor Dispatch</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm pl-8">Carrier: Delta Express Freight</div>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface font-label-sm text-label-sm font-semibold uppercase tracking-wider">Medium</span>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container-high hover:bg-tertiary-fixed text-on-surface hover:text-on-tertiary-fixed-variant font-headline-sm text-body-sm transition-all shadow-sm">
+                  Mark Fulfilled
+                </button>
+</div>
+</td>
+</tr>
+<!-- Row 4: High Value / Stage 3 -->
+<tr class="hover:bg-surface-container transition-colors bg-surface-container-lowest">
+<td class="py-4 px-space-md text-center">
+<input class="rounded accent-primary w-4 h-4 cursor-pointer" type="checkbox"/>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="font-label-lg text-label-lg font-semibold text-primary">R-2026-0035</span>
+<span class="font-headline-sm text-body-md font-semibold text-on-surface">Cisco Catalyst 9300 48-Port Switch</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm mt-0.5">PO Linked: PO-2026-781 • Distributor: Raya IT</div>
+</td>
+<td class="py-4 px-space-md">
+<div class="font-headline-sm text-body-sm font-medium text-on-surface">Kareem Adel</div>
+<div class="font-label-sm text-label-sm text-outline">Network Arch (HQ Cairo)</div>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="font-label-lg text-label-lg font-bold text-on-surface">312,000.00</div>
+<div class="font-label-sm text-label-sm text-outline">EGP</div>
+</td>
+<td class="py-4 px-space-md">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container text-on-surface-variant font-label-md text-label-md font-medium">
+<span class="material-symbols-outlined text-[14px]">hourglass_empty</span>
+<span>Due in 31h</span>
+</span>
+</td>
+<td class="py-4 px-space-md">
+<div class="flex items-center gap-2">
+<span class="w-6 h-6 rounded-full bg-primary-fixed flex items-center justify-center font-label-sm text-label-sm font-bold text-on-primary-fixed">3</span>
+<span class="font-body-sm text-body-sm font-semibold text-on-surface">PO Issuance</span>
+</div>
+<div class="text-outline font-label-sm text-label-sm pl-8">Elena Rostova (Self)</div>
+</td>
+<td class="py-4 px-space-md text-center">
+<span class="px-2 py-0.5 rounded-full bg-error/15 text-error font-label-sm text-label-sm font-bold uppercase tracking-wider">High</span>
+</td>
+<td class="py-4 px-space-md text-right">
+<div class="flex items-center justify-end gap-1.5">
+<button class="px-3 py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-body-sm transition-all shadow-sm">
+                  Review PO
+                </button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Table Pagination Footer -->
+<div class="flex flex-col sm:flex-row items-center justify-between px-space-lg py-space-sm bg-surface-container-low text-on-surface-variant gap-space-sm">
+<div class="flex items-center gap-2 font-label-md text-label-md">
+<span>Showing <strong class="text-on-surface">1 - 4</strong> of <strong class="text-on-surface">18</strong> pending items</span>
+<span class="text-outline">•</span>
+<span class="text-outline">Total Value on Page: 609,700.00 EGP</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-outline hover:text-on-surface disabled:opacity-40" disabled="">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<button class="w-8 h-8 rounded-lg bg-primary text-on-primary font-label-md text-label-md font-bold flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-label-md text-label-md hover:bg-surface-container-high text-on-surface">2</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center font-label-md text-label-md hover:bg-surface-container-high text-on-surface">3</button>
+<button class="w-8 h-8 rounded-lg bg-surface-container flex items-center justify-center text-outline hover:text-on-surface">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Secondary Bottom Panels (Bento Grid 2 Columns) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md">
+<!-- Left Panel: SLA Velocity & Aging Breakdown (7 Cols) -->
+<div class="lg:col-span-7 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between space-y-space-md">
+<div class="flex items-center justify-between">
+<div>
+<div class="flex items-center gap-2">
+<h2 class="font-headline-sm text-headline-sm text-on-surface">SLA Velocity &amp; Aging Breakdown</h2>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-outline uppercase font-semibold">Active Cycle</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">Requisition distribution across target response brackets</p>
+</div>
+<div class="flex items-center gap-1 font-label-sm text-label-sm text-tertiary bg-tertiary-fixed/40 px-2 py-1 rounded-md font-semibold">
+<span class="material-symbols-outlined text-[16px]">speed</span>
+<span>91.4% Within SLA</span>
+</div>
+</div>
+<!-- Segmented Stacked Bar Visual -->
+<div class="space-y-2">
+<div class="flex justify-between font-label-md text-label-md text-outline">
+<span>Overall Backlog: 61 Active Tickets</span>
+<span>Target Mean Resolution: &lt; 8 Hours</span>
+</div>
+<div class="h-5 w-full bg-surface-container rounded-full overflow-hidden flex p-0.5 gap-0.5">
+<div class="bg-error h-full rounded-l-full transition-all hover:opacity-90 cursor-pointer" style="width: 7%;" title="4 Overdue / Critical"></div>
+<div class="bg-secondary-container h-full transition-all hover:opacity-90 cursor-pointer" style="width: 18%;" title="11 items (&lt;4h remaining)"></div>
+<div class="bg-secondary-fixed-dim h-full transition-all hover:opacity-90 cursor-pointer" style="width: 31%;" title="19 items (4h - 12h remaining)"></div>
+<div class="bg-tertiary-fixed h-full transition-all hover:opacity-90 cursor-pointer" style="width: 28%;" title="17 items (12h - 24h remaining)"></div>
+<div class="bg-tertiary-container h-full rounded-r-full transition-all hover:opacity-90 cursor-pointer" style="width: 16%;" title="10 items (&gt;24h safe)"></div>
+</div>
+</div>
+<!-- Category Legend Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-sm pt-2">
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col">
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-error font-semibold">
+<span class="w-2 h-2 rounded-full bg-error"></span>
+<span>&lt; 4 Hours (High)</span>
+</div>
+<span class="font-headline-sm text-body-lg font-bold text-on-surface mt-1">4 items</span>
+<span class="font-label-sm text-label-sm text-outline">Action mandatory</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col">
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-secondary font-semibold">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>4h – 12 Hours</span>
+</div>
+<span class="font-headline-sm text-body-lg font-bold text-on-surface mt-1">11 items</span>
+<span class="font-label-sm text-label-sm text-outline">Under review</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col">
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-outline font-semibold">
+<span class="w-2 h-2 rounded-full bg-secondary-fixed"></span>
+<span>12h – 24 Hours</span>
+</div>
+<span class="font-headline-sm text-body-lg font-bold text-on-surface mt-1">29 items</span>
+<span class="font-label-sm text-label-sm text-outline">Standard pace</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-low flex flex-col">
+<div class="flex items-center gap-1.5 font-label-sm text-label-sm text-tertiary font-semibold">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>&gt; 24 Hours</span>
+</div>
+<span class="font-headline-sm text-body-lg font-bold text-on-surface mt-1">17 items</span>
+<span class="font-label-sm text-label-sm text-outline">Safe buffer</span>
+</div>
+</div>
+<!-- Supplementary Visual Sparkline Chart -->
+<div class="pt-2 flex items-center justify-between border-t-0 bg-surface-container p-3 rounded-lg">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-lowest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[20px]">analytics</span>
+</div>
+<div class="flex flex-col">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface">Queue Throughput Spark</span>
+<span class="font-label-sm text-label-sm text-outline">Hourly resolution cadence for Egypt Operations</span>
+</div>
+</div>
+<!-- Inline Micro SVG Sparkline -->
+<svg class="w-36 h-8 text-primary overflow-visible" fill="none" stroke="currentColor" viewbox="0 0 100 24">
+<path d="M0,18 L15,14 L30,19 L45,10 L60,12 L75,4 L90,8 L100,2" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+<circle cx="100" cy="2" fill="currentColor" r="3"></circle>
+</svg>
+</div>
+</div>
+<!-- Right Panel: Live Audit & Event Dispatch (5 Cols) -->
+<div class="lg:col-span-5 bg-surface-container-lowest p-space-lg rounded-xl shadow-sm flex flex-col justify-between space-y-space-sm">
+<div class="flex items-center justify-between">
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Live Audit &amp; Event Dispatch</h2>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Automated SAP ECC &amp; Telegram hooks</p>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container font-mono text-outline">v2.4-webhook</span>
+</div>
+<!-- Feed Events List -->
+<div class="space-y-space-sm divide-y-0">
+<!-- Event 1 -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low transition-colors">
+<div class="w-7 h-7 rounded-full bg-tertiary-fixed text-on-tertiary-fixed-variant flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">SAP PO-2026-779 Synced</span>
+<span class="font-label-sm text-label-sm text-outline shrink-0">2m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Alexandria Hub cement consignment booked to ledger 4100.</p>
+</div>
+</div>
+<!-- Event 2 -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low transition-colors">
+<div class="w-7 h-7 rounded-full bg-secondary-fixed text-on-secondary-fixed flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">edit_document</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">RFQ Revised by Raya IT</span>
+<span class="font-label-sm text-label-sm text-outline shrink-0">14m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">Net price adjusted -2.4% for Catalyst switches (EGP 312k).</p>
+</div>
+</div>
+<!-- Event 3 -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low transition-colors">
+<div class="w-7 h-7 rounded-full bg-error-container text-error flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">notification_important</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-body-sm font-semibold text-error truncate">SLA Escalation Broadcast</span>
+<span class="font-label-sm text-label-sm text-outline shrink-0">42m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">R-2026-0041 Dell Latitude laptops escalated to VP Procurement.</p>
+</div>
+</div>
+<!-- Event 4 -->
+<div class="flex items-start gap-space-sm p-space-xs rounded-lg hover:bg-surface-container-low transition-colors">
+<div class="w-7 h-7 rounded-full bg-surface-container text-on-surface-variant flex items-center justify-center shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[16px]">how_to_reg</span>
+</div>
+<div class="flex flex-col min-w-0 flex-1">
+<div class="flex items-center justify-between gap-1">
+<span class="font-headline-sm text-body-sm font-semibold text-on-surface truncate">Auto-Assigned Agent Batch</span>
+<span class="font-label-sm text-label-sm text-outline shrink-0">1h 10m ago</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant truncate">8 requisitions balanced to Cairo Central Desk queue.</p>
+</div>
+</div>
+</div>
+<!-- Quick Action Footer for Audit -->
+<div class="pt-2 flex items-center justify-between">
+<a class="text-primary hover:text-primary-container font-headline-sm text-body-sm flex items-center gap-1" href="#">
+<span>View complete audit log</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+<div class="flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span class="font-label-sm text-label-sm text-outline">Connector: SAP S/4HANA</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Micro-Interaction Script for Client-Side Filtering Demonstration -->
+<script>
+  (function() {
+    // Basic reactive indicator toggling for tabs
+    const tabButtons = document.querySelectorAll('div.overflow-x-auto button');
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        tabButtons.forEach(b => {
+          b.className = "flex items-center gap-2 px-space-md py-2 rounded-lg text-on-surface-variant hover:bg-surface-container font-headline-sm text-body-md transition-all whitespace-nowrap";
+        });
+        this.className = "flex items-center gap-2 px-space-md py-2 rounded-lg bg-primary text-on-primary font-headline-sm text-body-md shadow-sm transition-all whitespace-nowrap";
+      });
+    });
+  })();
+</script></main></div></body></html>

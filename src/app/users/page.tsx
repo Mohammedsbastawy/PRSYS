@@ -200,7 +200,7 @@ export default function UsersPage() {
       {/* Filters bar */}
       <div className="card mb-4 flex flex-wrap items-center gap-3 p-4">
         <div className="relative min-w-[200px] max-w-md flex-grow">
-          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-ink-faint" />
+          <Icon name="search" className="absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-outline" />
           <input
             className="input !pl-10"
             placeholder="Search name or email..."
@@ -228,7 +228,7 @@ export default function UsersPage() {
           <option value="inactive">Inactive</option>
         </select>
         {hasFilters ? (
-          <button className="ml-auto flex items-center gap-1 text-xs font-medium text-ink-soft transition-colors hover:text-ink" onClick={clearFilters}>
+          <button className="ml-auto flex items-center gap-1 text-xs font-medium text-on-surface-variant transition-colors hover:text-on-surface" onClick={clearFilters}>
             <Icon name="filter_list_off" className="text-[16px]" />
             Clear filters
           </button>
@@ -240,7 +240,7 @@ export default function UsersPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-surface-border bg-surface-muted text-left text-xs uppercase tracking-wide text-ink-soft">
+              <tr className="border-b border-surface-variant bg-surface-container text-left text-xs uppercase tracking-wide text-on-surface-variant">
                 <th className="px-4 py-3 font-semibold">User</th>
                 <th className="px-4 py-3 font-semibold">Department</th>
                 <th className="px-4 py-3 font-semibold">Role</th>
@@ -249,13 +249,13 @@ export default function UsersPage() {
                 <th className="px-4 py-3 text-right font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-surface-border">
+            <tbody className="divide-y divide-surface-variant">
               {loading &&
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
                     {Array.from({ length: 6 }).map((_, j) => (
                       <td key={j} className="px-4 py-3">
-                        <div className="h-4 w-24 animate-pulse rounded bg-surface-muted" />
+                        <div className="h-4 w-24 animate-pulse rounded bg-surface-container" />
                       </td>
                     ))}
                   </tr>
@@ -273,21 +273,21 @@ export default function UsersPage() {
               )}
               {!loading &&
                 data.items.map((u) => (
-                  <tr key={u.UserID} className={`transition-colors hover:bg-surface-muted ${u.IsActive ? "" : "bg-surface/60"}`}>
+                  <tr key={u.UserID} className={`transition-colors hover:bg-surface-container-low ${u.IsActive ? "" : "bg-surface-container-low/60"}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <Avatar name={u.Name} />
                         <div className="min-w-0">
-                          <div className={`truncate font-semibold ${u.IsActive ? "text-ink" : "text-ink-soft"}`}>
+                          <div className={`truncate font-semibold ${u.IsActive ? "text-on-surface" : "text-on-surface-variant"}`}>
                             {u.Name}
-                            {u.UserID === me?.id && <span className="ml-1 text-[11px] font-normal text-ink-faint">(you)</span>}
+                            {u.UserID === me?.id && <span className="ml-1 text-[11px] font-normal text-outline">(you)</span>}
                           </div>
-                          <div className="truncate text-[11px] text-ink-faint">{u.Email}</div>
+                          <div className="truncate text-[11px] text-outline">{u.Email}</div>
                         </div>
                       </div>
                     </td>
-                    <td className={`px-4 py-3 ${u.IsActive ? "text-ink" : "text-ink-soft"}`}>
-                      {u.Department?.Name || <span className="text-ink-faint">—</span>}
+                    <td className={`px-4 py-3 ${u.IsActive ? "text-on-surface" : "text-on-surface-variant"}`}>
+                      {u.Department?.Name || <span className="text-outline">—</span>}
                       {u.ManagedDEP && (
                         <div className="mt-0.5 flex items-center gap-1 text-[11px] text-primary-dark">
                           <Icon name="workspace_premium" className="text-[13px]" />
@@ -296,16 +296,16 @@ export default function UsersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="badge bg-surface-muted text-ink-soft">{u.Role?.Name}</span>
+                      <span className="badge bg-surface-container text-on-surface-variant">{u.Role?.Name}</span>
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 text-ink-soft">
+                      <div className="flex items-center gap-1.5 text-on-surface-variant">
                         <Icon name={u.AccountType === "AZURE_AD" ? "cloud" : "badge"} className="text-[16px]" />
                         <span className="text-[13px]">{u.AccountType === "AZURE_AD" ? "Microsoft 365" : "Local Account"}</span>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`badge ${u.IsActive ? "bg-green-100 text-green-800" : "border border-gray-200 bg-gray-100 text-gray-500"}`}>
+                      <span className={`badge ${u.IsActive ? "bg-tertiary-fixed text-green-800" : "border border-gray-200 bg-surface-container text-outline"}`}>
                         {u.IsActive ? "Active" : "Inactive"}
                       </span>
                     </td>
@@ -346,8 +346,8 @@ export default function UsersPage() {
         confirmLabel={toggling?.IsActive ? "Deactivate" : "Activate"}
         message={
           toggling?.IsActive
-            ? <>Are you sure you want to deactivate <b className="text-ink">{toggling?.Name}</b>? They will no longer be able to sign in.</>
-            : <>Reactivate <b className="text-ink">{toggling?.Name}</b>? They will immediately regain system access.</>
+            ? <>Are you sure you want to deactivate <b className="text-on-surface">{toggling?.Name}</b>? They will no longer be able to sign in.</>
+            : <>Reactivate <b className="text-on-surface">{toggling?.Name}</b>? They will immediately regain system access.</>
         }
       />
 
@@ -358,7 +358,7 @@ export default function UsersPage() {
         onConfirm={deleteUser}
         busy={busy}
         title="Delete user"
-        message={<>Are you sure you want to permanently delete <b className="text-ink">{deleting?.Name}</b> ({deleting?.Email})?</>}
+        message={<>Are you sure you want to permanently delete <b className="text-on-surface">{deleting?.Name}</b> ({deleting?.Email})?</>}
         note="Users who own requests, approvals or workflow history cannot be deleted — deactivate them instead."
       />
 
@@ -449,7 +449,7 @@ function UserFormModal({
                   type="button"
                   onClick={() => setAccountType(o.v)}
                   className={`flex items-center justify-center gap-2 rounded border px-3 py-2 text-sm transition-colors ${
-                    accountType === o.v ? "border-primary bg-primary-container/40 font-semibold text-primary-dark" : "border-surface-border text-ink-soft hover:bg-surface-muted"
+                    accountType === o.v ? "border-primary bg-primary-container/40 font-semibold text-primary-dark" : "border-surface-variant text-on-surface-variant hover:bg-surface-container-low"
                   }`}
                 >
                   <Icon name={o.icon} className="text-[18px]" />
@@ -479,7 +479,7 @@ function UserFormModal({
             {managers.map((m) => <option key={m.UserID} value={m.UserID}>{m.Name}</option>)}
           </select>
         </Field>
-        <div className="flex justify-end gap-2 border-t border-surface-border pt-4">
+        <div className="flex justify-end gap-2 border-t border-surface-variant pt-4">
           <button type="button" className="btn-secondary" onClick={onClose} disabled={busy}>Cancel</button>
           <button type="submit" className="btn-primary" disabled={busy}>
             {busy && <Icon name="progress_activity" className="animate-spin text-[18px]" />}

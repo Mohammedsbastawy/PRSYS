@@ -14,7 +14,7 @@ const TABS = [
 export default function AdminTabs() {
   const pathname = usePathname();
   return (
-    <div className="mb-6 flex items-center gap-1 border-b border-surface-border">
+    <div className="mb-6 flex items-center gap-1 border-b border-surface-variant">
       {TABS.map((t) => {
         const active = pathname.startsWith(t.href);
         return (
@@ -24,7 +24,7 @@ export default function AdminTabs() {
             className={`-mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm transition-colors ${
               active
                 ? "border-primary font-semibold text-primary-dark"
-                : "border-transparent text-ink-soft hover:bg-surface-muted hover:text-ink"
+                : "border-transparent text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface"
             }`}
           >
             <Icon name={t.icon} className="text-[18px]" />
