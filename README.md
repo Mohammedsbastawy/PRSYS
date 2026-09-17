@@ -89,23 +89,25 @@ Tools available on the palette (`src/lib/workflow-tools.ts`):
 
 * **Requester submits** — a marker node with no settings; drop actions on its port to run them at submit time.
 * **Nothing is pre-selected.** A new node has no name, no approver type, no trigger and no payload value: every
-  select opens on `— choose —` / `not set`, and the priority / quorum chips highlight nothing until you pick. A flow
+  select opens on `— choose —` / `not set`, and the priority chips highlight nothing until you pick. A flow
   does not have to start with an approver at all — automations hanging on the submit marker are a complete workflow
   (zero `WFSteps` rows).
-* Unchosen optional fields (quorum, comment policy) are **omitted** from the payload so the
+* Unchosen optional fields (quorum / approval mode, comment policy, due days) are **omitted** from the payload so the
   API's documented default applies, and `apiToNodes` maps those defaults back to an empty box instead of showing a
-  value you never picked. Approve/reject routing (what happens on approve / on reject) is deliberately **not exposed
-  in the UI**: approving moves on to the next node and rejecting ends the request, which is what every flow needs;
-  redirecting is done with a **Jump to a node** tool instead. Same for the name: `WFSteps.StepName` cannot be empty,
+  value you never picked. Quorum, due days and approve/reject routing are deliberately **not exposed in the UI**:
+  any one approver is enough (the default), due time is controlled by an **Apply SLA policy** step, approving moves
+  on to the next node and rejecting ends the request; redirecting is done with a **Jump to a node** tool instead.
+  Saved values for all of these still round-trip unchanged. Same for the name: `WFSteps.StepName` cannot be empty,
   so an unnamed approval gets a label derived from who decides (`Department manager approval`) at save time and
   loads back as an empty box.
 * The only two mandatory picks are **who decides** (an approval node) and **when it runs** (an action node);
   anything else left unset is reported at save time rather than guessed for you.
 * Presets in the palette wire **ports only** — they never fill in a priority, a policy or a name.
 * **Approval / decision** — who decides (requester's dept manager, direct manager, one person, group, role, any
-  approver), quorum, comment policy, due days, an *only if* gate. It exposes two drop ports — **if approved**
+  approver), comment policy, an *only if* gate. It exposes two drop ports — **if approved**
   (green) and **if rejected** (red), each with a **+ add** button (or drag) — and nothing runs there until you drop
-  a tool on them. Approving continues to the next node; rejecting ends the request.
+  a tool on them. Approving continues to the next node; rejecting ends the request. Due time comes from an
+  **Apply SLA policy** step, not from the approval itself.
 * **Set priority**, **Set ticket status**, **Apply SLA policy**, **Assign an owner**, **Notify people** — one action
   each, with their own *only if* condition.
 * **Jump to a node** — move the approval chain elsewhere (a Jump stops the rest of its group).

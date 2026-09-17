@@ -139,10 +139,6 @@ const APPROVER_TYPES = [
   { value: "ROLE", label: "A role" },
   { value: "ANY_APPROVER", label: "Anyone who may approve" },
 ];
-const APPROVAL_MODES = [
-  { value: "ANY_ONE", label: "Any one of them" },
-  { value: "ALL", label: "All of them must approve" },
-];
 const COMMENT_POLICIES = [
   { value: "OPTIONAL", label: "Comment optional" },
   { value: "ON_APPROVE", label: "Comment on approve" },
@@ -693,22 +689,7 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
         </div>
       </Field>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Field label="Quorum">
-          <select
-            className="input !py-1 text-xs"
-            disabled={ctx.ro}
-            value={n.approvalMode}
-            onChange={(e) => ctx.patch(n.key, { approvalMode: e.target.value })}
-          >
-            <option value="">not set — any one of them</option>
-            {APPROVAL_MODES.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </Field>
+      <div className="grid gap-3 sm:grid-cols-2">
         <Field label="Comments">
           <select
             className="input !py-1 text-xs"
@@ -723,16 +704,6 @@ function ApprovalBody({ n, ctx }: { n: FlowNode; ctx: NodeCtx }) {
               </option>
             ))}
           </select>
-        </Field>
-        <Field label="Due in (days)" hint="Leave empty for no due date on this step">
-          <input
-            className="input !py-1 text-xs"
-            disabled={ctx.ro}
-            inputMode="numeric"
-            placeholder="—"
-            value={n.dueDays}
-            onChange={(e) => ctx.patch(n.key, { dueDays: e.target.value.replace(/[^0-9]/g, "") })}
-          />
         </Field>
         <Field label="Only if" hint="The whole node is skipped when this is false">
           <ConditionRow n={n} disabled={ctx.ro} onPatch={(patch) => ctx.patch(n.key, patch)} />
@@ -1409,10 +1380,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
         if (n.approverType === "ROLE" && !n.targetRoleId) push(n.key, "choose a role");
         if (n.approverType === "GROUP" && !n.targetGroupId) push(n.key, "choose a group");
         if (n.approverType === "USER" && !n.targetUserId) push(n.key, "choose who approves");
-        if (n.dueDays.trim() !== "") {
-          const v = Number(n.dueDays);
-          if (!Number.isInteger(v) || v < 1 || v > 365) push(n.key, "due days must be 1–365");
-        }
         if (n.approveAction === "JUMP_TO_STEP") {
           if (!n.approveTargetKey) push(n.key, "choose where to jump");
           else if (n.approveTargetKey === n.key) push(n.key, "cannot jump to itself");
