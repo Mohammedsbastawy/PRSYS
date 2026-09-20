@@ -223,25 +223,34 @@ function IconChip({ name, accent }: { name: string; accent: string }) {
 /* ----------------------------------------------------------------- nodes -- */
 
 export function StartNode(_: NodeProps) {
-  const { issues, ro, preset, templateCount } = useWfCtx();
-  const both = preset && templateCount > 0;
-  // the trigger is CONTEXTUAL: a form-bound workflow starts on submit, a
-  // preset starts when the Request Approval button is pressed inside a ticket
-  const title = preset ? (both ? "Submitted · or requested" : "Approval requested") : "Request submitted";
-  const sub = preset
-    ? both
-      ? "the moment a request is submitted — or the Request Approval button is pressed"
-      : "the moment the Request Approval button is pressed inside the ticket"
-    : "the moment a request enters the queue";
-  const hint = ro
-    ? ""
-    : both || !preset
-      ? " — drag actions onto its port"
-      : " — the approval chain runs from the next node";
+  const ctx = useWfCtx();
+  const { issues, ro } = ctx;
+  const d = _.data as unknown as FlowNode;
+  const tool = (d?.tool as ToolId) || "START";
+  const m = toolMeta(tool) || toolMeta("START");
+
+  let title = m.label;
+  let sub = m.blurb;
+  if (tool === "STATUS_TRIGGER") {
+    title = "Status changed";
+    sub = "Runs when ticket changes status";
+  } else if (tool === "PRIORITY_TRIGGER") {
+    title = "Priority changed";
+    sub = "Runs when ticket priority changes";
+  } else if (tool === "APPROVAL_DECIDED") {
+    title = "Approval decided";
+    sub = "Runs when an approval is approved or rejected";
+  } else {
+    title = "Request submitted";
+    sub = "The moment a request enters the queue";
+  }
+
+  const hint = ro ? "" : " — drag actions onto its port";
+
   return (
-    <Card selected={_.selected} issues={issues[_.id] ?? []}>
+    <Card selected={_.selected} issues={issues[_.id] ?? []} onDelete={() => ctx.onRemove(_.id)}>
       <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <IconChip name="play_circle" accent="bg-emerald-50 text-emerald-700 border-emerald-200" />
+        <IconChip name={m.icon} accent={m.accent} />
         <div className="min-w-0">
           <div className="text-[10px] font-bold uppercase tracking-wider text-outline">Trigger</div>
           <div className="truncate text-[13px] font-semibold text-on-surface">{title}</div>

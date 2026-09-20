@@ -128,10 +128,59 @@ function dueSuffix(dueAt: Date | null): string {
   return ` (due ${dueAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`
 }
 
+async function resolveRunDueAt(
+  wfId: string,
+  canvasJson: string | null | undefined,
+  dueDays: number | null | undefined,
+  priority: string,
+  baseDate: Date
+): Promise<Date | null> {
+  const fromDays = dueAtFrom(dueDays, baseDate)
+  if (fromDays) return fromDays
+
+  let slaPolicyId: string | null = null
+  const slaRule = await prisma.wFRules.findFirst({
+    where: { WFDefinitionID: wfId, Action: 'SET_SLA', IsActive: true },
+    orderBy: { SortOrder: 'asc' },
+  })
+  if (slaRule?.ActionValue) {
+    try {
+      const parsed = JSON.parse(slaRule.ActionValue) as { slaPolicyId?: string }
+      if (parsed?.slaPolicyId) slaPolicyId = parsed.slaPolicyId
+    } catch {}
+  }
+  if (!slaPolicyId && canvasJson) {
+    try {
+      const parsed = JSON.parse(canvasJson) as { nodes?: { data?: { tool?: string; slaPolicyId?: string } }[] }
+      const slaNode = parsed.nodes?.find((n) => n.data?.tool === 'SET_SLA' && n.data?.slaPolicyId)
+      if (slaNode?.data?.slaPolicyId) slaPolicyId = slaNode.data.slaPolicyId
+    } catch {}
+  }
+  if (slaPolicyId) {
+    const policy = await prisma.sLAPolicies.findUnique({
+      where: { SLAPolicyID: slaPolicyId },
+      include: { Targets: true },
+    })
+    if (policy) {
+      const t =
+        policy.Targets.find((x) => x.Priority === priority) ??
+        policy.Targets.find((x) => x.Priority === 'MEDIUM') ??
+        policy.Targets[0]
+      if (t) {
+        const mins = t.ResolveMins || t.ResponseMins || 0
+        if (mins > 0) {
+          return new Date(baseDate.getTime() + mins * 60 * 1000)
+        }
+      }
+    }
+  }
+  return null
+}
+
 // Statuses in which an on-demand approval run can be decided. Runs never
 // change the request status — they ride alongside the main workflow while the
 // request is in progress.
-const RUN_ACTIVE_STATUSES = ['PENDING_APPROVAL', 'PROCESSING', 'PO_REGISTERED', 'CLARIFICATION_REQUESTED']
+const RUN_ACTIVE_STATUSES = ['PENDING_APPROVAL', 'PROCESSING', 'PO_REGISTERED', 'CLARIFICATION_REQUESTED', 'APPROVED', 'FULFILLED']
 
 /**
  * Decide a step of an ON-DEMAND approval run (an approval preset started from
@@ -279,7 +328,7 @@ async function decideRun(opts: {
         nextStep = jumpTarget
         runCurrentStepId = jumpTarget.WFStepID
         runStepOrder = jumpTarget.StepOrder
-        newDueAt = dueAtFrom(jumpTarget.DueDays, now)
+        newDueAt = await resolveRunDueAt(run.WFDefinitionID, (run as unknown as { WFDefinition?: { CanvasJson?: string | null } }).WFDefinition?.CanvasJson ?? null, jumpTarget.DueDays, request.Priority, now)
         const targetIdx = wfSteps.findIndex((s) => s.WFStepID === jumpTarget.WFStepID)
         const curIdx = wfSteps.findIndex((s) => s.WFStepID === step.WFStepID)
         if (targetIdx >= 0 && targetIdx <= curIdx) newRound = round + 1 // jumping back re-opens review
@@ -296,7 +345,7 @@ async function decideRun(opts: {
         if (nextStep) {
           runCurrentStepId = nextStep.WFStepID
           runStepOrder = nextStep.StepOrder
-          newDueAt = dueAtFrom(nextStep.DueDays, now)
+          newDueAt = await resolveRunDueAt(run.WFDefinitionID, (run as unknown as { WFDefinition?: { CanvasJson?: string | null } }).WFDefinition?.CanvasJson ?? null, nextStep.DueDays, request.Priority, now)
         } else {
           runStatus = 'APPROVED'
           runCurrentStepId = null
@@ -410,10 +459,13 @@ export async function GET(req: NextRequest, { params }: Params) {
         include: {
           Category: { select: { Name: true } },
           Workflow: { include: { Steps: { orderBy: { StepOrder: 'asc' } } } },
+          OwnerGroup: { select: { GroupID: true, Name: true } },
+          OwnerDEP: { select: { DEPID: true, Name: true } },
         },
       },
       Requester: { select: { UserID: true, Name: true, Email: true, DEPID: true } },
       Assignee: { select: { UserID: true, Name: true } },
+      AssignedGroup: { select: { GroupID: true, Name: true } },
       PoCreator: { select: { UserID: true, Name: true } },
       SLAPolicy: { select: { SLAPolicyID: true, Name: true } },
       CurrentStep: {
@@ -433,7 +485,23 @@ export async function GET(req: NextRequest, { params }: Params) {
       Approvals: { include: { WFStep: true, Approver: { select: { UserID: true, Name: true } } }, orderBy: { CreatedAt: 'asc' } },
       Runs: {
         include: {
-          WFDefinition: { select: { WFDefinitionID: true, Name: true, Description: true } },
+          WFDefinition: {
+            select: {
+              WFDefinitionID: true,
+              Name: true,
+              Description: true,
+              CanvasJson: true,
+              Steps: {
+                orderBy: { StepOrder: 'asc' },
+                include: {
+                  TargetUser: { select: { Name: true } },
+                  TargetGroup: { select: { Name: true } },
+                  TargetRole: { select: { Name: true } },
+                  TargetDEP: { select: { Name: true } },
+                },
+              },
+            },
+          },
           CurrentStep: {
             include: {
               TargetUser: { select: { Name: true } },
@@ -444,7 +512,13 @@ export async function GET(req: NextRequest, { params }: Params) {
           },
           CreatedBy: { select: { UserID: true, Name: true } },
           DecidedBy: { select: { Name: true } },
-          Approvals: { include: { Approver: { select: { UserID: true, Name: true } } }, orderBy: { CreatedAt: 'asc' } },
+          Approvals: {
+            include: {
+              Approver: { select: { UserID: true, Name: true } },
+              WFStep: { select: { WFStepID: true, StepName: true } },
+            },
+            orderBy: { CreatedAt: 'asc' },
+          },
         },
         orderBy: { StartedAt: 'asc' },
       },
@@ -655,8 +729,17 @@ export async function GET(req: NextRequest, { params }: Params) {
           myDecided: decidedIds.includes(payload.userId),
         }
       }
+      let runIcon = 'tune'
+      try {
+        const cj = (run as unknown as { WFDefinition?: { CanvasJson?: string | null } }).WFDefinition?.CanvasJson
+        if (cj) {
+          const parsed = JSON.parse(cj) as { presetIcon?: string }
+          if (parsed?.presetIcon) runIcon = parsed.presetIcon
+        }
+      } catch {}
       return {
         ...run,
+        Icon: runIcon,
         TargetSummary: step ? describeStepTarget(step) : null,
         CanDecide: runCanDecide,
         DecideReason: runDecideReason,
@@ -665,13 +748,14 @@ export async function GET(req: NextRequest, { params }: Params) {
     })
   )
 
-  // presets the request page can offer as "Request approval" buttons
+  // presets the request page can offer as buttons
   const presetRows = await prisma.wFDefinitions.findMany({
     where: { OnDemand: true, Status: 'ACTIVE' },
     select: {
       WFDefinitionID: true,
       Name: true,
       Description: true,
+      CanvasJson: true,
       Steps: {
         orderBy: { StepOrder: 'asc' },
         include: {
@@ -685,24 +769,63 @@ export async function GET(req: NextRequest, { params }: Params) {
     },
     orderBy: { Name: 'asc' },
   })
-  const approvalPresets = presetRows.map((wf: {
+
+  // Check group memberships for audience filtering
+  const userGroupRows = await prisma.groupMembers.findMany({
+    where: { UserID: payload.userId },
+    select: { GroupID: true },
+  })
+  const userGroupIds = new Set(userGroupRows.map((g) => g.GroupID))
+
+  const visiblePresetRows = presetRows.filter((wf: { CanvasJson: string | null }) => {
+    if (ctx.roleCode === 'SUPER_ADMIN') return true
+    if (!wf.CanvasJson) return true
+    try {
+      const parsed = JSON.parse(wf.CanvasJson) as { presetAudience?: { mode?: string; roleIds?: string[]; depIds?: string[]; groupIds?: string[] } }
+      const aud = parsed?.presetAudience
+      if (!aud || !aud.mode || aud.mode === 'ALL') return true
+      if (aud.mode === 'ROLES') {
+        return Array.isArray(aud.roleIds) && aud.roleIds.includes(ctx.roleId)
+      }
+      if (aud.mode === 'DEPARTMENTS') {
+        return !!(ctx.depId && Array.isArray(aud.depIds) && aud.depIds.includes(ctx.depId))
+      }
+      if (aud.mode === 'GROUPS') {
+        return Array.isArray(aud.groupIds) && aud.groupIds.some((gid) => userGroupIds.has(gid))
+      }
+      return true
+    } catch {
+      return true
+    }
+  })
+
+  const approvalPresets = visiblePresetRows.map((wf: {
     WFDefinitionID: string
     Name: string
     Description: string | null
+    CanvasJson: string | null
     Steps: StepTargetInput[]
     _count: { Steps: number }
   }) => {
-    const first = wf.Steps[0] ?? null
+    let icon = "tune";
+    try {
+      if (wf.CanvasJson) {
+        const parsed = JSON.parse(wf.CanvasJson) as { presetIcon?: string };
+        if (parsed?.presetIcon) icon = parsed.presetIcon;
+      }
+    } catch {}
+    const first = wf.Steps[0] ?? null;
     return {
       WFDefinitionID: wf.WFDefinitionID,
       Name: wf.Name,
       Description: wf.Description,
+      Icon: icon,
       StepCount: wf._count.Steps,
-      TargetSummary: first ? describeStepTarget(first) : 'No steps',
-    }
-  })
+      TargetSummary: first ? describeStepTarget(first) : "No steps",
+    };
+  });
 
-  return json({ ...request, Runs: enrichedRuns, ApprovalPresets: approvalPresets, RequesterDepartment: department, Comments: comments, Attachments: attachments, FieldValues: fieldValues, CanDecide: canDecide, DecideReason: decideReason, AwaitingTarget: awaitingTarget, StepProgress: stepProgress })
+  return json({ ...request, Runs: enrichedRuns, ApprovalPresets: approvalPresets, Presets: approvalPresets, RequesterDepartment: department, Comments: comments, Attachments: attachments, FieldValues: fieldValues, CanDecide: canDecide, DecideReason: decideReason, AwaitingTarget: awaitingTarget, StepProgress: stepProgress })
 }
 
 // PATCH /api/requests/[id] — status transitions
@@ -728,6 +851,7 @@ const actionSchema = z.object({
     'APPROVE',
     'REJECT',
     'REQUEST_APPROVAL',
+    'RUN_PRESET',
     'REQUEST_CLARIFICATION',
     'ASSIGN',
     'REGISTER_PO',
@@ -826,7 +950,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     }
     const itemCount = await prisma.requestItems.count({ where: { RequestID: params.id } })
     const builtCfg = parseRequestFormConfig((request.FormTemplate as { RequestFormConfig?: string | null } | null)?.RequestFormConfig ?? null)
-    if (builtCfg.items.show && itemCount === 0) return json({ error: 'Add at least one item before submitting' }, 400)
+    const hasCustomItemsField = tmplFields.some((f) => f.FieldType === 'items')
+    if (builtCfg.items.show && !hasCustomItemsField && itemCount === 0) return json({ error: 'Add at least one item before submitting' }, 400)
 
     const wf = request.FormTemplate.Workflow
     const steps = wf?.Steps ?? []
@@ -936,11 +1061,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   // tracks its own steps + SLA inside the request; the main workflow continues
   // untouched. Every pending run is listed on the request page, so several
   // approvals — each with its own due date — are all visible at once.
-  if (action === 'REQUEST_APPROVAL') {
+  if (action === 'REQUEST_APPROVAL' || action === 'RUN_PRESET') {
     const wfId = data!.wfDefinitionId
     if (!wfId) return json({ error: 'Choose a preset workflow' }, 400)
     if (!RUN_ACTIVE_STATUSES.includes(request.Status)) {
-      return json({ error: 'You can only request an approval while the request is in progress' }, 400)
+      return json({ error: 'You can only run a preset while the request is in progress' }, 400)
     }
     // the handling agent, the requester, an assigner, or a super admin
     const canRequest =
@@ -949,7 +1074,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       hasPermission(ctx, 'REQUEST_ASSIGN') ||
       ctx.roleCode === 'SUPER_ADMIN'
     if (!canRequest) {
-      return json({ error: 'Only the handling agent (or the requester) can request an approval' }, 403)
+      return json({ error: 'Only the handling agent (or the requester) can run a preset' }, 403)
     }
     const wf = await prisma.wFDefinitions.findUnique({
       where: { WFDefinitionID: wfId },
@@ -958,6 +1083,32 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     if (!wf || !wf.OnDemand || wf.Status !== 'ACTIVE') {
       return json({ error: 'Preset workflow not found' }, 404)
     }
+
+    // Check audience permissions
+    if (wf.CanvasJson && ctx.roleCode !== 'SUPER_ADMIN') {
+      try {
+        const parsed = JSON.parse(wf.CanvasJson) as { presetAudience?: { mode?: string; roleIds?: string[]; depIds?: string[]; groupIds?: string[] } }
+        const aud = parsed?.presetAudience
+        if (aud && aud.mode && aud.mode !== 'ALL') {
+          let allowed = false
+          if (aud.mode === 'ROLES') {
+            allowed = Array.isArray(aud.roleIds) && aud.roleIds.includes(ctx.roleId)
+          } else if (aud.mode === 'DEPARTMENTS') {
+            allowed = !!(ctx.depId && Array.isArray(aud.depIds) && aud.depIds.includes(ctx.depId))
+          } else if (aud.mode === 'GROUPS') {
+            const userGroups = await prisma.groupMembers.findMany({ where: { UserID: payload.userId }, select: { GroupID: true } })
+            const gids = new Set(userGroups.map((g) => g.GroupID))
+            allowed = Array.isArray(aud.groupIds) && aud.groupIds.some((gid) => gids.has(gid))
+          }
+          if (!allowed) {
+            return json({ error: 'You are not authorized to run this preset' }, 403)
+          }
+        }
+      } catch {
+        /* ignore json parse error */
+      }
+    }
+
     if (wf.Steps.length === 0) return json({ error: `"${wf.Name}" has no approval steps` }, 400)
     const activeRun = await prisma.wFRequestRuns.findFirst({
       where: { RequestID: params.id, WFDefinitionID: wfId, Status: 'PENDING' },
@@ -975,7 +1126,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       wf.Steps.find((s: { Condition: string | null }) => stepApplies(s, condCtx)) ?? null
     if (!firstStep) return json({ error: `"${wf.Name}" has no step that applies to this request` }, 400)
 
-    const dueAt = dueAtFrom(firstStep.DueDays, now)
+    const dueAt = await resolveRunDueAt(wfId, wf.CanvasJson, firstStep.DueDays, request.Priority, now)
     const run = await prisma.wFRequestRuns.create({
       data: {
         RequestID: params.id,
@@ -996,6 +1147,14 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ChangedByUserID: payload.userId,
         Note: `"${wf.Name}" started at "${firstStep.StepName}"`,
       },
+    })
+    await runWorkflowRules({
+      wfDefinitionId: wfId,
+      trigger: 'ON_SUBMIT',
+      requestId: params.id,
+      condCtx,
+      actorName,
+      skipActions: ['SET_STATUS', 'JUMP_TO_STEP'],
     })
     const targets = await stepTargetUserIds(firstStep, request.RequesterID, stepLookups())
     if (targets.length === 0) {

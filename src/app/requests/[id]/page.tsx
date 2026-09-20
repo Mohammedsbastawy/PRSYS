@@ -42,6 +42,8 @@ interface RunApproval {
   Decision: string;
   Comment: string | null;
   DecidedAt: string | null;
+  WFStepID?: string;
+  WFStep?: { WFStepID: string; StepName: string } | null;
 }
 /** One on-demand approval run (a preset workflow started from the request) */
 interface Run {
@@ -56,7 +58,14 @@ interface Run {
   CanDecide: boolean;
   DecideReason: string | null;
   StepProgress: StepProgress | null;
-  WFDefinition: { WFDefinitionID: string; Name: string; Description: string | null };
+  Icon?: string;
+  WFDefinition: {
+    WFDefinitionID: string;
+    Name: string;
+    Description: string | null;
+    CanvasJson?: string | null;
+    Steps?: RunStep[];
+  };
   CurrentStep: RunStep | null;
   CreatedBy: { UserID: string; Name: string } | null;
   DecidedBy: { Name: string } | null;
@@ -66,6 +75,7 @@ interface ApprovalPreset {
   WFDefinitionID: string;
   Name: string;
   Description: string | null;
+  Icon?: string;
   StepCount: number;
   TargetSummary: string;
 }
@@ -217,6 +227,7 @@ interface ReqDetail {
   StepProgress: StepProgress | null;
   Requester: { UserID: string; Name: string; Email: string };
   Assignee: { UserID: string; Name: string } | null;
+  AssignedGroup: { GroupID: string; Name: string } | null;
   PoCreator: { Name: string } | null;
   RequesterDepartment: string | null;
   FormTemplate: {
@@ -224,6 +235,8 @@ interface ReqDetail {
     Description: string | null;
     Category: { Name: string } | null;
     Workflow: { Name: string; Steps: Step[] } | null;
+    OwnerGroup?: { GroupID: string; Name: string } | null;
+    OwnerDEP?: { DEPID: string; Name: string } | null;
   };
   CurrentStep: (Step & {
     TargetUser: { Name: string } | null;
@@ -235,6 +248,7 @@ interface ReqDetail {
   Approvals: Approval[];
   Runs: Run[];
   ApprovalPresets: ApprovalPreset[];
+  Presets?: ApprovalPreset[];
   Comments: CommentT[];
   Attachments: Att[];
   AuditLogs: Audit[];
@@ -648,84 +662,6 @@ function VerifyModal({
   );
 }
 
-function StockLookup({ token }: { token: string }) {
-  const [q, setQ] = useState("");
-  const [hits, setHits] = useState<CatHit[]>([]);
-  const [searched, setSearched] = useState(false);
-  const [busy, setBusy] = useState(false);
-  async function run() {
-    if (q.trim().length < 2) return;
-    setBusy(true);
-    try {
-      const r = await fetch(`/api/catalog?q=${encodeURIComponent(q.trim())}&limit=20`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setHits(r.ok ? await r.json() : []);
-    } catch {
-      setHits([]);
-    } finally {
-      setBusy(false);
-      setSearched(true);
-    }
-  }
-  return (
-    <div className="card">
-      <div className="flex flex-col gap-1 px-5 pt-5 md:flex-row md:items-center md:justify-between">
-        <h3 className="font-headline-sm text-headline-sm font-semibold text-on-surface">Check Warehouse Stock</h3>
-        <p className="text-[13px] text-on-surface-variant">Search Oracle inventory to confirm requested items are in stock before approving.</p>
-      </div>
-      <div className="p-5">
-        <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline">
-            <Icon name="search" className="text-[20px]" />
-          </span>
-          <input
-            className="input !pl-10"
-            placeholder="Search by item name or code..."
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && run()}
-          />
-        </div>
-        {searched && (
-          <div className="mt-3 overflow-x-auto rounded border border-surface-variant">
-            <table className="tbl w-full min-w-[640px]">
-              <thead>
-                <tr>
-                  <th>Item Code</th>
-                  <th>Item Name</th>
-                  <th>Warehouse/Org</th>
-                  <th className="!text-right">Last Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {hits.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className="py-6 text-center text-outline">
-                      No catalog matches
-                    </td>
-                  </tr>
-                )}
-                {hits.map((h) => (
-                  <tr key={h.ItemCatalogCacheID}>
-                    <td className="font-semibold text-on-surface">[{h.ItemCode}]</td>
-                    <td>{h.ItemName}</td>
-                    <td className="text-on-surface-variant">{h.OrganizationCode}</td>
-                    <td className="!text-right font-medium text-primary-dark">
-                      {h.LastPurchasedPrice !== null ? fmtNum(h.LastPurchasedPrice) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-        {busy && <div className="mt-2 text-sm text-on-surface-variant">Searching...</div>}
-      </div>
-    </div>
-  );
-}
-
 /* ================= page ================= */
 export default function RequestDetailPage() {
   const { token, user } = useAuth();
@@ -893,11 +829,16 @@ export default function RequestDetailPage() {
     !!req.CurrentWFStepID &&
     !req.CanDecide;
   const canVerify = p("REQUEST_VERIFY_ITEMS");
-  const canCatalog = p("CATALOG_VIEW");
   const canSeeInternal = p("REQUEST_VIEW_ALL");
   const cancellable = ["DRAFT", "PENDING_APPROVAL", "CLARIFICATION_REQUESTED"].includes(req.Status);
-  // on-demand approval runs ride alongside any in-progress status
-  const runActive = ["PENDING_APPROVAL", "PROCESSING", "PO_REGISTERED", "CLARIFICATION_REQUESTED"].includes(req.Status);
+  const runActive = [
+    "PENDING_APPROVAL",
+    "PROCESSING",
+    "PO_REGISTERED",
+    "CLARIFICATION_REQUESTED",
+    "APPROVED",
+    "FULFILLED",
+  ].includes(req.Status);
   const canRequestApproval =
     !!user &&
     runActive &&
@@ -974,7 +915,116 @@ export default function RequestDetailPage() {
       nodes.push({ name: s.StepName, state: "todo" });
     }
   });
-  nodes.push({ name: finalLabel, state: isDone ? "done" : req.Status === "REJECTED" ? "todo" : "todo" });
+  // Main workflow conclusion / approval status
+  if (isDone) {
+    nodes.push({ name: "Approved", state: "done" });
+  } else if (req.Status === "REJECTED") {
+    nodes.push({
+      name: "Rejected",
+      state: "rejected",
+      sub: rejectedApproval?.Approver ? `Rejected by ${rejectedApproval.Approver.Name}` : undefined,
+    });
+  } else if (req.Status === "PENDING_APPROVAL" || req.Status === "CLARIFICATION_REQUESTED") {
+    nodes.push({ name: "Approved", state: "todo" });
+  }
+
+  // Automation Presets — all past and active runs recorded chronologically
+  const runs = req.Runs || [];
+  runs.forEach((r) => {
+    const icon = r.Icon || "tune";
+    const due = r.DueAt ? new Date(r.DueAt) : null;
+    const overdue = r.Status === "PENDING" && !!due && due.getTime() < Date.now();
+    const steps = r.WFDefinition?.Steps || [];
+
+    if (steps.length > 1) {
+      steps.forEach((st) => {
+        const ap = (r.Approvals || []).find(
+          (a) => (a.WFStepID === st.WFStepID || a.WFStep?.WFStepID === st.WFStepID) && a.Decision !== "PENDING"
+        );
+        if (ap?.Decision === "APPROVED") {
+          nodes.push({
+            name: `${r.WFDefinition.Name}: ${st.StepName}`,
+            state: "done",
+            sub: ap.Approver?.Name || "Approved",
+            isPreset: true,
+            icon,
+          });
+        } else if (ap?.Decision === "REJECTED") {
+          nodes.push({
+            name: `${r.WFDefinition.Name}: ${st.StepName}`,
+            state: "rejected",
+            sub: `Rejected by ${ap.Approver?.Name || "Approver"}`,
+            isPreset: true,
+            icon,
+          });
+        } else if (r.CurrentStepID === st.WFStepID && r.Status === "PENDING") {
+          nodes.push({
+            name: `${r.WFDefinition.Name}: ${st.StepName}`,
+            state: "current",
+            sub: `Awaiting: ${r.TargetSummary || "Approver"}${overdue ? " (Overdue)" : ""}`,
+            alert: overdue,
+            isPreset: true,
+            icon,
+          });
+        } else {
+          nodes.push({
+            name: `${r.WFDefinition.Name}: ${st.StepName}`,
+            state: "todo",
+            isPreset: true,
+            icon,
+          });
+        }
+      });
+    } else {
+      if (r.Status === "APPROVED") {
+        const decider =
+          r.DecidedBy?.Name ||
+          (r.Approvals && r.Approvals.length > 0 ? r.Approvals[r.Approvals.length - 1].Approver?.Name : null);
+        nodes.push({
+          name: r.WFDefinition.Name,
+          state: "done",
+          sub: decider ? `Approved by ${decider}` : "Approved",
+          isPreset: true,
+          icon,
+        });
+      } else if (r.Status === "PENDING") {
+        nodes.push({
+          name: r.WFDefinition.Name,
+          state: "current",
+          sub: `Awaiting: ${r.TargetSummary || "Approver"}${overdue ? " (Overdue)" : ""}`,
+          alert: overdue,
+          isPreset: true,
+          icon,
+        });
+      } else if (r.Status === "REJECTED") {
+        const rejecter =
+          r.DecidedBy?.Name ||
+          (r.Approvals ? r.Approvals.find((a) => a.Decision === "REJECTED")?.Approver?.Name : null);
+        nodes.push({
+          name: r.WFDefinition.Name,
+          state: "rejected",
+          sub: rejecter ? `Rejected by ${rejecter}` : "Rejected",
+          isPreset: true,
+          icon,
+        });
+      }
+    }
+  });
+
+  // Subsequent request lifecycle milestones
+  if (req.OraclePoNumber || req.Status === "PO_REGISTERED") {
+    nodes.push({
+      name: "PO Registered",
+      state: "done",
+      sub: req.PoCreator?.Name || (req.OraclePoNumber ? `#${req.OraclePoNumber}` : undefined),
+    });
+  }
+  if (req.Status === "FULFILLED") {
+    nodes.push({ name: "Fulfilled", state: "done" });
+  }
+  if (req.Status === "COMPLETED") {
+    nodes.push({ name: "Completed", state: "done" });
+  }
 
   /* unified discussion timeline */
   type FeedItem =
@@ -1039,20 +1089,20 @@ export default function RequestDetailPage() {
               </button>
             </>
           )}
-          {canRequestApproval && req.ApprovalPresets.length > 0 && (
+          {canRequestApproval && (req.Presets?.length ?? req.ApprovalPresets.length) > 0 && (
             <div className="relative">
               <button className="btn-secondary" disabled={busy !== null} onClick={() => setPresetOpen((v) => !v)}>
-                <Icon name="verified_user" className="text-[18px]" /> Request Approval
+                <Icon name="tune" className="text-[18px]" /> Automation Presets
               </button>
               {presetOpen && (
                 <>
                   <div className="fixed inset-0 z-10" onClick={() => setPresetOpen(false)} />
                   <div className="absolute right-0 z-20 mt-2 w-80 rounded border border-surface-variant bg-surface-container-lowest p-2 shadow-lg">
                     <p className="px-2 pb-1.5 pt-1 text-[11px] font-semibold uppercase tracking-wider text-outline">
-                      Start an approval preset on this ticket
+                      Run an automation preset on this ticket
                     </p>
                     <div className="space-y-1">
-                      {req.ApprovalPresets.map((wf) => {
+                      {(req.Presets ?? req.ApprovalPresets).map((wf) => {
                         const alreadyWaiting = (req.Runs || []).some(
                           (r) => r.WFDefinition.WFDefinitionID === wf.WFDefinitionID && r.Status === "PENDING"
                         );
@@ -1061,19 +1111,24 @@ export default function RequestDetailPage() {
                             key={wf.WFDefinitionID}
                             disabled={busy !== null || alreadyWaiting}
                             title={wf.Description || undefined}
-                            className="w-full rounded border border-transparent px-2.5 py-2 text-left transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50"
-                            onClick={() => act("REQUEST_APPROVAL", { wfDefinitionId: wf.WFDefinitionID })}
+                            className="flex w-full items-center gap-2.5 rounded-lg border border-transparent p-2 text-left transition-colors hover:bg-surface-container disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={() => act("RUN_PRESET", { wfDefinitionId: wf.WFDefinitionID })}
                           >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="text-sm font-semibold text-on-surface">{wf.Name}</span>
-                              {alreadyWaiting && (
-                                <span className="badge bg-secondary-fixed text-[10px] font-bold text-on-secondary-fixed-variant">
-                                  already waiting
-                                </span>
-                              )}
-                            </div>
-                            <div className="text-xs text-on-surface-variant">
-                              → {wf.TargetSummary} · {wf.StepCount} step{wf.StepCount === 1 ? "" : "s"}
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                              <Icon name={wf.Icon || "tune"} className="text-[18px]" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-1.5">
+                                <span className="truncate text-xs font-semibold text-on-surface">{wf.Name}</span>
+                                {alreadyWaiting && (
+                                  <span className="shrink-0 badge bg-secondary-fixed text-[9px] font-bold text-on-secondary-fixed-variant">
+                                    running
+                                  </span>
+                                )}
+                              </div>
+                              <div className="truncate text-[11px] text-on-surface-variant">
+                                {wf.Description || (wf.StepCount > 0 ? `→ ${wf.TargetSummary}` : "Preset action")}
+                              </div>
                             </div>
                           </button>
                         );
@@ -1159,11 +1214,16 @@ export default function RequestDetailPage() {
         <span className="flex items-center gap-1">
           <Icon name="schedule" className="text-[16px]" /> Submitted: {fmtDate(req.SubmittedAt || req.CreatedAt)}
         </span>
-        {req.Assignee && (
+        {req.AssignedGroup ? (
+          <span className="flex items-center gap-1">
+            <Icon name="group" className="text-[16px]" /> Assigned to: {req.AssignedGroup.Name}
+            {req.Assignee && <span className="text-outline">· {req.Assignee.Name}</span>}
+          </span>
+        ) : req.Assignee ? (
           <span className="flex items-center gap-1">
             <Icon name="person" className="text-[16px]" /> Assigned to: {req.Assignee.Name}
           </span>
-        )}
+        ) : null}
       </div>
 
       {(() => {
@@ -1269,10 +1329,10 @@ export default function RequestDetailPage() {
         )}
       </div>
 
-      {/* Approval Requests — on-demand approval presets, each with its own SLA clock */}
+      {/* Presets & Approvals — on-demand presets, each with its own SLA clock */}
       {(() => {
         const runs = req.Runs || [];
-        const presets = req.ApprovalPresets || [];
+        const presets = req.Presets || req.ApprovalPresets || [];
         const pendingCount = runs.filter((r) => r.Status === "PENDING").length;
         if (runs.length === 0 && !(canRequestApproval && presets.length > 0)) return null;
         const nowMs = Date.now();
@@ -1280,7 +1340,7 @@ export default function RequestDetailPage() {
           <div className="card mb-4 p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <h3 className="flex items-center gap-1.5 font-headline-sm text-headline-sm font-semibold text-on-surface">
-                <Icon name="verified_user" className="text-[18px]" /> Approval Requests
+                <Icon name="tune" className="text-[18px]" /> Automation Presets
               </h3>
               {pendingCount > 0 && (
                 <span className="badge bg-secondary-fixed text-[10px] font-bold text-on-secondary-fixed-variant">
@@ -1293,21 +1353,27 @@ export default function RequestDetailPage() {
                 presets.map((wf) => (
                   <div
                     key={wf.WFDefinitionID}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded border border-dashed border-surface-variant p-3"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashed border-surface-variant bg-surface-container-lowest/50 p-3 transition-colors hover:border-primary/40 hover:bg-surface-container-lowest"
                   >
-                    <div>
-                      <div className="text-sm font-semibold text-on-surface">{wf.Name}</div>
-                      <div className="text-xs text-on-surface-variant">
-                        → {wf.TargetSummary} · {wf.StepCount} step{wf.StepCount === 1 ? "" : "s"}
-                        {wf.Description ? ` — ${wf.Description}` : ""}
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                        <Icon name={wf.Icon || "tune"} className="text-[20px]" />
+                      </span>
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-on-surface">{wf.Name}</div>
+                        <div className="truncate text-xs text-on-surface-variant">
+                          {wf.Description ? `${wf.Description} · ` : ""}
+                          {wf.StepCount > 0 ? `→ ${wf.TargetSummary} · ${wf.StepCount} step${wf.StepCount === 1 ? "" : "s"}` : "Automation preset"}
+                        </div>
                       </div>
                     </div>
                     <button
-                      className="btn-secondary !px-2.5 !py-1 text-xs"
+                      className="btn-secondary flex shrink-0 items-center gap-1.5 !px-3 !py-1 text-xs"
                       disabled={busy !== null}
-                      onClick={() => act("REQUEST_APPROVAL", { wfDefinitionId: wf.WFDefinitionID })}
+                      onClick={() => act("RUN_PRESET", { wfDefinitionId: wf.WFDefinitionID })}
                     >
-                      Start
+                      <Icon name="play_arrow" className="text-[15px]" />
+                      Run Preset
                     </button>
                   </div>
                 ))}
@@ -1315,10 +1381,11 @@ export default function RequestDetailPage() {
                 const step = r.CurrentStep;
                 const dueMs = r.DueAt ? new Date(r.DueAt).getTime() : null;
                 const overdue = r.Status === "PENDING" && dueMs !== null && dueMs < nowMs;
+                const matchedPreset = presets.find((p) => p.WFDefinitionID === r.WFDefinition.WFDefinitionID);
                 return (
                   <div
                     key={r.WFRunID}
-                    className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded border p-3 ${
+                    className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border p-3 ${
                       r.Status === "PENDING"
                         ? "border-surface-variant bg-surface-container-low/40"
                         : r.Status === "APPROVED"
@@ -1328,6 +1395,9 @@ export default function RequestDetailPage() {
                   >
                     <div className="min-w-[220px] flex-1">
                       <div className="flex flex-wrap items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded border border-primary/20 bg-primary/10 text-primary">
+                          <Icon name={matchedPreset?.Icon || "tune"} className="text-[14px]" />
+                        </span>
                         <span className="text-sm font-semibold text-on-surface">{r.WFDefinition.Name}</span>
                         {r.Status === "PENDING" ? (
                           <span className="badge bg-secondary-fixed text-[10px] font-bold text-on-secondary-fixed-variant">waiting</span>
@@ -1418,10 +1488,27 @@ export default function RequestDetailPage() {
             <SummaryRow icon="domain" label="Department">
               {req.RequesterDepartment || "—"}
             </SummaryRow>
+            <SummaryRow icon="group" label="Assigned Group">
+              {req.AssignedGroup?.Name || req.FormTemplate.OwnerGroup?.Name || req.FormTemplate.OwnerDEP?.Name || "—"}
+            </SummaryRow>
+            <SummaryRow icon="person_outline" label="Assignee">
+              <span className="inline-flex items-center gap-1.5">
+                <span>{req.Assignee?.Name || "Unassigned"}</span>
+                {p("REQUEST_ASSIGN") && (
+                  <button
+                    type="button"
+                    onClick={() => setAssignOpen(true)}
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    ({req.Assignee ? "Change" : "Assign"})
+                  </button>
+                )}
+              </span>
+            </SummaryRow>
             <SummaryRow icon="event" label="Needed By">
               {fmtDate(req.NeededByDate)}
             </SummaryRow>
-            {req.FieldValues.filter((fv) => fv.FormField?.FieldType !== "items").map((fv, i) => (
+            {req.FieldValues.filter((fv) => fv.FormField !== null && fv.FormField?.FieldType !== "items" && fv.FormField?.FieldType !== "title").map((fv, i) => (
               <SummaryRow key={i} icon="info" label={fv.FormField?.Label || "Field"}>
                 {fv.FormField?.FieldType === "file" ? (
                   <FileAnswerLinks
@@ -1517,13 +1604,6 @@ export default function RequestDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Stock lookup (procurement) */}
-      {canCatalog && (
-        <div className="mb-4">
-          <StockLookup token={token!} />
-        </div>
-      )}
 
       {/* Attachments */}
       <div className="card mb-4 p-5">

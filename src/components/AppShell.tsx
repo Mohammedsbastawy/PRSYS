@@ -35,6 +35,7 @@ const NAV_SECTIONS: { title: string; items: NavItem[] }[] = [
       { href: "/groups", label: "Groups", icon: "hub", anyOf: ["GROUP_MANAGE"] },
       { href: "/forms", label: "Forms", icon: "dynamic_form", anyOf: ["FORM_TEMPLATE_VIEW", "FORM_TEMPLATE_MANAGE"] },
       { href: "/workflows", label: "Workflows", icon: "alt_route", anyOf: ["WF_VIEW", "WF_MANAGE"] },
+      { href: "/automation-presets", label: "Automation Presets", icon: "tune", anyOf: ["WF_VIEW", "WF_MANAGE"] },
       { href: "/sla", label: "SLA Policies", icon: "timer", anyOf: ["SLA_MANAGE"] },
     ],
   },

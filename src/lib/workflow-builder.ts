@@ -24,6 +24,10 @@ import { parseRuleActionValue, RULE_ACTIONS, type RuleActionValue } from "./work
 
 export type ToolId =
   | "START"
+  | "ON_DEMAND"
+  | "STATUS_TRIGGER"
+  | "PRIORITY_TRIGGER"
+  | "APPROVAL_DECIDED"
   | "APPROVAL"
   | "SET_PRIORITY"
   | "SET_STATUS"
@@ -33,6 +37,13 @@ export type ToolId =
   | "ASSIGN_TO_DEPARTMENT"
   | "NOTIFY"
   | "JUMP_TO_STEP";
+
+export interface PresetAudience {
+  mode: "ALL" | "ROLES" | "DEPARTMENTS" | "GROUPS";
+  roleIds: string[];
+  depIds: string[];
+  groupIds: string[];
+}
 
 /** "" = the admin has not chosen yet — the node cannot be saved until they do */
 export type WhenChoice = WhenId | "";
@@ -150,8 +161,14 @@ export function nextKey(prefix: string): string {
 
 export const ACTION_TOOLS: ToolId[] = ["SET_PRIORITY", "SET_STATUS", "SET_SLA", "ASSIGN_TO_USER", "ASSIGN_TO_GROUP", "ASSIGN_TO_DEPARTMENT", "NOTIFY", "JUMP_TO_STEP"];
 
+export const TRIGGER_TOOLS: ToolId[] = ["START", "ON_DEMAND", "STATUS_TRIGGER", "PRIORITY_TRIGGER", "APPROVAL_DECIDED"];
+
 export function isActionTool(t: ToolId): boolean {
   return ACTION_TOOLS.includes(t);
+}
+
+export function isTriggerTool(t: ToolId): boolean {
+  return TRIGGER_TOOLS.includes(t);
 }
 
 export function newNode(tool: ToolId, over: Partial<FlowNode> = {}): FlowNode {

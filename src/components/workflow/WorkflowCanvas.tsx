@@ -33,6 +33,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Icon } from "@/components/ui";
+import { toolMeta } from "@/lib/workflow-tools";
 import type { FlowNode, ToolId } from "@/lib/workflow-builder";
 import {
   appendRecipeToGraph,
@@ -278,9 +279,21 @@ function CanvasInner({ initial, ro, lookups, preset, templateCount, onGraph, onS
   const addNode = useCallback(
     (kind: GNodeKind, tool: ToolId, position: { x: number; y: number }) => {
       if (ro) return;
-      if (kind === "start" && nodes.some((n) => n.type === "wf_start")) {
-        showToast("There is already a start node — every flow has one.");
-        return;
+      if (kind === "start") {
+        const existingStart = nodes.find((n) => n.type === "wf_start");
+        if (existingStart) {
+          const g = graphFromRf(nodes, edges);
+          const ng: Graph = {
+            ...g,
+            nodes: g.nodes.map((n) => (n.id === existingStart.id ? { ...n, data: { ...n.data, tool } } : n)),
+          };
+          push();
+          apply(ng);
+          setNodes((prev) => prev.map((x) => ({ ...x, selected: x.id === existingStart.id })));
+          onSelection([existingStart.id]);
+          showToast(`Trigger changed to ${toolMeta(tool)?.label ?? tool}`);
+          return;
+        }
       }
       const n = makeNode(kind, tool, position);
       const g = graphFromRf(nodes, edges);
@@ -412,10 +425,9 @@ function CanvasInner({ initial, ro, lookups, preset, templateCount, onGraph, onS
   const issues = useMemo(() => {
     const g = graphFromRf(nodes, edges);
     const out: Record<string, string[]> = {};
-    for (const p of validateGraph(g)) if (p.key) out[p.key] = [...(out[p.key] ?? []), p.reason];
+    for (const p of validateGraph(g, { isPreset: preset })) if (p.key) out[p.key] = [...(out[p.key] ?? []), p.reason];
     return out;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges]);
+  }, [nodes, edges, preset]);
 
   const ctxValue = useMemo(
     () => ({
@@ -431,8 +443,7 @@ function CanvasInner({ initial, ro, lookups, preset, templateCount, onGraph, onS
   );
 
   const nodeTypes = useMemo(() => WF_NODE_TYPES, []);
-  const startCount = nodes.filter((n) => n.type === "wf_start").length;
-  const hasContent = nodes.length > startCount;
+
 
   return (
     <div
@@ -519,19 +530,7 @@ function CanvasInner({ initial, ro, lookups, preset, templateCount, onGraph, onS
         </div>
       )}
 
-      {/* empty state */}
-      {!hasContent && (
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="flex max-w-sm flex-col items-center gap-2 rounded-xl border-2 border-dashed border-[#c9d2e3] bg-white/60 px-8 py-6 text-center backdrop-blur-[2px]">
-            <Icon name="account_tree" className="text-[30px] text-outline" />
-            <p className="text-sm font-semibold text-on-surface">A fresh canvas</p>
-            <p className="text-xs leading-relaxed text-on-surface-variant">
-              Drag a tool from the left panel and drop it here, or click one to add it. The start marker is already
-              waiting — connect things to it.
-            </p>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 }

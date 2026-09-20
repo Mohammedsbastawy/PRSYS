@@ -14,7 +14,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 import { Icon, StatusBadge } from "@/components/ui";
@@ -25,7 +25,7 @@ import {
   PRIORITY_VALUES,
 } from "@/lib/workflow-conditions";
 import { NOTIFY_TARGET_TYPES } from "@/lib/workflow-rules";
-import type { FlowNode, ToolId } from "@/lib/workflow-builder";
+import type { FlowNode, PresetAudience, ToolId } from "@/lib/workflow-builder";
 import {
   apiToGraph,
   graphToApi,
@@ -103,6 +103,21 @@ const APPROVER_TYPES = [
   { value: "ANY_APPROVER", label: "Any approver" },
 ];
 
+const PRESET_ICONS = [
+  { name: "tune", label: "General Preset" },
+  { name: "account_balance_wallet", label: "Budget & Finance" },
+  { name: "payments", label: "Payment & Expense" },
+  { name: "verified_user", label: "Approval & Sign-off" },
+  { name: "support_agent", label: "IT & Support" },
+  { name: "build", label: "Maintenance & Operations" },
+  { name: "local_shipping", label: "Procurement & Shipping" },
+  { name: "inventory_2", label: "Inventory & Assets" },
+  { name: "security", label: "Security & Permissions" },
+  { name: "bolt", label: "Fast Action" },
+  { name: "assignment", label: "Task / Checklist" },
+  { name: "send", label: "Escalate & Send" },
+];
+
 /* ---------------------------------------------------------------- palette -- */
 
 interface PaletteItemSpec {
@@ -133,6 +148,30 @@ const PALETTE_SECTIONS: { name: string; items: PaletteItemSpec[] }[] = (() => {
           accent: "bg-emerald-50 text-emerald-700 border-emerald-200",
           blurb: "the moment a request enters the queue",
         },
+        {
+          kind: "start",
+          tool: "STATUS_TRIGGER",
+          label: "Status changed",
+          icon: "flag",
+          accent: "bg-sky-50 text-sky-700 border-sky-200",
+          blurb: "when ticket status changes",
+        },
+        {
+          kind: "start",
+          tool: "PRIORITY_TRIGGER",
+          label: "Priority changed",
+          icon: "priority_high",
+          accent: "bg-rose-50 text-rose-700 border-rose-200",
+          blurb: "when ticket priority is updated",
+        },
+        {
+          kind: "start",
+          tool: "APPROVAL_DECIDED",
+          label: "Approval decided",
+          icon: "verified",
+          accent: "bg-purple-50 text-purple-700 border-purple-200",
+          blurb: "when an approval is decided",
+        },
       ],
     },
     {
@@ -159,13 +198,11 @@ const PALETTE_SECTIONS: { name: string; items: PaletteItemSpec[] }[] = (() => {
 function Palette({
   ro,
   preset,
-  templateCount,
   onAdd,
   onRecipe,
 }: {
   ro: boolean;
   preset: boolean;
-  templateCount: number;
   onAdd: (p: PaletteItemSpec) => void;
   onRecipe: (id: string) => void;
 }) {
@@ -187,6 +224,7 @@ function Palette({
       />
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
         {PALETTE_SECTIONS.map((s) => {
+          if (preset && s.name === "Trigger") return null;
           const items = needle ? s.items.filter((i) => (i.label + i.blurb).toLowerCase().includes(needle)) : s.items;
           if (items.length === 0) return null;
           return (
@@ -194,24 +232,8 @@ function Palette({
               <div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-outline">{s.name}</div>
               <div className="space-y-1">
                 {items.map((it) => {
-                  // the trigger is contextual: preset workflows start on the
-                  // Request Approval button click, not on submit
-                  const isStart = it.kind === "start";
-                  const both = preset && templateCount > 0;
-                  const label = isStart
-                    ? preset
-                      ? both
-                        ? "Submitted · or requested"
-                        : "Approval requested"
-                      : it.label
-                    : it.label;
-                  const blurb = isStart
-                    ? preset
-                      ? both
-                        ? "on submit — or when the button is pressed in a ticket"
-                        : "the moment the Request Approval button is pressed"
-                      : it.blurb
-                    : it.blurb;
+                  const label = it.label;
+                  const blurb = it.blurb;
                   return (
                   <button
                     key={it.tool + it.kind}
@@ -555,7 +577,9 @@ const EMPTY_GRAPH: Graph = { nodes: [makeNode("start", "START", { x: 60, y: 140 
 export default function WorkflowEditor({ workflowId }: { workflowId: string | null }) {
   const { user, token } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isNew = workflowId === null;
+  const isPresetParam = isNew && (searchParams.get("preset") === "true" || searchParams.get("preset") === "1");
   const canManage = user?.role.code === "SUPER_ADMIN" || (user?.permissions?.includes("WF_MANAGE") ?? false);
   const ro = !canManage;
 
@@ -566,8 +590,10 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("ACTIVE");
-  const [onDemand, setOnDemand] = useState(false);
-  const [graph, setGraph] = useState<Graph>(EMPTY_GRAPH);
+  const [onDemand, setOnDemand] = useState(isPresetParam);
+  const [presetIcon, setPresetIcon] = useState<string>("tune");
+  const [presetAudience, setPresetAudience] = useState<PresetAudience>({ mode: "ALL", roleIds: [], depIds: [], groupIds: [] });
+  const [graph, setGraph] = useState<Graph>(isPresetParam ? { nodes: [], edges: [] } : EMPTY_GRAPH);
   const [canvasKey, setCanvasKey] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [usage, setUsage] = useState<LoadedWorkflow["usage"] | null>(null);
@@ -586,9 +612,19 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
 
   const lookups: WfLookups = useMemo(() => ({ users, groups, roles, deps, slas }), [users, groups, roles, deps, slas]);
 
+  const assignedDirty = useMemo(() => {
+    if (assigned.size !== initialAssigned.size) return true;
+    for (const id of Array.from(assigned)) {
+      if (!initialAssigned.has(id)) return true;
+    }
+    return false;
+  }, [assigned, initialAssigned]);
+
   const dirty = useMemo(
-    () => JSON.stringify({ name, description, status, onDemand, graph }) !== baseline.current,
-    [name, description, status, onDemand, graph]
+    () =>
+      assignedDirty ||
+      JSON.stringify({ name, description, status, onDemand, presetAudience, presetIcon, graph }) !== baseline.current,
+    [assignedDirty, name, description, status, onDemand, presetAudience, presetIcon, graph]
   );
 
   /* ------------------------------------------------------------- loaders -- */
@@ -647,11 +683,21 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           setDescription(w.Description ?? "");
           setStatus(w.Status);
           setOnDemand(Boolean(w.OnDemand));
+          if (g.presetAudience) setPresetAudience(g.presetAudience);
+          if (g.presetIcon) setPresetIcon(g.presetIcon);
           setUsage(w.usage ?? null);
           setGraph(g);
           setCanvasKey((k) => k + 1);
           setSelectedIds([]);
-          baseline.current = JSON.stringify({ name: w.Name, description: w.Description ?? "", status: w.Status, onDemand: Boolean(w.OnDemand), graph: g });
+          baseline.current = JSON.stringify({
+            name: w.Name,
+            description: w.Description ?? "",
+            status: w.Status,
+            onDemand: Boolean(w.OnDemand),
+            presetAudience: g.presetAudience ?? { mode: "ALL", roleIds: [], depIds: [], groupIds: [] },
+            presetIcon: g.presetIcon ?? "tune",
+            graph: g,
+          });
         }
       })
       .catch(() => setError("Failed to load workflow"))
@@ -668,21 +714,23 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
   /* -------------------------------------------------------------- helpers -- */
 
   const issues = useMemo(() => {
-    const list = validateGraph(graph);
+    const list = validateGraph(graph, { isPreset: onDemand });
     if (!name.trim()) list.unshift({ key: null, reason: "Give the workflow a name" });
     return list;
-  }, [graph, name]);
+  }, [graph, name, onDemand]);
 
   const nodeTitle = useCallback((id: string) => {
     const n = graph.nodes.find((x) => x.id === id);
     if (!n) return "a deleted node";
     if (n.kind === "start") {
-      if (onDemand) return (usage?.templates ?? 0) > 0 ? "Submitted · or requested" : "Approval requested";
-      return "Request submitted";
+      const tool = n.data.tool;
+      const meta = toolMeta(tool as ToolId);
+      if (tool && tool !== "START") return meta?.label ?? "Trigger";
+      return meta?.label ?? "Request submitted";
     }
     if (n.kind === "approval") return n.data.name || "Untitled approval";
     return toolMeta(n.data.tool as ToolId)?.label ?? "a node";
-  }, [graph, onDemand, usage]);
+  }, [graph]);
 
   const wiringSummary = useCallback(
     (id: string) => {
@@ -724,7 +772,8 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
     // save what is actually on screen — the canvas is the source of truth for
     // structure; the editor state follows it (it also self-corrects any drift)
     const live = canvasApi.current?.getGraph() ?? graph;
-    const built = graphToApi(live, { slas, users, groups, departments: deps });
+    const liveWithAudience: Graph = { ...live, presetAudience, presetIcon };
+    const built = graphToApi(liveWithAudience, { slas, users, groups, departments: deps, isPreset: onDemand });
     if (built.problems.length > 0) {
       const p = built.problems[0];
       setError(p.key ? `“${p.reason}” — fix the highlighted node.` : p.reason);
@@ -774,19 +823,21 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
           setGraph(savedGraph); // the canvas resyncs to it (keeps its selection)
         }
       }
-      const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
-      for (const tid of Array.from(assigned)) {
-        if (!initialAssigned.has(tid) && savedId)
-          await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: savedId }) });
+      if (!onDemand) {
+        const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+        for (const tid of Array.from(assigned)) {
+          if (!initialAssigned.has(tid) && savedId)
+            await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: savedId }) });
+        }
+        for (const tid of Array.from(initialAssigned)) {
+          if (!assigned.has(tid))
+            await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: null }) });
+        }
       }
-      for (const tid of Array.from(initialAssigned)) {
-        if (!assigned.has(tid))
-          await fetch(`/api/form-templates/${tid}`, { method: "PATCH", headers: h, body: JSON.stringify({ wfDefinitionId: null }) });
-      }
-      baseline.current = JSON.stringify({ name, description, status, onDemand, graph: savedGraph });
+      baseline.current = JSON.stringify({ name, description, status, onDemand, presetAudience, presetIcon, graph: savedGraph });
       setInitialAssigned(new Set(assigned));
       setSavedAt(new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }));
-      if (isNew && savedId) router.replace(`/workflows/${savedId}`);
+      if (isNew && savedId) router.replace(onDemand ? "/automation-presets" : `/workflows/${savedId}`);
       else router.refresh();
     } catch {
       setError("Save failed — check your connection");
@@ -865,17 +916,26 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
       <div className="flex h-[calc(100dvh-148px)] min-h-[560px] flex-col overflow-hidden rounded-xl border border-surface-variant bg-white shadow-tier1">
         {/* header */}
         <div className="flex shrink-0 items-center gap-3 border-b border-surface-variant px-3 py-2">
-          <Link href="/workflows" className="icon-btn !h-8 !w-8 shrink-0" title="Back to workflows">
+          <Link
+            href={onDemand ? "/automation-presets" : "/workflows"}
+            className="icon-btn !h-8 !w-8 shrink-0"
+            title={onDemand ? "Back to Automation Presets" : "Back to workflows"}
+          >
             <Icon name="arrow_back" className="text-[19px]" />
           </Link>
           <input
             className="min-w-0 flex-1 border-b border-transparent bg-transparent text-lg font-bold tracking-tight text-on-surface outline-none hover:border-surface-variant focus:border-primary"
             value={name}
             disabled={ro}
-            placeholder="Untitled workflow"
+            placeholder={onDemand ? "Untitled Automation Preset" : "Untitled workflow"}
             onChange={(e) => setName(e.target.value)}
           />
           <StatusBadge status={status} />
+          {onDemand && (
+            <span className="badge border border-primary/25 bg-primary/10 text-[10px] font-bold text-primary">
+              Automation Preset
+            </span>
+          )}
           <div className="hidden items-center gap-2 text-[11px] text-outline md:flex">
             <span>{approvalCount} approvals</span>
             <span>·</span>
@@ -893,19 +953,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             <option value="ACTIVE">Active</option>
             <option value="DRAFT">Draft</option>
           </select>
-          <label
-            className="flex cursor-pointer select-none items-center gap-1.5 text-[11px] font-medium text-on-surface-variant"
-            title="Show this workflow as a button inside open requests (“Request approval”) — an agent stuck on a ticket can start it on demand. It still works when attached to a form template."
-          >
-            <input
-              type="checkbox"
-              className="h-3.5 w-3.5 accent-primary"
-              disabled={ro}
-              checked={onDemand}
-              onChange={(e) => setOnDemand(e.target.checked)}
-            />
-            Request-approval preset
-          </label>
           {savedAt && !dirty && <span className="hidden text-[11px] text-outline lg:block">saved {savedAt}</span>}
           {dirty && <span className="badge bg-amber-100 text-on-secondary-fixed-variant">unsaved</span>}
           <button onClick={() => void save()} disabled={saving || ro || (!dirty && !isNew)} className="btn-primary !px-3 !py-1.5 text-xs">
@@ -928,7 +975,6 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             <Palette
               ro={ro}
               preset={onDemand}
-              templateCount={usage?.templates ?? 0}
               onAdd={(p) => canvasApi.current?.addNodeAtCenter(p.kind, p.tool)}
               onRecipe={(id) => canvasApi.current?.appendRecipe(id)}
             />
@@ -951,6 +997,158 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
 
           {/* rail */}
           <aside className="hidden w-80 shrink-0 space-y-3 overflow-y-auto border-l border-surface-variant bg-surface-container-low/40 p-3 xl:block">
+            {onDemand && (
+              <div className="card !rounded-xl border border-primary/40 bg-white p-3.5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-primary/25 bg-primary/10 text-primary">
+                      <Icon name={presetIcon || "tune"} className="text-[19px]" />
+                    </span>
+                    <div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-primary">Automation Preset Settings</div>
+                      <div className="text-xs font-semibold text-on-surface">Ticket On-Demand Action</div>
+                    </div>
+                  </div>
+                  <span className="badge bg-primary/10 text-[10px] font-bold text-primary">Preset</span>
+                </div>
+
+                {/* Preset Icon Selector */}
+                <Field label="Preset Icon in Ticket" hint="Choose an icon to identify this preset in tickets">
+                  <div className="grid grid-cols-6 gap-1 pt-1">
+                    {PRESET_ICONS.map((ic) => (
+                      <button
+                        key={ic.name}
+                        type="button"
+                        disabled={ro}
+                        title={ic.label}
+                        onClick={() => setPresetIcon(ic.name)}
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg border text-base transition-all ${
+                          (presetIcon || "tune") === ic.name
+                            ? "border-primary bg-primary text-white shadow-sm ring-2 ring-primary/20"
+                            : "border-surface-variant bg-surface-container-lowest text-on-surface-variant hover:border-primary/40 hover:bg-surface-container-low"
+                        }`}
+                      >
+                        <Icon name={ic.name} className="text-[17px]" />
+                      </button>
+                    ))}
+                  </div>
+                </Field>
+
+                {/* Preset Audience */}
+                <div className="border-t border-surface-variant/60 pt-2.5 space-y-2">
+                  <Field label="Who can see & run this Preset in tickets">
+                    <Segmented
+                      disabled={ro}
+                      value={presetAudience.mode}
+                      onChange={(m) => setPresetAudience((prev) => ({ ...prev, mode: m as PresetAudience["mode"] }))}
+                      options={[
+                        { value: "ALL", label: "Everyone" },
+                        { value: "ROLES", label: "Roles" },
+                        { value: "DEPARTMENTS", label: "Depts" },
+                        { value: "GROUPS", label: "Groups" },
+                      ]}
+                    />
+                  </Field>
+
+                  {presetAudience.mode === "ROLES" && (
+                    <div className="space-y-1.5 rounded-lg border border-surface-variant bg-surface-container-lowest p-2">
+                      <span className="block text-[11px] font-medium text-on-surface-variant">
+                        Select roles allowed to run this preset:
+                      </span>
+                      <div className="max-h-36 space-y-1 overflow-y-auto">
+                        {roles.map((r) => {
+                          const checked = presetAudience.roleIds.includes(r.id);
+                          return (
+                            <label key={r.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-xs text-on-surface hover:bg-surface-container-low">
+                              <input
+                                type="checkbox"
+                                disabled={ro}
+                                checked={checked}
+                                onChange={(e) => {
+                                  setPresetAudience((prev) => ({
+                                    ...prev,
+                                    roleIds: e.target.checked
+                                      ? [...prev.roleIds, r.id]
+                                      : prev.roleIds.filter((id) => id !== r.id),
+                                  }));
+                                }}
+                                className="h-3.5 w-3.5 rounded accent-primary"
+                              />
+                              <span>{r.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {presetAudience.mode === "DEPARTMENTS" && (
+                    <div className="space-y-1.5 rounded-lg border border-surface-variant bg-surface-container-lowest p-2">
+                      <span className="block text-[11px] font-medium text-on-surface-variant">
+                        Select departments allowed to run this preset:
+                      </span>
+                      <div className="max-h-36 space-y-1 overflow-y-auto">
+                        {deps.map((d) => {
+                          const checked = presetAudience.depIds.includes(d.DEPID);
+                          return (
+                            <label key={d.DEPID} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-xs text-on-surface hover:bg-surface-container-low">
+                              <input
+                                type="checkbox"
+                                disabled={ro}
+                                checked={checked}
+                                onChange={(e) => {
+                                  setPresetAudience((prev) => ({
+                                    ...prev,
+                                    depIds: e.target.checked
+                                      ? [...prev.depIds, d.DEPID]
+                                      : prev.depIds.filter((id) => id !== d.DEPID),
+                                  }));
+                                }}
+                                className="h-3.5 w-3.5 rounded accent-primary"
+                              />
+                              <span>{d.Name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {presetAudience.mode === "GROUPS" && (
+                    <div className="space-y-1.5 rounded-lg border border-surface-variant bg-surface-container-lowest p-2">
+                      <span className="block text-[11px] font-medium text-on-surface-variant">
+                        Select groups allowed to run this preset:
+                      </span>
+                      <div className="max-h-36 space-y-1 overflow-y-auto">
+                        {groups.map((g) => {
+                          const checked = presetAudience.groupIds.includes(g.id);
+                          return (
+                            <label key={g.id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-0.5 text-xs text-on-surface hover:bg-surface-container-low">
+                              <input
+                                type="checkbox"
+                                disabled={ro}
+                                checked={checked}
+                                onChange={(e) => {
+                                  setPresetAudience((prev) => ({
+                                    ...prev,
+                                    groupIds: e.target.checked
+                                      ? [...prev.groupIds, g.id]
+                                      : prev.groupIds.filter((id) => id !== g.id),
+                                  }));
+                                }}
+                                className="h-3.5 w-3.5 rounded accent-primary"
+                              />
+                              <span>{g.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {selectedNode ? (
               <div className="card !rounded-lg p-3">
                 <div className="mb-2.5 flex items-center gap-2">
@@ -984,7 +1182,7 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                     </div>
                     <div className="truncate text-sm font-semibold text-on-surface">{nodeTitle(selectedNode.id)}</div>
                   </div>
-                  {selectedNode.kind !== "start" && !ro && (
+                  {!ro && (
                     <button
                       type="button"
                       className="icon-btn !h-7 !w-7"
@@ -1000,33 +1198,46 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
                 </div>
 
                 {selectedNode.kind === "start" && (
-                  <p className="text-xs leading-relaxed text-on-surface-variant">
-                    {onDemand ? (
-                      (usage?.templates ?? 0) > 0 ? (
+                  <div className="space-y-3">
+                    <Field label="Trigger Event">
+                      <select
+                        className="input !py-1.5 text-xs"
+                        disabled={ro}
+                        value={selectedNode.data.tool || "START"}
+                        onChange={(e) => {
+                          const newTool = e.target.value as ToolId;
+                          patchSelected({ tool: newTool });
+                        }}
+                      >
+                        <option value="START">Request submitted (When created)</option>
+                        <option value="STATUS_TRIGGER">Status changed</option>
+                        <option value="PRIORITY_TRIGGER">Priority changed</option>
+                        <option value="APPROVAL_DECIDED">Approval decided</option>
+                      </select>
+                    </Field>
+
+                    <p className="text-xs leading-relaxed text-on-surface-variant">
+                      {selectedNode.data.tool === "STATUS_TRIGGER" ? (
                         <>
-                          This is the trigger. When the workflow is attached to a form, everything wired to this
-                          node&apos;s port runs the moment the request is submitted; and because it&apos;s a
-                          request-approval preset, the chain also starts whenever someone presses{" "}
-                          <span className="font-semibold text-on-surface">Request Approval</span> inside a ticket.
-                          It cannot be deleted — wire your first node to its port.
+                          This automation fires automatically when the ticket status changes. Nodes wired to this
+                          trigger execute upon status update.
+                        </>
+                      ) : selectedNode.data.tool === "PRIORITY_TRIGGER" ? (
+                        <>
+                          This automation fires automatically when the ticket priority is changed (e.g. upgraded to Urgent).
+                        </>
+                      ) : selectedNode.data.tool === "APPROVAL_DECIDED" ? (
+                        <>
+                          This automation fires whenever an approval step in the ticket reaches a decision.
                         </>
                       ) : (
                         <>
-                          This is the trigger — and for a preset there is no &ldquo;submit&rdquo;: the whole chain
-                          starts the moment someone presses{" "}
-                          <span className="font-semibold text-on-surface">Request Approval</span> inside a ticket.
-                          Wire your first node (e.g. the accountant&apos;s approval) to its port. It cannot be
-                          deleted, and it never changes the ticket&apos;s status.
+                          Everything wired to this node&apos;s port runs the moment the request is submitted — before
+                          anybody approves anything.
                         </>
-                      )
-                    ) : (
-                      <>
-                        Everything wired to this node&apos;s port runs the moment the request is submitted — before
-                        anybody approves anything. It cannot be deleted, but its port can feed as many actions as
-                        you like.
-                      </>
-                    )}
-                  </p>
+                      )}
+                    </p>
+                  </div>
                 )}
 
                 {selectedNode.kind === "approval" && (
@@ -1212,34 +1423,36 @@ export default function WorkflowEditor({ workflowId }: { workflowId: string | nu
             </div>
 
             {/* used by */}
-            <div className="card !rounded-lg p-3">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-outline">Used by forms</h3>
-              {templates.length === 0 && <p className="text-xs text-outline">No form templates yet.</p>}
-              <div className="max-h-48 space-y-0.5 overflow-y-auto">
-                {templates.map((t) => (
-                  <label key={t.FormTemplateID} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-surface-container-low">
-                    <input
-                      type="checkbox"
-                      className="h-3.5 w-3.5"
-                      disabled={ro}
-                      checked={assigned.has(t.FormTemplateID)}
-                      onChange={() =>
-                        setAssigned((prev) => {
-                          const n = new Set(prev);
-                          if (n.has(t.FormTemplateID)) n.delete(t.FormTemplateID);
-                          else n.add(t.FormTemplateID);
-                          return n;
-                        })
-                      }
-                    />
-                    <span className="min-w-0 flex-1 truncate text-on-surface">{t.Name}</span>
-                    <span className={`text-[10px] ${t.Status === "ACTIVE" ? "text-green-600" : "text-outline"}`}>
-                      {t.Status === "ACTIVE" ? "live" : t.Status.toLowerCase()}
-                    </span>
-                  </label>
-                ))}
+            {!onDemand && (
+              <div className="card !rounded-lg p-3">
+                <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-outline">Used by forms</h3>
+                {templates.length === 0 && <p className="text-xs text-outline">No form templates yet.</p>}
+                <div className="max-h-48 space-y-0.5 overflow-y-auto">
+                  {templates.map((t) => (
+                    <label key={t.FormTemplateID} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-surface-container-low">
+                      <input
+                        type="checkbox"
+                        className="h-3.5 w-3.5"
+                        disabled={ro}
+                        checked={assigned.has(t.FormTemplateID)}
+                        onChange={() =>
+                          setAssigned((prev) => {
+                            const n = new Set(prev);
+                            if (n.has(t.FormTemplateID)) n.delete(t.FormTemplateID);
+                            else n.add(t.FormTemplateID);
+                            return n;
+                          })
+                        }
+                      />
+                      <span className="min-w-0 flex-1 truncate text-on-surface">{t.Name}</span>
+                      <span className={`text-[10px] ${t.Status === "ACTIVE" ? "text-green-600" : "text-outline"}`}>
+                        {t.Status === "ACTIVE" ? "live" : t.Status.toLowerCase()}
+                      </span>
+                    </label>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="card !rounded-lg p-3 text-[11px] leading-relaxed text-outline">
               Drag nodes anywhere — the layout is saved too. <kbd className="rounded border border-surface-variant px-1">/</kbd>{" "}

@@ -104,6 +104,7 @@ model Groups {
   FormPerms  FormPermissions[] @relation("GroupFormPerms")
   WFSteps    WFSteps[]         @relation("WFGroup")
   OwnedTemplates FormTemplates[] @relation("TemplateOwnerGroup")
+  AssignedRequests Requests[]  @relation("ReqAssignedGroup")
 }
 
 model GroupMembers {
@@ -318,6 +319,7 @@ model Requests {
   Priority           String   @default("MEDIUM")
   NeededByDate       DateTime?
   AssigneeID         String?
+  AssignedGroupID    String?
   FulfillmentType    String?
   StockIssueNumber   String?
   OraclePoNumber     String?
@@ -338,6 +340,7 @@ model Requests {
   FormTemplate    FormTemplates    @relation(fields: [FormTemplateID], references: [FormTemplateID], onDelete: NoAction, onUpdate: NoAction)
   Requester       Users            @relation("ReqRequester", fields: [RequesterID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
   Assignee        Users?           @relation("ReqAssignee", fields: [AssigneeID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)
+  AssignedGroup   Groups?          @relation("ReqAssignedGroup", fields: [AssignedGroupID], references: [GroupID], onDelete: NoAction, onUpdate: NoAction)
   SLAPolicy       SLAPolicies?     @relation(fields: [SLAPolicyID], references: [SLAPolicyID], onDelete: SetNull)
   CurrentStep     WFSteps?         @relation(fields: [CurrentWFStepID], references: [WFStepID], onDelete: SetNull)
   PoCreator       Users?           @relation("ReqPoCreator", fields: [PoCreatedByUserID], references: [UserID], onDelete: NoAction, onUpdate: NoAction)

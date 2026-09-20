@@ -132,9 +132,9 @@ interface VisChip {
 }
 
 const OPTION_TYPES = ["select", "radio", "multiselect"];
-const PLACEHOLDER_TYPES = ["text", "textarea", "email", "tel", "url", "number", "currency"];
+const PLACEHOLDER_TYPES = ["text", "textarea", "email", "tel", "url", "number", "currency", "title"];
 const MINMAX_TYPES = ["number", "currency"];
-const LENGTH_TYPES = ["text", "textarea"];
+const LENGTH_TYPES = ["text", "textarea", "title"];
 
 let draftSeq = 0;
 function nextKey(): string {
@@ -153,16 +153,37 @@ function slugify(s: string): string {
 }
 
 function blankField(type: string): FieldDraft {
+  let defaultLabel = "";
+  let defaultKey = "";
+  let defaultRequired = false;
+  if (type === "title") {
+    defaultLabel = "Request Title";
+    defaultKey = "request_title";
+    defaultRequired = true;
+  } else if (type === "priority") {
+    defaultLabel = "Priority";
+    defaultKey = "priority";
+  } else if (type === "neededBy") {
+    defaultLabel = "Needed By Date";
+    defaultKey = "needed_by_date";
+  } else if (type === "items") {
+    defaultLabel = "Items List";
+    defaultKey = "items";
+  } else if (type === "file") {
+    defaultLabel = "File Upload";
+    defaultKey = "attachments";
+  }
+
   return {
     key: nextKey(),
-    label: "",
-    fieldKey: "",
-    keyTouched: false,
+    label: defaultLabel,
+    fieldKey: defaultKey,
+    keyTouched: Boolean(defaultKey),
     fieldType: type,
-    isRequired: false,
+    isRequired: defaultRequired,
     optionsText: "",
     help: "",
-    placeholder: "",
+    placeholder: type === "title" ? "e.g. Q4 Buffer Solution Batch A" : "",
     min: "",
     max: "",
     minLength: "",
@@ -179,7 +200,7 @@ function blankField(type: string): FieldDraft {
 
 function inputType(t: string): string {
   if (t === "number" || t === "currency") return "number";
-  if (t === "date") return "date";
+  if (t === "date" || t === "neededBy") return "date";
   if (t === "time") return "time";
   if (t === "datetime") return "datetime-local";
   if (t === "email" || t === "tel" || t === "url") return t;
@@ -202,6 +223,50 @@ function FieldFacsimile({ f }: { f: FieldDraft }) {
           {f.label || <span className="text-outline">Untitled section</span>}
         </div>
         {f.help && <p className="mt-0.5 text-xs text-on-surface-variant">{f.help}</p>}
+      </div>
+    );
+  }
+  if (f.fieldType === "title") {
+    return (
+      <div className="pointer-events-none">
+        <div className="mb-1 block text-sm font-medium text-on-surface">
+          {f.label || <span className="text-outline">Request Title</span>}{" "}
+          {f.isRequired && <span className="text-danger">*</span>}
+        </div>
+        <div className="rounded border border-surface-variant bg-surface-container px-3 py-2 text-sm text-outline">
+          {f.placeholder || "e.g. Q4 Buffer Solution Batch A"}
+        </div>
+        {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
+      </div>
+    );
+  }
+  if (f.fieldType === "priority") {
+    return (
+      <div className="pointer-events-none">
+        <div className="mb-1 block text-sm font-medium text-on-surface">
+          {f.label || <span className="text-outline">Priority</span>}{" "}
+          {f.isRequired && <span className="text-danger">*</span>}
+        </div>
+        <div className="flex items-center justify-between rounded border border-surface-variant bg-surface-container px-3 py-2 text-sm text-on-surface">
+          <span>MEDIUM</span>
+          <Icon name="arrow_drop_down" className="text-outline" />
+        </div>
+        {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
+      </div>
+    );
+  }
+  if (f.fieldType === "neededBy") {
+    return (
+      <div className="pointer-events-none">
+        <div className="mb-1 block text-sm font-medium text-on-surface">
+          {f.label || <span className="text-outline">Needed By Date</span>}{" "}
+          {f.isRequired && <span className="text-danger">*</span>}
+        </div>
+        <div className="flex items-center justify-between rounded border border-surface-variant bg-surface-container px-3 py-2 text-sm text-outline">
+          <span>yyyy-mm-dd</span>
+          <Icon name="calendar_month" className="text-outline" />
+        </div>
+        {f.help && <p className="mt-1 text-xs text-outline">{f.help}</p>}
       </div>
     );
   }
@@ -648,6 +713,17 @@ function LivePreview({
                       onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
                       {...lenAttrs}
                     />
+                  ) : f.fieldType === "priority" ? (
+                    <select
+                      className="input"
+                      value={vals[f.key] || "MEDIUM"}
+                      onChange={(e) => setVals({ ...vals, [f.key]: e.target.value })}
+                    >
+                      <option value="LOW">Low</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="HIGH">High</option>
+                      <option value="URGENT">Urgent</option>
+                    </select>
                   ) : f.fieldType === "select" ? (
                     <select
                       className="input"
@@ -1034,6 +1110,29 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
       }
     }
     setSaving(true);
+      const effectiveBuiltins: RequestFormConfig = {
+        title: {
+          ...builtins.title,
+          show: fields.some((f) => f.fieldType === "title") ? false : builtins.title.show,
+        },
+        priority: {
+          ...builtins.priority,
+          show: fields.some((f) => f.fieldType === "priority") ? false : builtins.priority.show,
+        },
+        neededBy: {
+          ...builtins.neededBy,
+          show: fields.some((f) => f.fieldType === "neededBy") ? false : builtins.neededBy.show,
+        },
+        items: {
+          ...builtins.items,
+          show: fields.some((f) => f.fieldType === "items") ? false : builtins.items.show,
+        },
+        attachments: {
+          ...builtins.attachments,
+          show: fields.some((f) => f.fieldType === "file") ? false : builtins.attachments.show,
+        },
+      };
+
     try {
       const body = {
         name: name.trim(),
@@ -1044,7 +1143,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
         ownerDepId: ownerType === "dep" ? ownerDepId || null : null,
         ownerGroupId: ownerType === "group" ? ownerGroupId || null : null,
         slaPolicyId: slaPolicyId || null,
-        requestFormConfig: builtins,
+        requestFormConfig: effectiveBuiltins,
         idPrefix: idPrefixNorm,
         idSeparator: idSeparator || null,
         idPadding: idPadNum,
@@ -1199,10 +1298,7 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
               ))}
             </div>
             <p className="mt-3 text-[11px] leading-snug text-outline">
-              Every request also has built-in Items (Oracle catalog search) and Attachments in the
-              Form Settings. The <span className="font-semibold">Items List</span> field is a line-item
-              table you can place anywhere in the form — its rows land in the request&apos;s Requested
-              Items.
+              Drag any field onto the canvas. Standard request fields (Title, Priority, Needed By Date, Items List, File Upload) can be placed and arranged anywhere on the form.
             </p>
           </div>
 
@@ -1911,59 +2007,79 @@ export default function FormTemplateEditor({ templateId }: { templateId: string 
                       Request Inputs
                     </div>
                     <p className="mb-2 text-[11px] text-outline">
-                      Standard inputs of every request. Unticked inputs simply do not appear when
-                      filling this form — add fields above for anything custom.
+                      Standard inputs of every request. When placed as fields on the canvas, they are configured there.
+                      Unticked inputs will not appear on the request form.
                     </p>
                     <div className="space-y-2">
                       {BUILTIN_INPUTS.map((b) => {
                         const st = builtins[b.key];
+                        const onCanvas =
+                          b.key === "title"
+                            ? fields.some((f) => f.fieldType === "title")
+                            : b.key === "priority"
+                              ? fields.some((f) => f.fieldType === "priority")
+                              : b.key === "neededBy"
+                                ? fields.some((f) => f.fieldType === "neededBy")
+                                : b.key === "items"
+                                  ? fields.some((f) => f.fieldType === "items")
+                                  : fields.some((f) => f.fieldType === "file");
+
                         return (
                           <div key={b.key} className="flex items-center justify-between gap-2">
                             <span className="flex min-w-0 items-center gap-1.5 text-[13px] font-medium text-on-surface" title={b.description}>
                               <Icon name={b.icon} className="text-[16px] text-outline" />
                               <span className="truncate">{b.label}</span>
                             </span>
-                            <span className="flex items-center gap-3">
-                              {b.hasRequired && (
-                                <label
-                                  className={`flex items-center gap-1 text-[11px] ${st.show ? "text-on-surface" : "text-outline"}`}
-                                  title="Must be filled before submission"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    className="h-3.5 w-3.5"
-                                    disabled={ro || !st.show}
-                                    checked={st.required}
-                                    onChange={(e) =>
-                                      setBuiltins({
-                                        ...builtins,
-                                        [b.key]: { ...st, required: e.target.checked },
-                                      })
-                                    }
-                                  />
-                                  required
-                                </label>
-                              )}
-                              <button
-                                type="button"
-                                role="switch"
-                                aria-checked={st.show}
-                                disabled={ro}
-                                onClick={() =>
-                                  setBuiltins({ ...builtins, [b.key]: { ...st, show: !st.show } })
-                                }
-                                className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                                  st.show ? "bg-primary" : "bg-gray-300"
-                                } disabled:opacity-50`}
-                                title={st.show ? "Shown on the form" : "Hidden from the form"}
+                            {onCanvas ? (
+                              <span
+                                className="flex items-center gap-1 rounded bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary"
+                                title="Placed directly on the canvas as a field"
                               >
-                                <span
-                                  className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface-container-lowest transition-all ${
-                                    st.show ? "left-[18px]" : "left-0.5"
-                                  }`}
-                                />
-                              </button>
-                            </span>
+                                <Icon name="check" className="text-[14px]" /> On Canvas
+                              </span>
+                            ) : (
+                              <span className="flex items-center gap-3">
+                                {b.hasRequired && (
+                                  <label
+                                    className={`flex items-center gap-1 text-[11px] ${st.show ? "text-on-surface" : "text-outline"}`}
+                                    title="Must be filled before submission"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      className="h-3.5 w-3.5"
+                                      disabled={ro || !st.show}
+                                      checked={st.required}
+                                      onChange={(e) =>
+                                        setBuiltins({
+                                          ...builtins,
+                                          [b.key]: { ...st, required: e.target.checked },
+                                        })
+                                      }
+                                    />
+                                    required
+                                  </label>
+                                )}
+                                <button
+                                  type="button"
+                                  role="switch"
+                                  aria-checked={st.show}
+                                  disabled={ro}
+                                  onClick={() =>
+                                    setBuiltins({ ...builtins, [b.key]: { ...st, show: !st.show } })
+                                  }
+                                  className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
+                                    st.show ? "bg-primary" : "bg-gray-300"
+                                  } disabled:opacity-50`}
+                                  title={st.show ? "Shown on the form" : "Hidden from the form"}
+                                >
+                                  <span
+                                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-surface-container-lowest transition-all ${
+                                      st.show ? "left-[18px]" : "left-0.5"
+                                    }`}
+                                  />
+                                </button>
+                              </span>
+                            )}
                           </div>
                         );
                       })}

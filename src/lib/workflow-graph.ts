@@ -19,6 +19,7 @@ import {
   type BuilderRule,
   type BuilderStep,
   type FlowNode,
+  type PresetAudience,
   type ToolId,
   actionPayload,
   conditionOf,
@@ -50,6 +51,8 @@ export interface GEdge {
 export interface Graph {
   nodes: GNode[];
   edges: GEdge[];
+  presetAudience?: PresetAudience;
+  presetIcon?: string;
 }
 export type SourceHandle = "out" | "approve" | "reject";
 
@@ -68,11 +71,26 @@ export const ACTION_NODE_TOOLS: ToolId[] = [
   "JUMP_TO_STEP",
 ];
 
+export const TRIGGER_NODE_TOOLS: ToolId[] = [
+  "START",
+  "ON_DEMAND",
+  "STATUS_TRIGGER",
+  "PRIORITY_TRIGGER",
+  "APPROVAL_DECIDED",
+];
+
 /* ------------------------------------------------------------- construction -- */
 
 export function makeNode(kind: GNodeKind, tool: ToolId, position = { x: 0, y: 0 }): GNode {
-  const t = kind === "start" ? "START" : kind === "approval" ? "APPROVAL" : kind === "action" ? tool : "NOTIFY";
-  const id = nextKey(kind === "action" ? t.toLowerCase() : kind.replace("_", "-"));
+  const t =
+    kind === "start"
+      ? (TRIGGER_NODE_TOOLS.includes(tool) ? tool : "START")
+      : kind === "approval"
+        ? "APPROVAL"
+        : kind === "action"
+          ? tool
+          : "NOTIFY";
+  const id = nextKey(kind === "action" || kind === "start" ? t.toLowerCase().replace(/_/g, "-") : kind.replace("_", "-"));
   return { id, kind, position, data: { ...newNode(t), key: id, open: false } };
 }
 
@@ -138,7 +156,7 @@ export function connectProblem(g: Graph, conn: { source: string; sourceHandle?: 
 
 export function removeNodeGraph(g: Graph, id: string): Graph {
   const n = nodeById(g, id);
-  if (!n || n.kind === "start") return g;
+  if (!n) return g;
   return {
     nodes: g.nodes.filter((x) => x.id !== id),
     edges: g.edges.filter((e) => e.source !== id && e.target !== id),
@@ -152,13 +170,21 @@ interface TriggerCtx {
   stepIndex: number | null;
 }
 
-/** BFS from START, in edge order — the visit order IS the execution order */
+/** BFS from START or root nodes, in edge order — the visit order IS the execution order */
 export function walk(g: Graph): { order: GNode[]; visited: Set<string> } {
   const start = g.nodes.find((n) => n.kind === "start");
   const order: GNode[] = [];
   const visited = new Set<string>();
-  if (!start) return { order, visited };
-  const queue: GNode[] = [start];
+
+  const roots: GNode[] = start
+    ? [start]
+    : g.nodes.filter((n) => !g.edges.some((e) => e.target === n.id));
+
+  if (roots.length === 0 && g.nodes.length > 0) {
+    roots.push(g.nodes[0]);
+  }
+
+  const queue: GNode[] = [...roots];
   while (queue.length) {
     const n = queue.shift()!;
     if (visited.has(n.id)) continue;
@@ -176,10 +202,19 @@ export function walk(g: Graph): { order: GNode[]; visited: Set<string> } {
 function triggerContexts(g: Graph, order: GNode[], stepIndexOf: Map<string, number>): Map<string, TriggerCtx> {
   const ctx = new Map<string, TriggerCtx>();
   const start = g.nodes.find((n) => n.kind === "start");
-  if (start) ctx.set(start.id, { trigger: "ON_SUBMIT", stepIndex: null });
+  if (start) {
+    ctx.set(start.id, { trigger: "ON_SUBMIT", stepIndex: null });
+  } else {
+    for (const root of order.filter((n) => !g.edges.some((e) => e.target === n.id))) {
+      ctx.set(root.id, { trigger: "ON_SUBMIT", stepIndex: null });
+    }
+  }
   for (const n of order) {
     const inE = g.edges.find((e) => e.target === n.id);
-    if (!inE) continue;
+    if (!inE) {
+      if (!ctx.has(n.id)) ctx.set(n.id, { trigger: "ON_SUBMIT", stepIndex: null });
+      continue;
+    }
     const src = nodeById(g, inE.source);
     if (!src) continue;
     let c: TriggerCtx | null = null;
@@ -188,7 +223,7 @@ function triggerContexts(g: Graph, order: GNode[], stepIndexOf: Map<string, numb
       const idx = stepIndexOf.get(src.id);
       if (idx == null) continue;
       c = inE.sourceHandle === "reject" ? { trigger: "ON_STEP_REJECTED", stepIndex: idx } : { trigger: "ON_STEP_APPROVED", stepIndex: idx };
-    } else if (src.kind === "action") c = ctx.get(src.id) ?? null;
+    } else if (src.kind === "action") c = ctx.get(src.id) ?? { trigger: "ON_SUBMIT", stepIndex: null };
     if (c) ctx.set(n.id, c);
   }
   return ctx;
@@ -240,16 +275,29 @@ export function nodeConfigProblems(n: GNode, g: Graph): string[] {
   return out;
 }
 
-export function validateGraph(g: Graph): GraphProblem[] {
+export function validateGraph(g: Graph, opts?: { isPreset?: boolean }): GraphProblem[] {
   const problems: GraphProblem[] = [];
   const { visited } = walk(g);
   const starts = g.nodes.filter((n) => n.kind === "start");
-  if (starts.length === 0) problems.push({ key: null, reason: "the canvas needs a start node" });
-  if (starts.length > 1) problems.push({ key: null, reason: "a flow can only have one start node — delete the extra one" });
-  const hasStart = starts.length > 0;
+  const isPreset = opts?.isPreset ?? false;
+
+  if (isPreset) {
+    if (g.nodes.length === 0) problems.push({ key: null, reason: "add at least one node to the preset" });
+    if (starts.length > 1) problems.push({ key: null, reason: "delete the extra start node" });
+  } else {
+    if (starts.length === 0) problems.push({ key: null, reason: "the workflow needs a trigger node" });
+    if (starts.length > 1) problems.push({ key: null, reason: "a flow can only have one trigger node — delete the extra one" });
+    const hasStart = starts.length > 0;
+    for (const n of g.nodes) {
+      if (hasStart && n.kind !== "start" && !visited.has(n.id))
+        problems.push({ key: n.id, reason: "not wired to the trigger node — connect it or delete it" });
+    }
+    const start = g.nodes.find((n) => n.kind === "start");
+    if (start && g.nodes.length > 1 && !g.edges.some((e) => e.source === start.id))
+      problems.push({ key: start.id, reason: "connect the trigger node to your first node" });
+  }
+
   for (const n of g.nodes) {
-    if (hasStart && n.kind !== "start" && !visited.has(n.id))
-      problems.push({ key: n.id, reason: "not wired to the start node — connect it or delete it" });
     for (const p of nodeConfigProblems(n, g)) problems.push({ key: n.id, reason: p });
   }
   // an approval reached through a REJECT output would re-open a dead request
@@ -259,9 +307,6 @@ export function validateGraph(g: Graph): GraphProblem[] {
     if (inE && inE.sourceHandle === "reject")
       problems.push({ key: n.id, reason: "an approval cannot come after a rejection — wire it after an approve output" });
   }
-  const start = g.nodes.find((n) => n.kind === "start");
-  if (start && g.nodes.length > 1 && !g.edges.some((e) => e.source === start.id))
-    problems.push({ key: start.id, reason: "connect the start node to your first node" });
   return problems;
 }
 
@@ -278,7 +323,7 @@ const blankIf = (v: string | null | undefined, dflt: string) => (v == null || v 
 
 export function graphToApi(
   g: Graph,
-  opts: { slas?: { id: string; name: string }[]; users?: { UserID: string; Name: string }[]; groups?: { id: string; name: string }[]; departments?: { DEPID: string; Name: string }[] } = {}
+  opts: { slas?: { id: string; name: string }[]; users?: { UserID: string; Name: string }[]; groups?: { id: string; name: string }[]; departments?: { DEPID: string; Name: string }[]; isPreset?: boolean } = {}
 ): GraphApiResult {
   const problems: GraphProblem[] = [];
   const { order } = walk(g);
@@ -289,7 +334,7 @@ export function graphToApi(
   const ctxMap = triggerContexts(g, order, stepIndexOf);
 
   // ---- problems (structure + config)
-  for (const p of validateGraph(g)) problems.push(p);
+  for (const p of validateGraph(g, { isPreset: opts.isPreset })) problems.push(p);
 
   // ---- steps (approvals in walk order). Hidden legacy settings (quorum, due
   // days, comment policy, on-approve/on-reject) are carried through untouched.
@@ -336,7 +381,7 @@ export function graphToApi(
     });
   }
 
-  return { steps, rules, problems, canvasJson: JSON.stringify({ v: GRAPH_VERSION, nodes: g.nodes, edges: g.edges }) };
+  return { steps, rules, problems, canvasJson: JSON.stringify({ v: GRAPH_VERSION, nodes: g.nodes, edges: g.edges, presetAudience: g.presetAudience, presetIcon: g.presetIcon }) };
 }
 
 /* ------------------------------------------------------------ API → graph -- */
@@ -348,7 +393,13 @@ export function graphToApi(
 export function apiToGraph(steps: BuilderStep[], rules: BuilderRule[], canvasJson?: string | null): Graph {
   if (canvasJson) {
     try {
-      const raw = JSON.parse(canvasJson) as { v?: number; nodes?: Record<string, unknown>[]; edges?: Record<string, unknown>[] };
+      const raw = JSON.parse(canvasJson) as {
+        v?: number;
+        nodes?: Record<string, unknown>[];
+        edges?: Record<string, unknown>[];
+        presetAudience?: PresetAudience;
+        presetIcon?: string;
+      };
       if (raw && raw.v === GRAPH_VERSION && Array.isArray(raw.nodes) && Array.isArray(raw.edges) && raw.nodes.length > 0) {
         const nodes: GNode[] = raw.nodes
           // legacy terminals ("End · approved/rejected") no longer exist — the
@@ -358,21 +409,25 @@ export function apiToGraph(steps: BuilderStep[], rules: BuilderRule[], canvasJso
           .map((r) => {
           const rd = (r.data ?? {}) as Record<string, unknown>;
           const kind = (["start", "approval", "action"].includes(String(r.kind)) ? r.kind : "action") as GNodeKind;
-          const tool = (typeof rd.tool === "string" && ACTION_NODE_TOOLS.includes(rd.tool as ToolId) ? rd.tool : "NOTIFY") as ToolId;
+          const tool = (typeof rd.tool === "string" && (ACTION_NODE_TOOLS.includes(rd.tool as ToolId) || TRIGGER_NODE_TOOLS.includes(rd.tool as ToolId))
+            ? rd.tool
+            : kind === "start"
+              ? "START"
+              : "NOTIFY") as ToolId;
           const id = String(r.id);
           const rp = r.position as { x?: number; y?: number } | undefined;
           const position =
             rp && typeof rp === "object" && rp.x != null
               ? { x: Number(rp.x), y: Number(rp.y ?? 0) }
               : { x: 0, y: 0 };
-          const base = newNode(kind === "approval" ? "APPROVAL" : kind === "start" ? "START" : kind === "action" ? tool : "NOTIFY");
-          return { id, kind, position, data: { ...base, ...(rd as Partial<FlowNode>), key: id } };
+          const base = newNode(kind === "approval" ? "APPROVAL" : kind === "start" ? tool : kind === "action" ? tool : "NOTIFY");
+          return { id, kind, position, data: { ...base, ...(rd as Partial<FlowNode>), tool, key: id } };
         });
         const ids = new Set(nodes.map((n) => n.id));
         const edges: GEdge[] = raw.edges
           .map((r) => ({ id: String(r.id), source: String(r.source), sourceHandle: (r.sourceHandle as string) || undefined, target: String(r.target) }))
           .filter((e) => ids.has(e.source) && ids.has(e.target));
-        if (!nodes.some((n) => n.kind === "start")) nodes.unshift(makeNode("start", "START", { x: 0, y: 0 }));
+        if (nodes.length === 0) nodes.unshift(makeNode("start", "START", { x: 0, y: 0 }));
         // reconcile step ids: the saved steps (by StepOrder) line up with the
         // approval nodes in execution order. This self-heals the canvas when a
         // save recreated steps (e.g. the very first canvas save of a legacy
@@ -385,7 +440,7 @@ export function apiToGraph(steps: BuilderStep[], rules: BuilderRule[], canvasJso
             const s = savedSteps[i];
             if (s && s.WFStepID) n.data.id = String(s.WFStepID);
           });
-        return { nodes, edges };
+        return { nodes, edges, presetAudience: raw.presetAudience, presetIcon: raw.presetIcon };
       }
     } catch {
       /* corrupted canvas — fall back to deriving from steps/rules */

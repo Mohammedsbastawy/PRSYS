@@ -41,11 +41,11 @@ export const BUILTIN_INPUTS: BuiltinDef[] = [
 /** Back-compat default: everything visible, title required (current behaviour). */
 export function defaultRequestFormConfig(): RequestFormConfig {
   return {
-    title: { show: true, required: true },
-    priority: { show: true, required: false },
-    neededBy: { show: true, required: false },
-    items: { show: true, required: false },
-    attachments: { show: true, required: false },
+    title: { show: false, required: false },
+    priority: { show: false, required: false },
+    neededBy: { show: false, required: false },
+    items: { show: false, required: false },
+    attachments: { show: false, required: false },
   }
 }
 

@@ -26,6 +26,7 @@ export interface FieldTypeDef {
 }
 
 export const FIELD_TYPE_GROUPS = [
+  "Request Fields",
   "Basic Input",
   "Numbers & Dates",
   "Selection",
@@ -34,14 +35,18 @@ export const FIELD_TYPE_GROUPS = [
 ] as const;
 
 export const FIELD_TYPES: FieldTypeDef[] = [
+  // Request Fields
+  { value: "title", label: "Request Title", icon: "title", group: "Request Fields" },
+  { value: "priority", label: "Priority", icon: "flag", group: "Request Fields" },
+  { value: "neededBy", label: "Needed By Date", icon: "event", group: "Request Fields" },
+  { value: "items", label: "Items List", icon: "inventory_2", group: "Request Fields" },
+  { value: "file", label: "File Upload", icon: "attach_file", group: "Request Fields" },
   // Basic Input
   { value: "text", label: "Text Input", icon: "text_fields", group: "Basic Input" },
   { value: "textarea", label: "Textarea", icon: "notes", group: "Basic Input" },
   { value: "email", label: "Email", icon: "mail", group: "Basic Input" },
   { value: "tel", label: "Phone", icon: "call", group: "Basic Input" },
   { value: "url", label: "URL / Link", icon: "link", group: "Basic Input" },
-  { value: "file", label: "File Upload", icon: "attach_file", group: "Basic Input" },
-  { value: "items", label: "Items List", icon: "inventory_2", group: "Basic Input" },
   // Numbers & Dates
   { value: "number", label: "Number", icon: "numbers", group: "Numbers & Dates" },
   { value: "currency", label: "Currency", icon: "payments", group: "Numbers & Dates" },
@@ -61,6 +66,9 @@ export const FIELD_TYPES: FieldTypeDef[] = [
 ];
 
 export const FIELD_TYPE_VALUES = [
+  "title",
+  "priority",
+  "neededBy",
   "text",
   "textarea",
   "email",
@@ -496,11 +504,17 @@ export function validateFieldValue(
       return null;
     }
     case "date":
+    case "neededBy":
       return validDateYMD(v) ? null : "must be a valid date (YYYY-MM-DD)";
+    case "priority":
+      return ["LOW", "MEDIUM", "HIGH", "URGENT"].includes(v.toUpperCase())
+        ? null
+        : "must be LOW, MEDIUM, HIGH, or URGENT";
     case "time":
       return validTimeHM(v) ? null : "must be a valid time (HH:MM)";
     case "datetime":
       return validDateTimeLocal(v) ? null : "must be a valid date and time";
+    case "title":
     case "text":
     case "textarea": {
       const minL = cfg.minLength.trim() === "" ? null : Number(cfg.minLength);

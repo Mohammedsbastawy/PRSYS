@@ -280,6 +280,8 @@ export default function RequestForm({
   const [cHits, setCHits] = useState<CatItem[]>([]);
   const [cOpen, setCOpen] = useState(false);
   const [cSearching, setCSearching] = useState(false);
+  const [fieldCq, setFieldCq] = useState<Record<string, string>>({});
+  const [fieldCOpen, setFieldCOpen] = useState<string | null>(null);
   const keyRef = useRef(1);
   const cTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -425,9 +427,11 @@ export default function RequestForm({
   }, [token, template, needsUser, needsDep]);
 
   // Catalog search (debounced)
+  const activeFieldQ = fieldCOpen ? fieldCq[fieldCOpen] || "" : "";
+  const activeQuery = cq.trim() || activeFieldQ.trim();
   useEffect(() => {
     if (cTimer.current) clearTimeout(cTimer.current);
-    if (cq.trim().length < 2 || !token || !canCatalog) {
+    if (activeQuery.length < 2 || !token || !canCatalog) {
       setCHits([]);
       setCSearching(false);
       return;
@@ -435,7 +439,7 @@ export default function RequestForm({
     setCSearching(true);
     cTimer.current = setTimeout(async () => {
       try {
-        const r = await fetch(`/api/catalog?q=${encodeURIComponent(cq.trim())}&limit=8`, {
+        const r = await fetch(`/api/catalog?q=${encodeURIComponent(activeQuery)}&limit=8`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCHits(r.ok ? await r.json() : []);
@@ -448,7 +452,7 @@ export default function RequestForm({
     return () => {
       if (cTimer.current) clearTimeout(cTimer.current);
     };
-  }, [cq, token, canCatalog]);
+  }, [activeQuery, token, canCatalog]);
 
   function typeOf(fieldId: string): string {
     return template?.Fields.find((f) => f.FormFieldID === fieldId)?.FieldType ?? "text";
@@ -514,6 +518,40 @@ export default function RequestForm({
   function removeFieldRow(fieldId: string, key: number) {
     setFieldRows((p) => ({ ...p, [fieldId]: (p[fieldId] || []).filter((r) => r.key !== key) }));
   }
+  function addFieldCatalogRow(fieldId: string, it: CatItem) {
+    const cur = fieldRows[fieldId] || [];
+    const exists = cur.find(
+      (r) => (r.catalogId && r.catalogId === it.ItemCatalogCacheID) || (r.code && r.code === it.ItemCode)
+    );
+    if (exists) {
+      updateFieldRow(fieldId, exists.key, { qty: exists.qty + 1 });
+      setFieldCOpen(null);
+      setFieldCq((p) => ({ ...p, [fieldId]: "" }));
+      return;
+    }
+    const key = keyRef.current++;
+    setFieldRows((p) => ({
+      ...p,
+      [fieldId]: [
+        ...(p[fieldId] || []),
+        {
+          key,
+          id: null,
+          catalogId: it.ItemCatalogCacheID,
+          oracle: it.OracleItemID,
+          code: it.ItemCode,
+          name: it.ItemName,
+          details: "",
+          uom: it.Uom,
+          qty: 1,
+          org: it.OrganizationCode,
+          price: it.LastPurchasedPrice !== null ? String(it.LastPurchasedPrice) : "",
+        },
+      ],
+    }));
+    setFieldCOpen(null);
+    setFieldCq((p) => ({ ...p, [fieldId]: "" }));
+  }
 
   async function deleteExistingAtt(id: string) {
     if (!editRequestId || busy) return;
@@ -534,9 +572,31 @@ export default function RequestForm({
 
   // Built-in inputs config (title/priority/needed-by/attachments/items) + conditional field visibility
   const bc = parseRequestFormConfig(template?.RequestFormConfig ?? null);
+
+  const canvasTitleField = (template?.Fields || []).find((f) => f.FieldType === "title");
+  const canvasPriorityField = (template?.Fields || []).find((f) => f.FieldType === "priority");
+  const canvasNeededByField = (template?.Fields || []).find((f) => f.FieldType === "neededBy");
+  const hasCanvasItems = (template?.Fields || []).some((f) => f.FieldType === "items");
+  const hasCanvasFiles = (template?.Fields || []).some((f) => f.FieldType === "file");
+
+  const showTopTitle = bc.title.show && !canvasTitleField;
+  const showTopPriority = bc.priority.show && !canvasPriorityField;
+  const showTopNeededBy = bc.neededBy.show && !canvasNeededByField;
+  const showTopDetails = showTopTitle || showTopPriority || showTopNeededBy;
+
+  const showBottomItems = bc.items.show && !hasCanvasItems;
+  const showBottomAttachments = bc.attachments.show && !hasCanvasFiles;
+
   const valueByKey = (k: string): string => {
+    if (k === "request_title" && title) return title;
+    if (k === "priority" && priority) return priority;
+    if (k === "needed_by_date" && neededBy) return neededBy;
     const f = template?.Fields.find((x) => x.FieldKey === k);
-    return f ? values[f.FormFieldID] || "" : "";
+    if (!f) return "";
+    if (f.FieldType === "title") return title;
+    if (f.FieldType === "priority") return priority;
+    if (f.FieldType === "neededBy") return neededBy;
+    return values[f.FormFieldID] || "";
   };
   const isFieldVisible = (f: TField): boolean =>
     evalShowWhen(parseFieldConfig(f.Config).showWhen, valueByKey);
@@ -550,6 +610,9 @@ export default function RequestForm({
       template?.Fields.filter((f) => {
         if (f.FieldType === "section" || !f.IsRequired) return false;
         if (!isFieldVisible(f)) return false;
+        if (f.FieldType === "title") return title.trim() === "";
+        if (f.FieldType === "priority") return !priority;
+        if (f.FieldType === "neededBy") return !neededBy;
         if (f.FieldType === "file") {
           const have =
             (fieldFiles[f.FormFieldID] || []).length +
@@ -559,14 +622,20 @@ export default function RequestForm({
         if (f.FieldType === "items") return (fieldRows[f.FormFieldID] || []).length === 0;
         return isValueEmpty(f.FieldType, values[f.FormFieldID] || "");
       }).map((f) => f.FormFieldID) || [];
-    const badRows = rows.filter(rowInvalid).map((r) => r.key);
+
+    const badRows = showBottomItems ? rows.filter(rowInvalid).map((r) => r.key) : [];
     const badFieldRows: Record<string, number[]> = {};
     for (const f of (template?.Fields || []).filter((x) => x.FieldType === "items" && isFieldVisible(x))) {
       const bad = (fieldRows[f.FormFieldID] || []).filter(rowInvalid).map((r) => r.key);
       if (bad.length > 0) badFieldRows[f.FormFieldID] = bad;
     }
-    const badTitle = bc.title.show && bc.title.required && title.trim() === "";
-    const badNeeded = bc.neededBy.show && bc.neededBy.required && !neededBy;
+    const badTitle = canvasTitleField
+      ? canvasTitleField.IsRequired && title.trim() === ""
+      : showTopTitle && bc.title.required && title.trim() === "";
+    const badNeeded = canvasNeededByField
+      ? canvasNeededByField.IsRequired && !neededBy
+      : showTopNeededBy && bc.neededBy.required && !neededBy;
+
     setInvalidFields(badFields);
     setInvalidRows(badRows);
     setFieldRowErrors(badFieldRows);
@@ -580,7 +649,7 @@ export default function RequestForm({
       msgs.push(`Missing required fields: ${labels.join(", ")}`);
     }
     const anyBadRows = badRows.length > 0 || Object.keys(badFieldRows).length > 0;
-    if (bc.items.show) {
+    if (showBottomItems) {
       if (rows.length === 0) msgs.push("Add at least one item");
       else if (anyBadRows) msgs.push("Some items are missing a name, quantity or valid price");
     } else if (anyBadRows) {
@@ -918,59 +987,65 @@ export default function RequestForm({
             <div className="card overflow-hidden">
               {/* Request Details */}
               <div className="border-b border-surface-variant p-6 md:p-8">
-                <h2 className="mb-5 border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">
-                  Request Details
-                </h2>
+                {showTopDetails && (
+                  <div className="mb-6">
+                    <h2 className="mb-5 border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">
+                      Request Details
+                    </h2>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                      {showTopTitle && (
+                        <div className="md:col-span-2">
+                          <label className="label" htmlFor="req-title">
+                            Request Title{" "}
+                            {bc.title.required && <span className="text-danger">*</span>}
+                          </label>
+                          <input
+                            id="req-title"
+                            className={`input ${invalidTitle ? "!border-danger" : ""}`}
+                            placeholder="e.g. Q4 Buffer Solution Batch A"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                          />
+                        </div>
+                      )}
+                      {showTopPriority && (
+                        <div>
+                          <label className="label" htmlFor="req-priority">
+                            Priority
+                          </label>
+                          <select
+                            id="req-priority"
+                            className="input"
+                            value={priority}
+                            onChange={(e) => setPriority(e.target.value)}
+                          >
+                            {PRIORITIES.map(([v, l]) => (
+                              <option key={v} value={v}>
+                                {l}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      {showTopNeededBy && (
+                        <div>
+                          <label className="label" htmlFor="req-needed">
+                            Needed By Date{" "}
+                            {bc.neededBy.required && <span className="text-danger">*</span>}
+                          </label>
+                          <input
+                            id="req-needed"
+                            type="date"
+                            className={`input ${invalidNeeded ? "!border-danger" : ""}`}
+                            value={neededBy}
+                            onChange={(e) => setNeededBy(e.target.value)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  {bc.title.show && (
-                    <div className="md:col-span-2">
-                      <label className="label" htmlFor="req-title">
-                        Request Title{" "}
-                        {bc.title.required && <span className="text-danger">*</span>}
-                      </label>
-                      <input
-                        id="req-title"
-                        className={`input ${invalidTitle ? "!border-danger" : ""}`}
-                        placeholder="e.g. Q4 Buffer Solution Batch A"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                      />
-                    </div>
-                  )}
-                  {bc.priority.show && (
-                    <div>
-                      <label className="label" htmlFor="req-priority">
-                        Priority
-                      </label>
-                      <select
-                        id="req-priority"
-                        className="input"
-                        value={priority}
-                        onChange={(e) => setPriority(e.target.value)}
-                      >
-                        {PRIORITIES.map(([v, l]) => (
-                          <option key={v} value={v}>
-                            {l}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  {bc.neededBy.show && (
-                    <div>
-                      <label className="label" htmlFor="req-needed">
-                        Needed By Date{" "}
-                        {bc.neededBy.required && <span className="text-danger">*</span>}
-                      </label>
-                      <input
-                        id="req-needed"
-                        type="date"
-                        className={`input ${invalidNeeded ? "!border-danger" : ""}`}
-                        value={neededBy}
-                        onChange={(e) => setNeededBy(e.target.value)}
-                      />
-                    </div>
-                  )}
                   {[...template.Fields].sort((a, b) => a.SortOrder - b.SortOrder).map((f) => {
                     if (!isFieldVisible(f)) return null;
                     const invalid = invalidFields.includes(f.FormFieldID);
@@ -996,14 +1071,139 @@ export default function RequestForm({
                       );
                     }
 
+                    if (f.FieldType === "title") {
+                      return (
+                        <div key={f.FormFieldID} className="md:col-span-2">
+                          <label className="label" htmlFor={`field-${f.FormFieldID}`}>
+                            {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
+                          </label>
+                          <input
+                            id={`field-${f.FormFieldID}`}
+                            className={`input ${invalidTitle ? "!border-danger" : ""}`}
+                            placeholder={cfg.placeholder || "e.g. Q4 Buffer Solution Batch A"}
+                            value={title}
+                            onChange={(e) => {
+                              setTitle(e.target.value);
+                              set(e.target.value);
+                            }}
+                          />
+                          {invalidTitle && <p className="mt-1 text-xs font-medium text-danger">Request title is required</p>}
+                          {cfg.help && <p className="mt-1 text-xs text-outline">{cfg.help}</p>}
+                        </div>
+                      );
+                    }
+
+                    if (f.FieldType === "priority") {
+                      return (
+                        <div key={f.FormFieldID}>
+                          <label className="label" htmlFor={`field-${f.FormFieldID}`}>
+                            {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
+                          </label>
+                          <select
+                            id={`field-${f.FormFieldID}`}
+                            className="input"
+                            value={priority}
+                            onChange={(e) => {
+                              setPriority(e.target.value);
+                              set(e.target.value);
+                            }}
+                          >
+                            {PRIORITIES.map(([v, l]) => (
+                              <option key={v} value={v}>
+                                {l}
+                              </option>
+                            ))}
+                          </select>
+                          {cfg.help && <p className="mt-1 text-xs text-outline">{cfg.help}</p>}
+                        </div>
+                      );
+                    }
+
+                    if (f.FieldType === "neededBy") {
+                      return (
+                        <div key={f.FormFieldID}>
+                          <label className="label" htmlFor={`field-${f.FormFieldID}`}>
+                            {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
+                          </label>
+                          <input
+                            id={`field-${f.FormFieldID}`}
+                            type="date"
+                            className={`input ${invalidNeeded ? "!border-danger" : ""}`}
+                            value={neededBy}
+                            onChange={(e) => {
+                              setNeededBy(e.target.value);
+                              set(e.target.value);
+                            }}
+                          />
+                          {invalidNeeded && <p className="mt-1 text-xs font-medium text-danger">Needed-by date is required</p>}
+                          {cfg.help && <p className="mt-1 text-xs text-outline">{cfg.help}</p>}
+                        </div>
+                      );
+                    }
+
                     if (f.FieldType === "items") {
                       const fRows = fieldRows[f.FormFieldID] || [];
                       const invalid = invalidFields.includes(f.FormFieldID);
+                      const fQ = fieldCq[f.FormFieldID] || "";
+                      const isOpen = fieldCOpen === f.FormFieldID;
                       return (
                         <div key={f.FormFieldID} className="md:col-span-2">
                           <label className="label">
                             {f.Label} {f.IsRequired && <span className="text-danger">*</span>}
                           </label>
+                          {canCatalog && (
+                            <div className="relative mb-3">
+                              <div className="relative">
+                                <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-outline">
+                                  <Icon name="search" className="text-[20px]" />
+                                </span>
+                                <input
+                                  className="input !pl-10"
+                                  placeholder="Search Oracle Item Catalog (Item Code or Name)..."
+                                  value={fQ}
+                                  onChange={(e) => {
+                                    const val = e.target.value;
+                                    setFieldCq((p) => ({ ...p, [f.FormFieldID]: val }));
+                                    setFieldCOpen(f.FormFieldID);
+                                  }}
+                                  onFocus={() => setFieldCOpen(f.FormFieldID)}
+                                  onBlur={() => setTimeout(() => setFieldCOpen(null), 150)}
+                                />
+                              </div>
+                              {isOpen && fQ.trim().length >= 2 && (
+                                <div className="dropdown left-0 right-0">
+                                  {cSearching ? (
+                                    <div className="px-4 py-3 text-sm text-on-surface-variant">Searching catalog...</div>
+                                  ) : cHits.length === 0 ? (
+                                    <div className="px-4 py-3 text-sm text-on-surface-variant">
+                                      No catalog matches — use &quot;Add item&quot; for a custom entry
+                                    </div>
+                                  ) : (
+                                    cHits.map((h) => (
+                                      <button
+                                        key={h.ItemCatalogCacheID}
+                                        type="button"
+                                        className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-surface-container-low"
+                                        onMouseDown={(e) => e.preventDefault()}
+                                        onClick={() => addFieldCatalogRow(f.FormFieldID, h)}
+                                      >
+                                        <span className="min-w-0">
+                                          <span className="block truncate text-sm text-on-surface">
+                                            <span className="font-semibold">[{h.ItemCode}]</span> {h.ItemName}
+                                          </span>
+                                          <span className="block text-xs text-outline">
+                                            {h.OrganizationCode}
+                                            {h.LastPurchasedPrice !== null ? ` · Last price ${h.LastPurchasedPrice}` : ""}
+                                          </span>
+                                        </span>
+                                        <span className="shrink-0 text-sm text-on-surface-variant">{h.Uom}</span>
+                                      </button>
+                                    ))
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          )}
                           <ItemsRowsTable
                             rows={fRows}
                             invalidKeys={fieldRowErrors[f.FormFieldID] || []}
@@ -1266,7 +1466,7 @@ export default function RequestForm({
               </div>
 
               {/* Items */}
-              {bc.items.show && (
+              {showBottomItems && (
               <div className="border-b border-surface-variant p-6 md:p-8">
                 <div className="mb-5">
                   <h2 className="border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">Items</h2>
@@ -1339,7 +1539,7 @@ export default function RequestForm({
               )}
 
               {/* Attachments */}
-              {bc.attachments.show && (
+              {showBottomAttachments && (
               <div className="p-6 md:p-8">
                 <h2 className="mb-1 border-l-2 border-primary pl-3 text-lg font-semibold text-on-surface">
                   Attachments

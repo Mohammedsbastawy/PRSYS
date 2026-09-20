@@ -411,6 +411,8 @@ export interface TimelineNode {
   state: "done" | "current" | "todo" | "rejected" | "skipped";
   sub?: string;
   alert?: boolean;
+  isPreset?: boolean;
+  icon?: string;
 }
 
 export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
@@ -431,19 +433,19 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
           )}
           <div className="flex w-28 shrink-0 flex-col items-center gap-1.5 text-center">
             {n.state === "done" ? (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 shadow-sm">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 shadow-sm" title={n.isPreset ? "Automation Preset completed" : undefined}>
                 <Icon name="check" className="text-[17px] font-bold text-white" />
               </span>
             ) : n.state === "current" ? (
               <span
-                title="The request is waiting here"
+                title={n.isPreset ? "Automation Preset in progress" : "The request is waiting here"}
                 className="relative flex h-8 w-8 items-center justify-center rounded-full border-[3px] border-primary bg-surface-container-lowest shadow-[0_0_0_4px_rgba(163,57,0,0.14)]"
               >
                 <span className="absolute h-full w-full animate-ping rounded-full bg-primary/15" />
                 <span className="relative h-3 w-3 rounded-full bg-primary" />
               </span>
             ) : n.state === "rejected" ? (
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-error">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-error" title={n.isPreset ? "Automation Preset rejected" : undefined}>
                 <Icon name="close" className="text-[17px] font-bold text-white" />
               </span>
             ) : n.state === "skipped" ? (
@@ -452,6 +454,11 @@ export function WorkflowTimeline({ nodes }: { nodes: TimelineNode[] }) {
               </span>
             ) : (
               <span className="h-8 w-8 rounded-full border-2 border-surface-variant bg-surface-container-lowest" />
+            )}
+            {n.isPreset && (
+              <span className="inline-flex items-center gap-1 rounded bg-secondary-fixed/70 px-1.5 py-0.5 text-[9px] font-bold text-on-secondary-fixed-variant">
+                <Icon name={n.icon || "tune"} className="text-[11px]" /> Preset
+              </span>
             )}
             <span
               className={`text-xs leading-tight ${

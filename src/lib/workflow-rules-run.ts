@@ -13,6 +13,7 @@ export interface RuleRunResult {
   jumpedToStepId?: string | null
   newPriority?: string
   newAssigneeId?: string
+  newAssignedGroupId?: string | null
 }
 
 /**
@@ -82,8 +83,10 @@ export async function runWorkflowRules(opts: {
         const target = await prisma.users.findUnique({ where: { UserID: v.userId }, select: { UserID: true, Name: true, IsActive: true } })
         if (!target?.IsActive) break
         patch.AssigneeID = target.UserID
+        patch.AssignedGroupID = null  // clear group when explicitly assigning to a user
         request.AssigneeID = target.UserID
         result.newAssigneeId = target.UserID
+        result.newAssignedGroupId = null
         const assignVisible = await filterVisibleUserIds([target.UserID], request.FormTemplateID)
         if (assignVisible.length > 0) {
           await notifyUsers(assignVisible, {
@@ -98,7 +101,7 @@ export async function runWorkflowRules(opts: {
       }
       case 'ASSIGN_TO_GROUP': {
         if (!v.assignGroupId) break
-        const group = await prisma.groups.findUnique({ where: { GroupID: v.assignGroupId }, select: { Name: true } })
+        const group = await prisma.groups.findUnique({ where: { GroupID: v.assignGroupId }, select: { GroupID: true, Name: true } })
         const members = await prisma.groupMembers.findMany({ where: { GroupID: v.assignGroupId }, select: { UserID: true } })
         if (members.length === 0) break
         const active = await prisma.users.findMany({
@@ -111,8 +114,10 @@ export async function runWorkflowRules(opts: {
         // is notified so a colleague can take it over
         const target = active.slice().sort((a, b) => a.Name.localeCompare(b.Name))[0]
         patch.AssigneeID = target.UserID
+        patch.AssignedGroupID = v.assignGroupId  // track the group so UI can show "Supply Chain"
         request.AssigneeID = target.UserID
         result.newAssigneeId = target.UserID
+        result.newAssignedGroupId = v.assignGroupId
         const groupVisible = await filterVisibleUserIds(active.map((u) => u.UserID), request.FormTemplateID)
         if (groupVisible.length > 0) {
           await notifyUsers(groupVisible, {
@@ -132,8 +137,10 @@ export async function runWorkflowRules(opts: {
         const mgr = await prisma.users.findUnique({ where: { UserID: dep.ManagerID }, select: { UserID: true, Name: true, IsActive: true } })
         if (!mgr?.IsActive) break
         patch.AssigneeID = mgr.UserID
+        patch.AssignedGroupID = null  // clear group when assigning to dept
         request.AssigneeID = mgr.UserID
         result.newAssigneeId = mgr.UserID
+        result.newAssignedGroupId = null
         const depVisible = await filterVisibleUserIds([mgr.UserID], request.FormTemplateID)
         if (depVisible.length > 0) {
           await notifyUsers(depVisible, {

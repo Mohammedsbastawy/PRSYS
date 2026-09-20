@@ -24,6 +24,7 @@ interface WF {
   Name: string;
   Description: string | null;
   Status: string;
+  OnDemand?: boolean;
   Steps?: WFStep[];
   Templates?: { FormTemplateID: string; Name: string; Status: string }[];
   _count?: { Templates: number };
@@ -32,6 +33,7 @@ interface WF {
 export default function WorkflowsPage() {
   const { user, token } = useAuth();
   const [wfs, setWfs] = useState<WF[]>([]);
+  const [tab, setTab] = useState<"workflows" | "all">("workflows");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [error, setError] = useState("");
 
@@ -72,26 +74,67 @@ export default function WorkflowsPage() {
     }
   }
 
+  const displayedWfs = tab === "workflows" ? wfs.filter((w) => !w.OnDemand) : wfs;
+
   return (
     <AppShell>
       <PageHeader
         title="Workflows"
-        subtitle="Approval workflow definitions"
+        subtitle="Approval and automation workflows attached to form templates and tickets"
         action={
           canManage ? (
-            <Link href="/workflows/new" className="btn-primary">
-              + New Workflow
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link href="/automation-presets" className="btn-secondary text-xs">
+                Automation Presets
+              </Link>
+              <Link href="/workflows/new" className="btn-primary text-xs">
+                + New Workflow
+              </Link>
+            </div>
           ) : undefined
         }
       />
+
+      <div className="mb-4 flex items-center justify-between gap-2 border-b border-surface-variant/70 pb-2">
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => setTab("workflows")}
+            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+              tab === "workflows"
+                ? "bg-primary text-white shadow-sm"
+                : "text-on-surface-variant hover:bg-surface-container-low"
+            }`}
+          >
+            Form Workflows ({wfs.filter((w) => !w.OnDemand).length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("all")}
+            className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+              tab === "all"
+                ? "bg-primary text-white shadow-sm"
+                : "text-on-surface-variant hover:bg-surface-container-low"
+            }`}
+          >
+            All Workflows ({wfs.length})
+          </button>
+        </div>
+        <Link
+          href="/automation-presets"
+          className="text-xs font-medium text-primary hover:underline"
+        >
+          Manage Automation Presets →
+        </Link>
+      </div>
+
       {error && (
         <div className="mb-4 rounded border border-error/25 bg-error-container/60 px-4 py-3 text-sm font-medium text-on-error-container">
           {error}
         </div>
       )}
       <div className="space-y-4">
-        {wfs.map((w) => {
+        {displayedWfs.map((w) => {
           const inUse = w._count?.Templates ?? w.Templates?.length ?? 0;
           const confirming = confirmId === w.WFDefinitionID;
           return (
@@ -101,6 +144,11 @@ export default function WorkflowsPage() {
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-on-surface">{w.Name}</h3>
                     <StatusBadge status={w.Status} />
+                    {w.OnDemand && (
+                      <span className="badge border border-amber-200 bg-amber-50 text-[10px] font-bold text-amber-700">
+                        Preset
+                      </span>
+                    )}
                   </div>
                   {w.Description && (
                     <p className="mt-1 text-sm text-on-surface-variant">{w.Description}</p>
