@@ -132,25 +132,31 @@ export async function runWorkflowRules(opts: {
       }
       case 'ASSIGN_TO_DEPARTMENT': {
         if (!v.assignDepId) break
-        const dep = await prisma.dEP.findUnique({ where: { DEPID: v.assignDepId }, select: { Name: true, ManagerID: true } })
-        if (!dep?.ManagerID) break
-        const mgr = await prisma.users.findUnique({ where: { UserID: dep.ManagerID }, select: { UserID: true, Name: true, IsActive: true } })
-        if (!mgr?.IsActive) break
-        patch.AssigneeID = mgr.UserID
-        patch.AssignedGroupID = null  // clear group when assigning to dept
-        request.AssigneeID = mgr.UserID
-        result.newAssigneeId = mgr.UserID
-        result.newAssignedGroupId = null
-        const depVisible = await filterVisibleUserIds([mgr.UserID], request.FormTemplateID)
+        const dep = await prisma.dEP.findUnique({ where: { DEPID: v.assignDepId }, select: { DEPID: true, Name: true } })
+        if (!dep) break
+        // The ticket now belongs to the department — but the system does NOT
+        // pick a person on the team's behalf (no manager shortcut). The team
+        // must explicitly assign a handler to the ticket, so the work stays
+        // coordinated. An existing human assignment is left untouched.
+        const members = await prisma.users.findMany({
+          where: { DEPID: dep.DEPID, IsActive: true },
+          select: { UserID: true },
+        })
+        const depVisible = await filterVisibleUserIds(
+          members
+            .map((m) => m.UserID)
+            .filter((id) => id !== request.AssigneeID && !(opts.excludeUserIds ?? []).includes(id)),
+          request.FormTemplateID
+        )
         if (depVisible.length > 0) {
           await notifyUsers(depVisible, {
-            title: `Request ${request.TrackingNumber} assigned to you`,
-            message: `Workflow rule "${rule.Name}" routed it to the ${dep.Name} department.`,
+            title: `Employee must be assigned on ${request.TrackingNumber}`,
+            message: `Workflow rule "${rule.Name}" routed this ticket to the ${dep.Name} department — assign a handler so the team can coordinate who works on it.`,
             type: 'REQUEST_ASSIGNED',
             requestId: request.RequestID,
           })
         }
-        result.applied.push(`Rule "${rule.Name}": assigned → ${dep.Name} (${mgr.Name})`)
+        result.applied.push(`Rule "${rule.Name}": routed to ${dep.Name} department (team must assign a handler)`)
         break
       }
       case 'NOTIFY': {

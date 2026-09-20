@@ -42,15 +42,18 @@ export function stepLookups(): StepLookups {
       })
       return dep?.ManagerID ?? null
     },
-    departmentManagerById: async (depId) => {
-      const dep = await prisma.dEP.findUnique({
-        where: { DEPID: depId },
-        select: { ManagerID: true },
-      })
-      return dep?.ManagerID ?? null
-    },
     allApprovers: () => usersWithPermission('REQUEST_APPROVE'),
   }
+}
+
+/** Active members of a department (the team that must assign a handler). */
+export async function departmentMemberIds(depId: string | null | undefined): Promise<string[]> {
+  if (!depId) return []
+  const rows = await prisma.users.findMany({
+    where: { DEPID: depId, IsActive: true },
+    select: { UserID: true },
+  })
+  return rows.map((r) => r.UserID)
 }
 
 /** Departments managed by a user (assignment-based, not role-based). */

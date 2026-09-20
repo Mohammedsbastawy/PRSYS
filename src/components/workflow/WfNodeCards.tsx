@@ -116,7 +116,8 @@ export function approverSummary(n: FlowNode, l: WfLookups): string {
       return "requester's direct manager";
     case "DEPARTMENT": {
       const d = l.deps.find((x) => x.DEPID === n.targetDepId);
-      return d ? `manager of ${d.Name}` : "a department's manager";
+      // the team must assign a handler — the system never auto-picks a person
+      return d ? `${d.Name} (assign a handler)` : "a department (assign a handler)";
     }
     case "USER":
       return l.users.find((u) => u.UserID === n.targetUserId)?.Name || "a person";

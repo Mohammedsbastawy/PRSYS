@@ -19,8 +19,6 @@ export interface StepLookups {
   requesterManager: (requesterId: string) => Promise<string | null>;
   /** Resolves the MANAGER of the requester's department (an assignment, not a role) */
   departmentManager: (requesterId: string) => Promise<string | null>;
-  /** Resolves the MANAGER of a specific department (ApproverType "DEPARTMENT") */
-  departmentManagerById: (depId: string) => Promise<string | null>;
   allApprovers: () => Promise<string[]>;
 }
 
@@ -37,7 +35,7 @@ export function describeStepTarget(step: StepTargetInput): string {
     case "DEPARTMENT_MANAGER":
       return "Requester's department manager (or direct manager as fallback)";
     case "DEPARTMENT":
-      return step.TargetDEP?.Name ? `Manager of ${step.TargetDEP.Name}` : "A department's manager";
+      return step.TargetDEP?.Name ? `Department: ${step.TargetDEP.Name}` : "A department (assign a handler)";
     case "ANY_APPROVER":
     default:
       return "Any approver";
@@ -47,7 +45,11 @@ export function describeStepTarget(step: StepTargetInput): string {
 export async function stepTargetUserIds(
   step: StepTargetInput,
   requesterId: string,
-  lookups: StepLookups
+  lookups: StepLookups,
+  /** The request's current handler (AssigneeID). For DEPARTMENT steps the
+   *  system never picks a person on the department's behalf — only the
+   *  handler the team explicitly assigned can decide the step. */
+  assignedUserId?: string | null
 ): Promise<string[]> {
   switch (step.ApproverType) {
     case "USER":
@@ -76,11 +78,12 @@ export async function stepTargetUserIds(
       return dm ? [dm] : [];
     }
     case "DEPARTMENT": {
-      // "Approve with the manager of THIS department" (e.g. Budget Approval →
-      // the Accounting manager). No requester fallback — the department is fixed
-      // by the preset; an unmanaged department surfaces as an unassignable step.
-      const m = step.TargetDEPID ? await lookups.departmentManagerById(step.TargetDEPID) : null;
-      return m ? [m] : [];
+      // The department TEAM owns this step — the system deliberately does NOT
+      // auto-pick one of its people (no manager, no first member): the team
+      // must coordinate and explicitly assign a handler to the ticket, and
+      // only that handler may decide the step. Unassigned => nobody can
+      // decide, which the UI surfaces as "Employee must be assigned".
+      return assignedUserId ? [assignedUserId] : [];
     }
     case "ANY_APPROVER":
     default:
@@ -97,15 +100,28 @@ export async function canUserDecideStep(opts: {
   lookups: StepLookups;
   /** user IDs that already recorded a decision on this step in the current round */
   decidedUserIds?: string[];
+  /** the request's current handler — DEPARTMENT steps resolve to it (see stepTargetUserIds) */
+  assignedUserId?: string | null;
 }): Promise<{ canDecide: boolean; reason: string | null }> {
   if (opts.decidedUserIds?.includes(opts.userId)) {
     return { canDecide: false, reason: 'You have already decided on this step' };
   }
   if (!opts.step) return { canDecide: false, reason: "No active approval step" };
-  const ids = await stepTargetUserIds(opts.step, opts.requesterId, opts.lookups);
+  const isDeptStep = opts.step.ApproverType === 'DEPARTMENT';
+  const deptName = opts.step.TargetDEP?.Name || 'the department';
+  const ids = await stepTargetUserIds(opts.step, opts.requesterId, opts.lookups, opts.assignedUserId);
   const routedToMe = ids.includes(opts.userId);
 
   if (ids.length === 0) {
+    if (isDeptStep) {
+      // The expected, visible waiting state: the team must assign a handler.
+      return {
+        canDecide: false,
+        reason:
+          `Employee must be assigned — the ${deptName} team must assign a handler ` +
+          `to this ticket before this step can be decided.`,
+      };
+    }
     return {
       canDecide: false,
       reason:
@@ -139,6 +155,8 @@ export async function canUserDecideStep(opts: {
   if (routedToMe) return { canDecide: true, reason: null };
   return {
     canDecide: false,
-    reason: `Only ${describeStepTarget(opts.step)} can decide this step`,
+    reason: isDeptStep
+      ? `Only the handler assigned by the ${deptName} team can decide this step`
+      : `Only ${describeStepTarget(opts.step)} can decide this step`,
   };
 }

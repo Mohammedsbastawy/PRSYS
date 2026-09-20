@@ -119,11 +119,13 @@ export async function GET(req: NextRequest) {
           TargetUserID: true,
           TargetGroupID: true,
           TargetRoleID: true,
+          TargetDEPID: true,
           ApprovalMode: true,
           DueDays: true,
           TargetUser: { select: { Name: true } },
           TargetGroup: { select: { Name: true } },
           TargetRole: { select: { Name: true } },
+          TargetDEP: { select: { Name: true } },
         },
       },
       Items: { select: { RequestedQuantity: true, EstimatedPrice: true } },
@@ -189,11 +191,12 @@ export async function GET(req: NextRequest) {
       hasApprovePerm: canApprove,
       lookups,
       decidedUserIds: myDecidedKeys.has(roundKey) ? [payload.userId] : [],
+      assignedUserId: r.AssigneeID,
     })
     let progress: { approved: number; total: number } | null = null
     if (r.CurrentStep?.ApprovalMode === 'ALL' && r.CurrentWFStepID) {
       const approved = approvalCount.get(roundKey)?.size ?? 0
-      const targets = await stepTargetUserIds(r.CurrentStep, r.RequesterID, lookups)
+      const targets = await stepTargetUserIds(r.CurrentStep, r.RequesterID, lookups, r.AssigneeID)
       progress = { approved, total: Math.max(targets.length, approved) }
     }
     items.push({

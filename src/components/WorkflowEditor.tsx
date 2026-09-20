@@ -96,7 +96,7 @@ interface LoadedWorkflow {
 const APPROVER_TYPES = [
   { value: "DEPARTMENT_MANAGER", label: "Dept manager" },
   { value: "REQUESTER_MANAGER", label: "Direct manager" },
-  { value: "DEPARTMENT", label: "A dept's manager" },
+  { value: "DEPARTMENT", label: "A department (team assigns a handler)" },
   { value: "USER", label: "One person" },
   { value: "GROUP", label: "Group" },
   { value: "ROLE", label: "Role" },

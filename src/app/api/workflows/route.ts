@@ -180,7 +180,7 @@ async function validateSteps(steps: StepInput[]): Promise<string | null> {
       if (!u) return `Step "${s.stepName}": user not found`
     }
     if (s.approverType === 'DEPARTMENT') {
-      if (!s.targetDepId) return `Step "${s.stepName}": choose a department (its manager will approve)`
+      if (!s.targetDepId) return `Step "${s.stepName}": choose a department (its team assigns a handler)`
       const d = await prisma.dEP.findUnique({ where: { DEPID: s.targetDepId }, select: { DEPID: true } })
       if (!d) return `Step "${s.stepName}": department not found`
     }

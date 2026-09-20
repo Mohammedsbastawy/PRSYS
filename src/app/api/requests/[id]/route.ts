@@ -6,7 +6,7 @@ import { getUserContext, hasPermission } from '@/lib/rbac'
 import { notifyUsers, usersWithPermission } from '@/lib/notifications'
 import { canUserDecideStep, describeStepTarget, stepTargetUserIds } from '@/lib/workflow-targets'
 import type { StepTargetInput } from '@/lib/workflow-targets'
-import { stepLookups } from '@/lib/workflow-targets-prisma'
+import { stepLookups, departmentMemberIds } from '@/lib/workflow-targets-prisma'
 import { canUserUseTemplate, filterVisibleUserIds, visibilityBypass } from '@/lib/form-visibility'
 import { computeDueDates, type SLATargetRow } from '@/lib/sla'
 import { runWorkflowRules, type RuleRunResult } from '@/lib/workflow-rules-run'
@@ -62,11 +62,48 @@ async function alertUnassignableStep(
   requesterId: string,
   fromStatus: string | null,
   toStatus: string,
-  actorId: string | null
+  actorId: string | null,
+  assignedUserId?: string | null
 ): Promise<boolean> {
   if (!step) return false
-  const ids = await stepTargetUserIds(step, requesterId, stepLookups())
+  const ids = await stepTargetUserIds(step, requesterId, stepLookups(), assignedUserId)
   if (ids.length > 0) return false
+
+  if (step.ApproverType === 'DEPARTMENT') {
+    // A department step with no handler yet is NOT a broken routing gap —
+    // it is the expected waiting state. The system must not pick a person on
+    // the department's behalf: audit it, and ask the TEAM to assign a handler.
+    const dep = step.TargetDEPID
+      ? await prisma.dEP.findUnique({ where: { DEPID: step.TargetDEPID }, select: { Name: true } })
+      : null
+    const depName = dep?.Name ?? 'the department'
+    const req = await prisma.requests.findUnique({
+      where: { RequestID: requestId },
+      select: { TrackingNumber: true },
+    })
+    const note = `"${step.StepName}" is waiting for the ${depName} team to assign a handler to this ticket`
+    await prisma.requestAuditLog.create({
+      data: {
+        RequestID: requestId,
+        FromStatus: fromStatus,
+        ToStatus: toStatus,
+        Action: 'AWAITING_HANDLER',
+        ChangedByUserID: actorId,
+        Note: note.slice(0, 400),
+      },
+    })
+    const team = (await departmentMemberIds(step.TargetDEPID)).filter((id) => id !== actorId)
+    if (team.length > 0) {
+      await notifyUsers(team, {
+        title: `Employee must be assigned on ${req?.TrackingNumber ?? requestId.slice(0, 8)}`,
+        message: `"${step.StepName}" belongs to the ${depName} team — assign a handler to this ticket so the team can coordinate who works on it.`,
+        type: 'REQUEST_ASSIGNED',
+        requestId,
+      })
+    }
+    return true
+  }
+
   const note =
     `"${step.StepName}" has no approver (${describeStepTarget(step)}) — ` +
     `set the requester's Direct manager or the department Manager to unblock it`
@@ -211,7 +248,7 @@ async function decideRun(opts: {
 
   const request = await prisma.requests.findUnique({
     where: { RequestID: requestId },
-    select: { RequestID: true, Status: true, RequesterID: true, TrackingNumber: true, Priority: true, FormTemplateID: true },
+    select: { RequestID: true, Status: true, RequesterID: true, TrackingNumber: true, Priority: true, FormTemplateID: true, AssigneeID: true },
   })
   if (!request) return notFound('Request not found')
   if (!RUN_ACTIVE_STATUSES.includes(request.Status)) {
@@ -259,6 +296,7 @@ async function decideRun(opts: {
     hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
     lookups: stepLookups(),
     decidedUserIds: priorDecisions.map((d) => d.ApproverUserID),
+    assignedUserId: request.AssigneeID,
   })
   if (!verdict.canDecide) return json({ error: verdict.reason ?? 'You cannot decide this step' }, 403)
 
@@ -284,7 +322,7 @@ async function decideRun(opts: {
 
   const approvalMode: string = step.ApprovalMode ?? 'ANY_ONE'
   const approveAction: string = step.ApproveAction ?? 'CONTINUE'
-  const targets = await stepTargetUserIds(step, request.RequesterID, stepLookups())
+  const targets = await stepTargetUserIds(step, request.RequesterID, stepLookups(), request.AssigneeID)
   const approvedIds = new Set(
     priorDecisions.filter((d) => d.Decision === 'APPROVED').map((d) => d.ApproverUserID)
   )
@@ -401,18 +439,20 @@ async function decideRun(opts: {
 
   // notify whoever is next in the run's chain
   if (runStatus === 'PENDING' && nextStep) {
-    const allNext = await stepTargetUserIds(nextStep, request.RequesterID, stepLookups())
+    const allNext = await stepTargetUserIds(nextStep, request.RequesterID, stepLookups(), request.AssigneeID)
     if (allNext.length === 0) {
-      await alertUnassignableStep(requestId, nextStep, request.RequesterID, request.Status, request.Status, payload.userId)
-    }
-    const visibleNext = await filterVisibleUserIds(allNext.filter((id: string) => id !== payload.userId), request.FormTemplateID)
-    if (visibleNext.length > 0) {
-      await notifyUsers(visibleNext, {
-        title: `Approval needed on ${request.TrackingNumber}`,
-        message: `${run.WFDefinition.Name} moved to "${nextStep.StepName}"${dueSuffix(newDueAt)}`,
-        type: 'REQUEST_SUBMITTED',
-        requestId,
-      })
+      // department steps: audit + ask the TEAM to assign a handler (handled inside)
+      await alertUnassignableStep(requestId, nextStep, request.RequesterID, request.Status, request.Status, payload.userId, request.AssigneeID)
+    } else {
+      const visibleNext = await filterVisibleUserIds(allNext.filter((id: string) => id !== payload.userId), request.FormTemplateID)
+      if (visibleNext.length > 0) {
+        await notifyUsers(visibleNext, {
+          title: `Approval needed on ${request.TrackingNumber}`,
+          message: `${run.WFDefinition.Name} moved to "${nextStep.StepName}"${dueSuffix(newDueAt)}`,
+          type: 'REQUEST_SUBMITTED',
+          requestId,
+        })
+      }
     }
   }
   // tell the agent who raised the run what happened (advancing or final)
@@ -473,6 +513,7 @@ export async function GET(req: NextRequest, { params }: Params) {
           TargetUser: { select: { Name: true } },
           TargetGroup: { select: { Name: true } },
           TargetRole: { select: { Name: true } },
+          TargetDEP: { select: { Name: true } },
         },
       },
       FieldValues: { include: { FormField: true } },
@@ -649,6 +690,7 @@ export async function GET(req: NextRequest, { params }: Params) {
       hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
       lookups: stepLookups(),
       decidedUserIds,
+      assignedUserId: request.AssigneeID,
     })
     canDecide = verdict.canDecide
     decideReason = verdict.reason
@@ -658,7 +700,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     const approvedCount = new Set(
       approvedOnes.map((a: { ApproverUserID: string }) => a.ApproverUserID)
     ).size
-    const targets = await stepTargetUserIds(request.CurrentStep, request.RequesterID, stepLookups())
+    const targets = await stepTargetUserIds(request.CurrentStep, request.RequesterID, stepLookups(), request.AssigneeID)
     stepProgress = {
       mode: request.CurrentStep.ApprovalMode ?? 'ANY_ONE',
       approved: approvedCount,
@@ -715,12 +757,13 @@ export async function GET(req: NextRequest, { params }: Params) {
           hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
           lookups: stepLookups(),
           decidedUserIds: decidedIds,
+          assignedUserId: request.AssigneeID,
         })
         runCanDecide = verdict.canDecide
         runDecideReason = verdict.reason
         const approvedOnes = prior.filter((a: RunApprovalRow) => a.Decision === 'APPROVED')
         const approvedCount = new Set(approvedOnes.map((a: RunApprovalRow) => a.ApproverUserID)).size
-        const runTargets = await stepTargetUserIds(step, request.RequesterID, stepLookups())
+        const runTargets = await stepTargetUserIds(step, request.RequesterID, stepLookups(), request.AssigneeID)
         runProgress = {
           mode: step.ApprovalMode ?? 'ANY_ONE',
           approved: approvedCount,
@@ -993,17 +1036,23 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       })
     }
     const firstTargets = firstStep
-      ? await stepTargetUserIds(firstStep, request.RequesterID, stepLookups())
+      ? await stepTargetUserIds(firstStep, request.RequesterID, stepLookups(), request.AssigneeID)
       : []
     // no manager anywhere in the org data -> the step stays open and the admins
-    // are told, instead of the request quietly rolling past it
+    // are told, instead of the request quietly rolling past it. For DEPARTMENT
+    // steps the TEAM is asked to assign a handler instead (handled inside).
     const unassigned = await alertUnassignableStep(
-      params.id, firstStep, request.RequesterID, request.Status, updated.Status, payload.userId
+      params.id, firstStep, request.RequesterID, request.Status, updated.Status, payload.userId, request.AssigneeID
     )
-    const approvers = (
-      firstTargets.length > 0 ? firstTargets : await usersWithPermission('REQUEST_APPROVE')
-    ).filter((id) => id !== payload.userId)
-    await notifyUsers(approvers, {
+    const isDeptFirstStep = firstStep?.ApproverType === 'DEPARTMENT'
+    // department steps never fan out to blanket approvers — when unassigned the
+    // team was already notified; when assigned only the handler is the decider
+    const approvers = isDeptFirstStep
+      ? firstTargets.filter((id) => id !== payload.userId)
+      : (
+          firstTargets.length > 0 ? firstTargets : await usersWithPermission('REQUEST_APPROVE')
+        ).filter((id) => id !== payload.userId)
+    if (approvers.length > 0) await notifyUsers(approvers, {
       title: unassigned ? 'New request — no approver assigned yet' : 'New request needs approval',
       message: unassigned
         ? `${request.Requester.Name} submitted ${request.TrackingNumber} (${request.FormTemplate.Name}) but "${firstStep?.StepName}" has no approver — set the requester's direct manager or their department manager.`
@@ -1156,10 +1205,11 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       actorName,
       skipActions: ['SET_STATUS', 'JUMP_TO_STEP'],
     })
-    const targets = await stepTargetUserIds(firstStep, request.RequesterID, stepLookups())
+    const targets = await stepTargetUserIds(firstStep, request.RequesterID, stepLookups(), request.AssigneeID)
     if (targets.length === 0) {
-      // e.g. the target department has no manager assigned — surface it
-      await alertUnassignableStep(params.id, firstStep, request.RequesterID, request.Status, request.Status, payload.userId)
+      // DEPARTMENT steps: the team is asked to assign a handler (handled
+      // inside); other types: the routing gap is surfaced to admins
+      await alertUnassignableStep(params.id, firstStep, request.RequesterID, request.Status, request.Status, payload.userId, request.AssigneeID)
     } else {
       const visible = await filterVisibleUserIds(
         targets.filter((id: string) => id !== payload.userId),
@@ -1216,6 +1266,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         TargetUser: { select: { Name: true } },
         TargetGroup: { select: { Name: true } },
         TargetRole: { select: { Name: true } },
+        TargetDEP: { select: { Name: true } },
       },
     })
     if (!step) return json({ error: 'Approval step not found' }, 400)
@@ -1237,6 +1288,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
       lookups: stepLookups(),
       decidedUserIds: priorDecisions.map((d) => d.ApproverUserID),
+      assignedUserId: request.AssigneeID,
     })
     if (!verdict.canDecide) return json({ error: verdict.reason ?? 'You cannot decide this step' }, 403)
 
@@ -1269,7 +1321,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     const approvalMode: string = step.ApprovalMode ?? 'ANY_ONE'
     const approveAction: string = step.ApproveAction ?? 'CONTINUE'
     const rejectAction: string = step.RejectAction ?? 'REJECT_COMPLETELY'
-    const targets = await stepTargetUserIds(step, request.RequesterID, stepLookups())
+    const targets = await stepTargetUserIds(step, request.RequesterID, stepLookups(), request.AssigneeID)
     const approvedIds = new Set(
       priorDecisions
         .filter((d) => d.Decision === 'APPROVED')
@@ -1443,22 +1495,24 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       }
     }
     if (nextStep && newStatus === 'PENDING_APPROVAL') {
-      const allNextTargets = await stepTargetUserIds(nextStep, request.RequesterID, stepLookups())
-      const nextTargets = allNextTargets.filter((id: string) => id !== payload.userId)
-      const visibleNext = await filterVisibleUserIds(nextTargets, request.FormTemplateID)
-      // the step is open but nobody owns it -> park it visibly (audit + admin alert)
+      const allNextTargets = await stepTargetUserIds(nextStep, request.RequesterID, stepLookups(), request.AssigneeID)
+      // the step is open but nobody owns it -> park it visibly. DEPARTMENT
+      // steps ask the TEAM to assign a handler; other types alert admins.
       if (allNextTargets.length === 0) {
         await alertUnassignableStep(
-          params.id, nextStep, request.RequesterID, request.Status, newStatus, payload.userId
+          params.id, nextStep, request.RequesterID, request.Status, newStatus, payload.userId, request.AssigneeID
         )
-      }
-      if (visibleNext.length > 0) {
-        await notifyUsers(visibleNext, {
-          title: 'Request needs your approval',
-          message: `${request.TrackingNumber} is now at "${nextStep.StepName}"${dueSuffix(newDueAt)}`,
-          type: 'REQUEST_SUBMITTED',
-          requestId: params.id,
-        })
+      } else {
+        const nextTargets = allNextTargets.filter((id: string) => id !== payload.userId)
+        const visibleNext = await filterVisibleUserIds(nextTargets, request.FormTemplateID)
+        if (visibleNext.length > 0) {
+          await notifyUsers(visibleNext, {
+            title: 'Request needs your approval',
+            message: `${request.TrackingNumber} is now at "${nextStep.StepName}"${dueSuffix(newDueAt)}`,
+            type: 'REQUEST_SUBMITTED',
+            requestId: params.id,
+          })
+        }
       }
     }
     // ---- automation rules ----
@@ -1499,6 +1553,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
               TargetUser: { select: { Name: true } },
               TargetGroup: { select: { Name: true } },
               TargetRole: { select: { Name: true } },
+              TargetDEP: { select: { Name: true } },
             },
           })
         : null
@@ -1509,6 +1564,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         isSuperAdmin: ctx.roleCode === 'SUPER_ADMIN',
         hasApprovePerm: hasPermission(ctx, 'REQUEST_APPROVE'),
         lookups: stepLookups(),
+        assignedUserId: request.AssigneeID,
       })
       if (!verdict.canDecide) return json({ error: verdict.reason ?? 'You cannot decide this step' }, 403)
     }

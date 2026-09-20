@@ -242,6 +242,7 @@ interface ReqDetail {
     TargetUser: { Name: string } | null;
     TargetGroup: { Name: string } | null;
     TargetRole: { Name: string } | null;
+    TargetDEP?: { Name: string } | null;
   }) | null;
   FieldValues: { Value: string; DisplayValue?: string | null; FormField: { Label: string; FieldType: string } | null }[];
   Items: Item[];
@@ -302,6 +303,7 @@ const AUDIT_LABELS: Record<string, string> = {
   JUMPED_TO_STEP: "Jumped to step",
   STEP_SKIPPED: "Step skipped",
   STEP_UNASSIGNED: "Step has no approver",
+  AWAITING_HANDLER: "Waiting for handler assignment",
   DRAFT_UPDATED: "Draft updated",
   CLARIFICATION_REQUESTED: "Clarification requested",
   ASSIGN: "Assigned",
@@ -877,7 +879,17 @@ export default function RequestDetailPage() {
       : req.Status === "PO_REGISTERED"
         ? "PO Registered"
         : "Approved";
+  // A DEPARTMENT step with no handler yet: the system never picks a person on
+  // the team's behalf — the team must assign a handler, and only that handler
+  // can decide the step.
+  const deptStepName = req.CurrentStep?.TargetDEP?.Name;
+  const deptAssignPending =
+    req.CurrentStep?.ApproverType === "DEPARTMENT" &&
+    !req.Assignee &&
+    ["PENDING_APPROVAL", "CLARIFICATION_REQUESTED"].includes(req.Status);
+
   const awaitingTarget =
+    (deptAssignPending ? `Employee must be assigned — ${deptStepName || "department"} team` : null) ||
     req.AwaitingTarget ||
     (req.CurrentStep
       ? req.CurrentStep.TargetUser?.Name ||
@@ -1316,6 +1328,25 @@ export default function RequestDetailPage() {
           <span className="badge bg-surface-container text-outline">Cancelled — workflow stopped</span>
         ) : (
           <WorkflowTimeline nodes={nodes} />
+        )}
+        {deptAssignPending && (
+          <div className="mt-3 flex flex-wrap items-start gap-2 rounded border border-secondary-container bg-secondary-fixed/60 px-3 py-2.5 text-[13px] text-on-secondary-fixed">
+            <Icon name="group_work" className="mt-0.5 text-[16px]" />
+            <span className="min-w-0 flex-1">
+              <span className="font-semibold">Employee must be assigned.</span> This step belongs to the{" "}
+              <span className="font-semibold">{deptStepName || "department"}</span> team — assign a handler to
+              this ticket so the team can coordinate who works on it. Only the assigned handler can decide the step.
+            </span>
+            {p("REQUEST_ASSIGN") && (
+              <button
+                className="btn-primary !py-1.5 text-xs"
+                disabled={busy !== null}
+                onClick={() => setAssignOpen(true)}
+              >
+                <Icon name="person_add" className="text-[16px]" /> Assign employee
+              </button>
+            )}
+          </div>
         )}
         {req.Status === "CLARIFICATION_REQUESTED" && (
           <div className="mt-3 flex items-start gap-2 rounded border border-secondary-container bg-secondary-fixed/60 px-3 py-2 text-[13px] text-on-secondary-fixed">
