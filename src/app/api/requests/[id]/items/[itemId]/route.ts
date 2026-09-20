@@ -17,6 +17,13 @@ const verifySchema = z.object({
 })
 
 // PATCH /api/requests/[id]/items/[itemId] — procurement verification (link catalog + stock split)
+//
+// Stock split rules (the system enforces them, it does not guess):
+//   • Issue from stock can never exceed the on-hand qty (max = on-hand)
+//   • Issue from stock can never exceed the requested qty
+//   • Issuing anything requires a recorded on-hand qty (the verifier
+//     confirms stock exists before taking from it)
+//   • To purchase is DERIVED data: requested qty − issued from stock
 export async function PATCH(req: NextRequest, { params }: Params) {
   const payload = getUserFromRequest(req)
   if (!payload) return unauthorized()
@@ -35,11 +42,47 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     ItemVerifiedByUserID: payload.userId,
     ItemVerifiedAt: new Date(),
   }
-  if (data!.onHandQuantity !== undefined) update.OnHandQuantity = data!.onHandQuantity
-  if (data!.issuedFromStockQuantity !== undefined) {
-    update.IssuedFromStockQuantity = data!.issuedFromStockQuantity
+
+  // ---- stock split validation + auto to-purchase ----
+  const qty = Number(item.RequestedQuantity)
+  const storedOnHand = item.OnHandQuantity === null ? null : Number(item.OnHandQuantity)
+  const newOnHand = data!.onHandQuantity !== undefined ? data!.onHandQuantity : storedOnHand
+  const issuedProvided = data!.issuedFromStockQuantity !== undefined
+  const newIssued = issuedProvided
+    ? Number(data!.issuedFromStockQuantity ?? 0)
+    : Number(item.IssuedFromStockQuantity ?? 0)
+
+  if (issuedProvided) {
+    if (newIssued > 0 && newOnHand === null) {
+      return json(
+        { error: 'Record the on-hand quantity before issuing from stock' },
+        400
+      )
+    }
+    // the on-hand check first — it is the tighter, more actionable cap
+    if (newOnHand !== null && newIssued > newOnHand) {
+      return json(
+        { error: `Issue from stock can't exceed the on-hand quantity (${newOnHand})` },
+        400
+      )
+    }
+    if (newIssued > qty) {
+      return json(
+        { error: `Issue from stock can't exceed the requested quantity (${qty})` },
+        400
+      )
+    }
+    // to-purchase is automatic: whatever the stock doesn't cover gets purchased
+    update.ToPurchaseQuantity = Math.max(0, qty - newIssued)
+  } else if (data!.toPurchaseQuantity !== undefined) {
+    // caller adjusted only the purchase qty (rare) — accept as-is
+    update.ToPurchaseQuantity = data!.toPurchaseQuantity
   }
-  if (data!.toPurchaseQuantity !== undefined) update.ToPurchaseQuantity = data!.toPurchaseQuantity
+
+  if (data!.onHandQuantity !== undefined) update.OnHandQuantity = data!.onHandQuantity
+  if (issuedProvided) {
+    update.IssuedFromStockQuantity = newIssued
+  }
   if (data!.estimatedPrice !== undefined) update.EstimatedPrice = data!.estimatedPrice
   if (data!.stockDecisionNotes !== undefined) update.StockDecisionNotes = data!.stockDecisionNotes
 

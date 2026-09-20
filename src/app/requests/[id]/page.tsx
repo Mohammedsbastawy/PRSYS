@@ -509,11 +509,30 @@ function VerifyModal({
   const [open, setOpen] = useState(false);
   const [onHand, setOnHand] = useState(item.OnHandQuantity !== null ? String(item.OnHandQuantity) : "");
   const [issued, setIssued] = useState(String(item.IssuedFromStockQuantity ?? 0));
-  const [toBuy, setToBuy] = useState(item.ToPurchaseQuantity !== null ? String(item.ToPurchaseQuantity) : "");
   const [price, setPrice] = useState(item.EstimatedPrice !== null ? String(item.EstimatedPrice) : "");
   const [notes, setNotes] = useState(item.StockDecisionNotes || "");
   const [err, setErr] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Stock split math — the system derives it, nobody types it:
+  //   to purchase = requested qty − issue from stock
+  const qtyNum = Number(item.RequestedQuantity) || 0;
+  const issuedNum = issued.trim() === "" ? 0 : Number(issued);
+  const onHandNum = onHand.trim() === "" ? null : Number(onHand);
+  const toBuy =
+    !isNaN(issuedNum) && issuedNum >= 0 ? Math.max(0, qtyNum - issuedNum) : null;
+
+  // live validation of the on-hand cap (mirrored server-side on save)
+  let issuedErr = "";
+  if (isNaN(issuedNum) || issuedNum < 0) {
+    issuedErr = "Issue from stock must be a positive number.";
+  } else if (issuedNum > 0 && onHandNum === null) {
+    issuedErr = "Record the on-hand qty before issuing from stock.";
+  } else if (onHandNum !== null && issuedNum > onHandNum) {
+    issuedErr = `Issue from stock can't exceed the on-hand qty (${onHandNum}).`;
+  } else if (issuedNum > qtyNum) {
+    issuedErr = `Issue from stock can't exceed the requested quantity (${qtyNum}).`;
+  }
 
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
@@ -539,17 +558,22 @@ function VerifyModal({
   async function save() {
     setErr("");
     const num = (v: string) => (v.trim() === "" ? null : Number(v));
-    for (const [v, l] of [[onHand, "On-hand"], [issued, "Issued"], [toBuy, "To purchase"], [price, "Price"]] as const) {
+    for (const [v, l] of [[onHand, "On-hand qty"], [issued, "Issue from stock"], [price, "Price"]] as const) {
       if (v.trim() !== "" && (isNaN(Number(v)) || Number(v) < 0)) {
         setErr(`${l} must be a positive number`);
         return;
       }
     }
+    if (issuedErr) {
+      setErr(issuedErr);
+      return;
+    }
     onSavedAction({
       itemCatalogCacheId: catId || null,
       onHandQuantity: num(onHand),
       issuedFromStockQuantity: num(issued) ?? 0,
-      toPurchaseQuantity: num(toBuy),
+      // toPurchaseQuantity is intentionally NOT sent — the server derives it
+      // automatically: to purchase = requested qty − issue from stock
       estimatedPrice: num(price),
       stockDecisionNotes: notes.trim() || null,
     });
@@ -618,6 +642,9 @@ function VerifyModal({
                         setCatLabel(`[${h.ItemCode}] ${h.ItemName}`);
                         setOpen(false);
                         setQ("");
+                        // TODO(oracle): once the Oracle inventory sync lands,
+                        // auto-fill onHand from the catalog's live on-hand qty
+                        // here, so the verifier only confirms the split.
                       }}
                     >
                       <span className="truncate text-sm text-on-surface">
@@ -632,24 +659,65 @@ function VerifyModal({
           </>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <div>
+          <label className="label">Requested qty</label>
+          <input
+            className="input cursor-not-allowed bg-surface-container-low"
+            value={`${qtyNum}${item.RequestedUom || item.Uom ? ` ${item.RequestedUom || item.Uom}` : ""}`}
+            readOnly
+          />
+        </div>
         <div>
           <label className="label">On-hand qty</label>
-          <input type="number" min="0" step="any" className="input" value={onHand} onChange={(e) => setOnHand(e.target.value)} />
+          <input
+            type="number"
+            min="0"
+            step="any"
+            className="input"
+            value={onHand}
+            onChange={(e) => setOnHand(e.target.value)}
+          />
         </div>
         <div>
           <label className="label">Issue from stock</label>
-          <input type="number" min="0" step="any" className="input" value={issued} onChange={(e) => setIssued(e.target.value)} />
+          <input
+            type="number"
+            min="0"
+            step="any"
+            className="input"
+            value={issued}
+            onChange={(e) => setIssued(e.target.value)}
+          />
         </div>
         <div>
-          <label className="label">To purchase</label>
-          <input type="number" min="0" step="any" className="input" value={toBuy} onChange={(e) => setToBuy(e.target.value)} />
+          <label className="label">To purchase (auto)</label>
+          <input
+            className="input cursor-not-allowed bg-surface-container-low"
+            value={toBuy === null ? "" : String(toBuy)}
+            readOnly
+          />
         </div>
         <div>
           <label className="label">Est. price</label>
-          <input type="number" min="0" step="any" className="input" value={price} onChange={(e) => setPrice(e.target.value)} />
+          <input
+            type="number"
+            min="0"
+            step="any"
+            className="input"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
         </div>
       </div>
+      {issuedErr ? (
+        <div className="mt-2 text-xs font-semibold text-danger">{issuedErr}</div>
+      ) : (
+        <div className="mt-2 text-xs text-outline">
+          To purchase is calculated automatically: requested qty − issue from stock. Est. price is
+          optional — the purchase happens in a later stage.
+        </div>
+      )}
       <label className="label mt-3">Decision notes</label>
       <textarea rows={2} className="input" value={notes} onChange={(e) => setNotes(e.target.value)} />
       <div className="mt-4 flex justify-end gap-2">
@@ -1612,7 +1680,7 @@ export default function RequestDetailPage() {
                             </span>
                             <span className="block text-on-surface-variant">
                               On-hand {fmtNum(it.OnHandQuantity)} · Issue {fmtNum(it.IssuedFromStockQuantity)} ·
-                              Buy {fmtNum(it.ToPurchaseQuantity)}
+                              To purchase {fmtNum(it.ToPurchaseQuantity)}
                             </span>
                             <button
                               className="mt-1 font-semibold text-primary-dark hover:underline"
